@@ -27,7 +27,7 @@ namespace FiniteUnions
 opaque focusBound (alphabet colors q : ℕ) : ℕ
 
 /-- The simultaneous color-profile focusing step used in the finite-unions argument. -/
-theorem focus (A C U : Type*) [Fintype A] [Fintype C] [Fintype U]
+theorem focus (A C U : Type*) [Fintype A] [Nonempty A] [Fintype C] [Fintype U]
     (n : ℕ) (hn : focusBound (Fintype.card A) (Fintype.card C) (Fintype.card U) ≤ n)
     (χ : U → (Fin n → A) → C) :
     ∃ l : Combinatorics.Line A (Fin n), ∀ u, ∃ c, ∀ a, χ u (l a) = c := by

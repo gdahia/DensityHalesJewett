@@ -105,12 +105,19 @@ theorem exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ
           ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ) := by
   sorry
 
+/-- A parameter-cube dimension sufficient for the insensitive-intersection construction. -/
+opaque insensitiveIntersectionDimension (k : ℕ) (δ : ℝ) : ℕ
+
 /-- A large intersection of insensitive families with a density gain on its complement. -/
 theorem exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m n : ℕ) (hm : 1 ≤ m)
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hm_large : insensitiveIntersectionDimension k δ ≤ m)
+    (hn : manyLinesBound k m δ ≤ n)
     (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ))
-    (hfree : IsLineFree A) :
+    (hfree : IsLineFree A)
+    (hsmall : ∀ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
+      (Subspace.relativeDensity V A : ℝ) < δ + (Parameters.get k δ).η ^ 2 / 2) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       ∃ C : Fin k → Finset (Fin m → Fin (k + 1)),
         (∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) ∧
@@ -126,6 +133,8 @@ theorem exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
 theorem exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m n : ℕ) (hm : 1 ≤ m)
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hm_large : insensitiveIntersectionDimension k δ ≤ m)
+    (hn : manyLinesBound k m δ ≤ n)
     (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ))
     (hfree : IsLineFree A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
