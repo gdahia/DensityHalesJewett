@@ -5,11 +5,12 @@ Authors: GPT-5.6 Sol, Gabriel Dahia
 -/
 module
 
-import DensityHalesJewett.Challenge
+public import DensityHalesJewett.Main
+public import DensityHalesJewett.Szemeredi
 
 /-!
 # Positive-density configurations
 
-The challenge interface lives in `DensityHalesJewett.Challenge`.  This module re-exports it as the
-public API of the project.
+This module re-exports the density Hales--Jewett and Szemeredi interfaces as the public API of the
+project.
 -/

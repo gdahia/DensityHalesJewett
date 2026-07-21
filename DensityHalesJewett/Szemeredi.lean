@@ -5,7 +5,6 @@ Authors: Gabriel Dahia
 -/
 module
 
-public import DensityHalesJewett.Challenge
 public import DensityHalesJewett.Main
 public import Mathlib.Data.Nat.Digits.Lemmas
 
@@ -20,6 +19,32 @@ theorem on finite intervals.
 
 open Finset
 open Combinatorics
+
+namespace Combinatorics
+
+/-- A nonconstant arithmetic progression of length `k` in an additive monoid. -/
+@[ext]
+structure ArithmeticProgression (α : Type*) [AddMonoid α] (k : ℕ) where
+  /-- The initial term of the arithmetic progression. -/
+  start : α
+  /-- The common difference of the arithmetic progression. -/
+  diff : α
+  diff_ne_zero : diff ≠ 0
+
+namespace ArithmeticProgression
+
+/-- The term of `P` indexed by `i`. -/
+def term {α : Type*} [AddMonoid α] {k : ℕ} (P : ArithmeticProgression α k)
+    (i : Fin k) : α :=
+  P.start + (i : ℕ) • P.diff
+
+/-- The proposition that every term of `P` belongs to `s`. -/
+def IsSubset {α : Type*} [AddMonoid α] {k : ℕ} (P : ArithmeticProgression α k)
+    (s : Set α) : Prop :=
+  ∀ i, P.term i ∈ s
+
+end ArithmeticProgression
+end Combinatorics
 
 namespace DensityHalesJewett
 
@@ -53,3 +78,16 @@ theorem exists_dense_digitBlock {K : ℕ} (hK : 1 ≤ K) {δ : ℝ} (hδ : 0 < �
   sorry
 
 end DensityHalesJewett
+
+namespace Combinatorics.ArithmeticProgression
+
+/-- A threshold for the density theorem for arithmetic progressions of length `k`. -/
+opaque densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ
+
+theorem exists_of_density_nat (k : ℕ) (δ : ℝ) (hδ : 0 < δ)
+    (n : ℕ) (hn : densityTheoremBound k δ ≤ n) (A : Finset ℕ)
+    (hAn : A ⊆ range n) (hAδ : δ * n ≤ #A) :
+    ∃ P : ArithmeticProgression ℕ k, P.IsSubset (A : Set ℕ) := by
+  sorry
+
+end Combinatorics.ArithmeticProgression

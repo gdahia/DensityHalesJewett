@@ -41,3 +41,16 @@ theorem density_hales_jewett_fin (k : ℕ) (hk : 2 ≤ k) : HasDensityHJ k := by
   sorry
 
 end DensityHalesJewett
+
+namespace Combinatorics.Line
+
+/-- A threshold for the density Hales--Jewett theorem over an alphabet of size `k`. -/
+opaque densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ
+
+theorem exists_of_density (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
+    (n : ℕ) (hn : densityTheoremBound (Fintype.card α) δ ≤ n)
+    (A : Finset (Fin n → α)) (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
+    ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
+  sorry
+
+end Combinatorics.Line

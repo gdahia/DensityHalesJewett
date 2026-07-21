@@ -1,5 +1,4 @@
 import DensityHalesJewett.Basic
-import DensityHalesJewett.Challenge
 import DensityHalesJewett.Word
 import DensityHalesJewett.Subspace
 import DensityHalesJewett.GrahamRothschild
