@@ -8,6 +8,12 @@ module
 public import Mathlib.Combinatorics.Additive.Corner.Roth
 public import Mathlib.Combinatorics.HalesJewett
 
+/-!
+# Density theorem challenge statements
+
+This file records density-theorem interfaces for arithmetic progressions and
+combinatorial lines.
+-/
 
 @[expose] public section
 
@@ -15,18 +21,23 @@ open Finset
 
 namespace Combinatorics
 
+/-- A nonconstant arithmetic progression of length `k` in an additive monoid. -/
 @[ext]
 structure ArithmeticProgression (α : Type*) [AddMonoid α] (k : ℕ) where
+  /-- The initial term of the arithmetic progression. -/
   start : α
+  /-- The common difference of the arithmetic progression. -/
   diff : α
   diff_ne_zero : diff ≠ 0
 
 namespace ArithmeticProgression
 
+/-- The term of `P` indexed by `i`. -/
 def term {α : Type*} [AddMonoid α] {k : ℕ} (P : ArithmeticProgression α k)
     (i : Fin k) : α :=
   P.start + (i : ℕ) • P.diff
 
+/-- The proposition that every term of `P` belongs to `s`. -/
 def IsSubset {α : Type*} [AddMonoid α] {k : ℕ} (P : ArithmeticProgression α k)
     (s : Set α) : Prop :=
   ∀ i, P.term i ∈ s
@@ -36,6 +47,7 @@ end Combinatorics
 
 namespace Combinatorics.ArithmeticProgression
 
+/-- A threshold for the density theorem for arithmetic progressions of length `k`. -/
 opaque densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ
 
 theorem exists_of_density_nat (k : ℕ) (δ : ℝ) (hδ : 0 < δ)
@@ -48,6 +60,7 @@ end Combinatorics.ArithmeticProgression
 
 namespace Combinatorics.Line
 
+/-- A threshold for the density Hales--Jewett theorem over an alphabet of size `k`. -/
 opaque densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ
 
 theorem exists_of_density (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
