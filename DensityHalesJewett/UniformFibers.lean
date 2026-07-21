@@ -32,7 +32,7 @@ namespace Subspace
 opaque densityBound (k m : ℕ) (δ : ℝ) : ℕ
 
 /-- Multidimensional density Hales--Jewett follows from the one-dimensional assertion. -/
-theorem exists_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
+lemma exists_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
     (m : ℕ) (hm : 1 ≤ m) (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityBound k m δ ≤ n) (A : Finset (Fin n → Fin k))
     (hA : δ * (k : ℝ) ^ n ≤ #A) :
@@ -44,7 +44,7 @@ dense. -/
 opaque uniformFibersBound (alphabet dimension : ℕ) (ε : ℝ) : ℕ
 
 /-- Uniform fibers on a subspace. -/
-theorem exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
+lemma exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
     [Fintype (κ → α)] [Fintype (ι ⊕ κ → α)]
     [DecidableEq (ι ⊕ κ → α)]
     (m : ℕ) (hm : 1 ≤ m) (ε : ℝ) (hε₀ : 0 < ε) (hε₁ : ε < 1)
@@ -58,7 +58,7 @@ theorem exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
 opaque restrictAlphabetBound (k m : ℕ) (δ : ℝ) : ℕ
 
 /-- A dense family over `Fin (k+1)` contains the `Fin k` restriction of a subspace. -/
-theorem exists_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k)
+lemma exists_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k)
     (m : ℕ) (hm : 1 ≤ m) (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : restrictAlphabetBound k m δ ≤ n)
     (A : Finset (Fin n → Fin (k + 1)))

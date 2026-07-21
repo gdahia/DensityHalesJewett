@@ -34,12 +34,12 @@ def concat {α ι κ : Type*} (x : ι → α) (y : κ → α) : ι ⊕ κ → α
   (Equiv.sumArrowEquivProdArrow ι κ α).symm (x, y)
 
 @[simp]
-theorem concat_apply_inl {α ι κ : Type*} (x : ι → α) (y : κ → α) (i : ι) :
+lemma concat_apply_inl {α ι κ : Type*} (x : ι → α) (y : κ → α) (i : ι) :
     concat x y (Sum.inl i) = x i := by
   rfl
 
 @[simp]
-theorem concat_apply_inr {α ι κ : Type*} (x : ι → α) (y : κ → α) (i : κ) :
+lemma concat_apply_inr {α ι κ : Type*} (x : ι → α) (y : κ → α) (i : κ) :
     concat x y (Sum.inr i) = y i := by
   rfl
 
@@ -49,13 +49,13 @@ def fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → �
   Finset.univ.filter fun y ↦ concat x y ∈ A
 
 @[simp]
-theorem mem_fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
+lemma mem_fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
     {A : Finset (ι ⊕ κ → α)} {x : ι → α} {y : κ → α} :
     y ∈ fiber A x ↔ concat x y ∈ A := by
   simp [fiber]
 
 /-- Uniform density is the average of the uniform densities of the fibers. -/
-theorem average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (κ → α)]
+lemma average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (κ → α)]
     [Fintype (ι ⊕ κ → α)] [DecidableEq (ι ⊕ κ → α)]
     (A : Finset (ι ⊕ κ → α)) :
     (𝔼 x : ι → α, ((fiber A x).dens : ℝ)) = (A.dens : ℝ) := by
@@ -77,7 +77,7 @@ theorem average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype 
 
 /-- A bounded function with large average exceeds a lower threshold on a quantitatively large
 set. -/
-theorem density_ge_threshold {X : Type*} [Fintype X] [Nonempty X]
+lemma density_ge_threshold {X : Type*} [Fintype X] [Nonempty X]
     (f : X → ℝ) (a b : ℝ) (_hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
     (_hb : 0 ≤ b) (hba : b < a) (havg : a ≤ 𝔼 x : X, f x) :
     (a - b) / (1 - b) ≤

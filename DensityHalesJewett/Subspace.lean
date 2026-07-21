@@ -25,7 +25,7 @@ namespace Subspace
 variable {η α ι : Type*}
 
 /-- Evaluation by a fixed combinatorial subspace is injective when the alphabet is nontrivial. -/
-theorem injective [Nontrivial α] (V : Combinatorics.Subspace η α ι) :
+lemma injective [Nontrivial α] (V : Combinatorics.Subspace η α ι) :
     Function.Injective V := by
   intro x y hxy
   funext e
@@ -38,7 +38,7 @@ def range [Fintype (η → α)] [DecidableEq (ι → α)]
   Finset.univ.image V
 
 @[simp]
-theorem mem_range [Fintype (η → α)] [DecidableEq (ι → α)]
+lemma mem_range [Fintype (η → α)] [DecidableEq (ι → α)]
     {V : Combinatorics.Subspace η α ι} {w : ι → α} :
     w ∈ range V ↔ ∃ x, V x = w := by
   simp [range]
@@ -68,7 +68,7 @@ def composeLine (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α
     simp only [hi, Sum.elim_inr, he]
 
 @[simp]
-theorem composeLine_apply (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η)
+lemma composeLine_apply (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η)
     (a : α) : composeLine V l a = V (l a) := by
   funext i
   cases hi : V.idxFun i
@@ -85,7 +85,7 @@ noncomputable def parameterWord [Fintype (η → α)] [DecidableEq (ι → α)]
     (V : Combinatorics.Subspace η α ι) (q : Lines V) (a : α) : η → α :=
   Classical.choose <| mem_range.mp (q.2 a)
 
-theorem parameterWord_apply [Fintype (η → α)] [DecidableEq (ι → α)]
+lemma parameterWord_apply [Fintype (η → α)] [DecidableEq (ι → α)]
     (V : Combinatorics.Subspace η α ι) (q : Lines V) (a : α) :
     V (parameterWord V q a) = q.1 a :=
   Classical.choose_spec <| mem_range.mp (q.2 a)
@@ -94,7 +94,7 @@ theorem parameterWord_apply [Fintype (η → α)] [DecidableEq (ι → α)]
 noncomputable def properCoordinate (V : Combinatorics.Subspace η α ι) (e : η) : ι :=
   Classical.choose <| V.proper e
 
-theorem properCoordinate_spec (V : Combinatorics.Subspace η α ι) (e : η) :
+lemma properCoordinate_spec (V : Combinatorics.Subspace η α ι) (e : η) :
     V.idxFun (properCoordinate V e) = Sum.inr e :=
   Classical.choose_spec <| V.proper e
 
@@ -122,7 +122,7 @@ noncomputable def uncomposeLine [Fintype (η → α)] [DecidableEq (ι → α)] 
         rw [← parameterWord_apply V q a]
         rw [V.apply_inr (properCoordinate_spec V e), V.apply_inr hVj]
 
-theorem uncomposeLine_apply [Fintype (η → α)] [DecidableEq (ι → α)] [Nontrivial α]
+lemma uncomposeLine_apply [Fintype (η → α)] [DecidableEq (ι → α)] [Nontrivial α]
     (V : Combinatorics.Subspace η α ι) (q : Lines V) (a : α) :
     V (uncomposeLine V q a) = q.1 a := by
   funext i

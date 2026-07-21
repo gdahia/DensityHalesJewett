@@ -56,7 +56,7 @@ namespace DensityHalesJewett
 def baseEncode (k m : ℕ) (x : Fin m → Fin k) : ℕ :=
   ∑ i, (x i : ℕ) * k ^ (i : ℕ)
 
-theorem baseEncode_eq_ofDigits (k m : ℕ) (x : Fin m → Fin k) :
+lemma baseEncode_eq_ofDigits (k m : ℕ) (x : Fin m → Fin k) :
     baseEncode k m x = Nat.ofDigits k (List.ofFn fun i ↦ (x i : ℕ)) := by
   rw [Nat.ofDigits_eq_sum_mapIdx, List.mapIdx_eq_ofFn, List.sum_ofFn]
   simp only [List.get_ofFn]
@@ -66,7 +66,7 @@ theorem baseEncode_eq_ofDigits (k m : ℕ) (x : Fin m → Fin k) :
   congr 2
 
 /-- A base-`k` encoding of an `m`-digit word lies below `k ^ m`. -/
-theorem baseEncode_lt_pow {k m : ℕ} (hk : 1 < k) (x : Fin m → Fin k) :
+lemma baseEncode_lt_pow {k m : ℕ} (hk : 1 < k) (x : Fin m → Fin k) :
     baseEncode k m x < k ^ m := by
   rw [baseEncode_eq_ofDigits]
   apply Nat.mapsTo_ofDigits hk m
@@ -99,7 +99,7 @@ noncomputable def baseEncodeEquiv (k m : ℕ) (hk : 1 ≤ k) :
   · simp
 
 @[simp]
-theorem baseEncodeEquiv_apply (k m : ℕ) (hk : 2 ≤ k) (x : Fin m → Fin k) :
+lemma baseEncodeEquiv_apply (k m : ℕ) (hk : 2 ≤ k) (x : Fin m → Fin k) :
     (baseEncodeEquiv k m (one_le_two.trans hk) x : ℕ) = baseEncode k m x := by
   classical
   by_cases hk_one : k = 1
@@ -109,7 +109,7 @@ theorem baseEncodeEquiv_apply (k m : ℕ) (hk : 2 ≤ k) (x : Fin m → Fin k) :
 namespace Line
 
 /-- A base-encoded combinatorial line is a nonconstant arithmetic progression. -/
-theorem baseEncode_isArithmeticProgression {k m : ℕ} (hk : 1 ≤ k)
+lemma baseEncode_isArithmeticProgression {k m : ℕ} (hk : 1 ≤ k)
     (l : Combinatorics.Line (Fin k) (Fin m)) :
     ∃ P : Combinatorics.ArithmeticProgression ℕ k,
       ∀ a, P.term a = baseEncode k m (l a) := by
@@ -141,7 +141,7 @@ end Line
 
 /-- A sufficiently dense initial interval has a complete digit block with at least half the
 ambient density. -/
-theorem exists_dense_digitBlock {K : ℕ} (hK : 1 ≤ K) {δ : ℝ} (hδ : 0 < δ)
+lemma exists_dense_digitBlock {K : ℕ} (hK : 1 ≤ K) {δ : ℝ} (hδ : 0 < δ)
     {N : ℕ} (hN : 2 * K / δ ≤ N) (A : Finset ℕ) (hAN : A ⊆ Finset.range N)
     (hA : δ * N ≤ #A) :
     ∃ q : ℕ, (q + 1) * K ≤ N ∧

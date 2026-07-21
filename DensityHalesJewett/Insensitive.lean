@@ -32,7 +32,7 @@ def IsInsensitive {α ι : Type*} (i j : α) (D : Finset (ι → α)) : Prop :=
 namespace IsInsensitive
 
 /-- Complements preserve insensitivity. -/
-theorem compl {α ι : Type*} [Fintype (ι → α)] [DecidableEq (ι → α)]
+lemma compl {α ι : Type*} [Fintype (ι → α)] [DecidableEq (ι → α)]
     {i j : α} {D : Finset (ι → α)} (hD : IsInsensitive i j D) :
     IsInsensitive i j Dᶜ := by
   intro x y hxy
@@ -40,7 +40,7 @@ theorem compl {α ι : Type*} [Fintype (ι → α)] [DecidableEq (ι → α)]
   exact not_congr (hD hxy)
 
 /-- Unions preserve insensitivity. -/
-theorem union {α ι : Type*} [DecidableEq (ι → α)]
+lemma union {α ι : Type*} [DecidableEq (ι → α)]
     {i j : α} {D E : Finset (ι → α)} (hD : IsInsensitive i j D)
     (hE : IsInsensitive i j E) : IsInsensitive i j (D ∪ E) := by
   intro x y hxy
@@ -48,7 +48,7 @@ theorem union {α ι : Type*} [DecidableEq (ι → α)]
   rw [hD hxy, hE hxy]
 
 /-- Intersections preserve insensitivity. -/
-theorem inter {α ι : Type*} [DecidableEq (ι → α)]
+lemma inter {α ι : Type*} [DecidableEq (ι → α)]
     {i j : α} {D E : Finset (ι → α)} (hD : IsInsensitive i j D)
     (hE : IsInsensitive i j E) : IsInsensitive i j (D ∩ E) := by
   intro x y hxy
@@ -72,7 +72,7 @@ noncomputable def intersection {r : ℕ} {X : Type*} [Fintype X]
 opaque tilingBound (k m : ℕ) (β : ℝ) : ℕ
 
 /-- A dense insensitive family can be tiled, up to small error, by disjoint subspaces. -/
-theorem exists_disjoint_subspaces {k : ℕ} (i : Fin k)
+lemma exists_disjoint_subspaces {k : ℕ} (i : Fin k)
     (m n : ℕ) (hm : 1 ≤ m) (β : ℝ) (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
     (hn : tilingBound k m β ≤ n) (D : Finset (Fin n → Fin (k + 1)))
     (hD : IsInsensitive i.castSucc (Fin.last k) D)
@@ -88,7 +88,7 @@ theorem exists_disjoint_subspaces {k : ℕ} (i : Fin k)
 opaque intersectionTilingBound (k r m : ℕ) (β : ℝ) : ℕ
 
 /-- An intersection of insensitive families can be tiled by disjoint subspaces. -/
-theorem exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ)
+lemma exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ)
     (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
     (β : ℝ) (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
     (hn : intersectionTilingBound k r m β ≤ n)

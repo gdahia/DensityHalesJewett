@@ -27,7 +27,7 @@ namespace FiniteUnions
 opaque focusBound (alphabet colors q : ℕ) : ℕ
 
 /-- The simultaneous color-profile focusing step used in the finite-unions argument. -/
-theorem focus (A C U : Type*) [Fintype A] [Nonempty A] [Fintype C] [Fintype U]
+lemma focus (A C U : Type*) [Fintype A] [Nonempty A] [Fintype C] [Fintype U]
     (n : ℕ) (hn : focusBound (Fintype.card A) (Fintype.card C) (Fintype.card U) ≤ n)
     (χ : U → (Fin n → A) → C) :
     ∃ l : Combinatorics.Line A (Fin n), ∀ u, ∃ c, ∀ a, χ u (l a) = c := by
@@ -37,7 +37,7 @@ theorem focus (A C U : Type*) [Fintype A] [Nonempty A] [Fintype C] [Fintype U]
 opaque bound (colors m : ℕ) : ℕ
 
 /-- The finite-unions theorem in ordered block-sequence form. -/
-theorem exists_mono (C : Type*) [Finite C] (m : ℕ) :
+lemma exists_mono (C : Type*) [Finite C] (m : ℕ) :
     ∃ L, ∀ χ : Finset (Fin L) → C,
       ∃ B : Fin m → Finset (Fin L),
         (∀ i, (B i).Nonempty) ∧
@@ -58,7 +58,7 @@ opaque canonizationBound (alphabet colors blocks : ℕ) : ℕ
 
 /-- Block canonization: inside a suitable subspace, the color of a line depends only on its
 variable directions and not on its fixed letters. -/
-theorem canonize (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
+lemma canonize (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
     [DecidableEq α] (L n : ℕ)
     (hn : canonizationBound (Fintype.card α) (Fintype.card C) L ≤ n)
     (χ : Combinatorics.Line α (Fin n) → C) :
@@ -71,7 +71,7 @@ theorem canonize (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
 opaque bound (alphabet colors dimension : ℕ) : ℕ
 
 /-- The line case of the Graham--Rothschild theorem. -/
-theorem lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
+lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
     [DecidableEq α] (m n : ℕ) (hm : 1 ≤ m)
     (hn : bound (Fintype.card α) (Fintype.card C) m ≤ n)
     (χ : Combinatorics.Line α (Fin n) → C) :
@@ -80,7 +80,7 @@ theorem lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
   sorry
 
 /-- The two-color form of Graham--Rothschild used by the density argument. -/
-theorem lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
+lemma lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
     (m n : ℕ) (hm : 1 ≤ m)
     (hn : bound (Fintype.card α) 2 m ≤ n)
     (L : Finset (Combinatorics.Line α (Fin n))) :
