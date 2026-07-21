@@ -36,19 +36,25 @@ namespace IsInsensitive
 theorem compl {α ι : Type*} [Fintype (ι → α)] [DecidableEq (ι → α)]
     {i j : α} {D : Finset (ι → α)} (hD : IsInsensitive i j D) :
     IsInsensitive i j Dᶜ := by
-  sorry
+  intro x y hxy
+  simp only [mem_compl]
+  exact not_congr (hD hxy)
 
 /-- Unions preserve insensitivity. -/
 theorem union {α ι : Type*} [DecidableEq (ι → α)]
     {i j : α} {D E : Finset (ι → α)} (hD : IsInsensitive i j D)
     (hE : IsInsensitive i j E) : IsInsensitive i j (D ∪ E) := by
-  sorry
+  intro x y hxy
+  simp only [mem_union]
+  rw [hD hxy, hE hxy]
 
 /-- Intersections preserve insensitivity. -/
 theorem inter {α ι : Type*} [DecidableEq (ι → α)]
     {i j : α} {D E : Finset (ι → α)} (hD : IsInsensitive i j D)
     (hE : IsInsensitive i j E) : IsInsensitive i j (D ∩ E) := by
-  sorry
+  intro x y hxy
+  simp only [mem_inter]
+  rw [hD hxy, hE hxy]
 
 /-- The part of `D` left uncovered by a set of subspaces. -/
 noncomputable def uncovered {η α ι : Type*} [Fintype (η → α)]
