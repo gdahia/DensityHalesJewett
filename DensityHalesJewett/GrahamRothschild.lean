@@ -87,7 +87,18 @@ theorem lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α
     ∃ V : Combinatorics.Subspace (Fin m) α (Fin n),
       (∀ l : Combinatorics.Line α (Fin m), Subspace.mapLine V l ∈ L) ∨
         (∀ l : Combinatorics.Line α (Fin m), Subspace.mapLine V l ∉ L) := by
-  sorry
+  classical
+  obtain ⟨V, c, hc⟩ :=
+    lines α (Fin 2) m n hm hn fun l ↦ if l ∈ L then 0 else 1
+  obtain rfl | ⟨c, rfl⟩ := c.eq_zero_or_eq_succ
+  · refine ⟨V, Or.inl ?_⟩
+    intro l
+    by_contra h
+    simpa [h] using hc l
+  · refine ⟨V, Or.inr ?_⟩
+    rw [Fin.eq_zero c] at hc
+    intro l h
+    simpa [h] using hc l
 
 end GrahamRothschild
 end DensityHalesJewett
