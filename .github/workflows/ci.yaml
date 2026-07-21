@@ -1,10 +1,9 @@
-name: Compile blueprint
+name: Build project and blueprint
 
 on:
   push:
-    branches:
-      - main # Trigger on pushes to the default branch
-  workflow_dispatch:        # Allow manual triggering of the workflow from the GitHub Actions interface
+  pull_request:
+  workflow_dispatch:
 
 # Cancel previous runs if a new commit is pushed to the same PR or branch
 concurrency:
@@ -47,7 +46,8 @@ jobs:
           lint: true
           mk_all-check: true
 
-      - name: Compile blueprint and documentation
+      - name: Compile blueprint
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: leanprover-community/docgen-action@deed0cdc44dd8e5de07a300773eb751d33e32fc8 # 2025-10-26
         with:
           blueprint: true
