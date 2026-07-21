@@ -50,7 +50,7 @@ $k\geq2$.
 \label{thm:szemeredi}
 \lean{Combinatorics.ArithmeticProgression.exists_of_density_nat}
 \uses{thm:dhj}
-For every $k\in\N$ and every $\delta>0$ there is a natural number $N=N(k,\delta)$ such
+For every $k\geq3$ and every $\delta>0$ there is a natural number $N=N(k,\delta)$ such
 that, whenever $n\geq N$ and $A\subseteq\{0,\ldots,n-1\}$ satisfies
 $\delta n\leq\card A$, the set $A$ contains all the terms of a nonconstant arithmetic
 progression of length $k$.
@@ -978,8 +978,8 @@ $\delta/2$, their union would contain fewer than $(\delta/2)N$ points, a contrad
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:szemeredi}]
-The cases $k=0$ and $k=1$ are discharged directly.  For $k\geq2$, let
-$m=\DHJ(k,\delta/2)$ and $K=k^m$.  Choose the public bound at least $2K/\delta$.  By
+Assume $k\geq3$, let $m=\DHJ(k,\delta/2)$, and put $K=k^m$.  Choose the public bound to be
+at least $2K/\delta$.  By
 Lemma~\ref{lem:dense-block}, some complete $K$-block has $A$-density at least $\delta/2$.
 Pull its intersection with $A$ back through the bijection of Lemma~\ref{lem:digital-equiv} and
 apply Theorem~\ref{thm:dhj}.  The resulting line maps, by Lemma~\ref{lem:line-to-ap} and translation
