@@ -1,1 +1,2 @@
 import DensityHalesJewett.Basic
+import DensityHalesJewett.Challenge
