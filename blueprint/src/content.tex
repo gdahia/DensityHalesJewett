@@ -129,7 +129,12 @@ space whose ranges are contained in $[V]$.
 In Lean it is preferable to work with parameterized line structures rather than sets of points.
 For nontrivial alphabets a line is determined by its evaluation function, so no multiplicity is
 introduced.  Composition of a line in the parameter cube with $V$ provides an equivalence between
-lines of $\eta\to\alpha$ and lines contained in $V$.
+lines of $\eta\to\alpha$ and lines contained in $V$.  The Lean construction replaces each variable
+direction of $V$ by the corresponding fixed or variable coordinate of the parameter line, and its
+evaluation is exactly the composite of the two evaluations.  For the inverse, Lean chooses a
+parameter word representing each point of an ambient line and one proper coordinate for every
+direction of $V$.  Reading the ambient line at these coordinates recovers a parameter line; its
+properness follows because a variable coordinate of the ambient line cannot be fixed by $V$.
 
 \begin{lemma}[Lines in a subspace]
 \label{lem:lines-equiv}
@@ -229,7 +234,8 @@ Double-count the pairs $(x,y)$ for which $x\concat y\in A$, then divide by
 $\card\alpha^{\card\iota+\card\kappa}$.  The subspace version uses
 Lemma~\ref{lem:subspace-injective} to identify its range with a full parameter cube.
 In Lean the full-cube identity is a short consequence of \texttt{Finset.expect\_product}; the
-project lemma packages it in terms of fibers and \texttt{Finset.dens}.
+proof rewrites densities as indicator expectations and reindexes the product cube through
+\texttt{Equiv.sumArrowEquivProdArrow}.
 \end{proof}
 
 \begin{lemma}[Threshold averaging]
@@ -246,6 +252,8 @@ We will freely use weaker consequences such as a lower bound of $a/2$ after taki
 \begin{proof}
 If $H=\{x:f(x)\geq b\}$, then
 $\E f\leq\dens(H)\cdot1+(1-\dens(H))b$.  Rearrangement gives the result.
+The Lean proof expresses the upper bound as $b+(1-b)\mathbf 1_H$, averages the indicator, and
+uses $b<1$ to divide by $1-b$.
 \end{proof}
 
 
@@ -506,12 +514,17 @@ Fix $k\geq2$, assume $\mathsf{DHJ}_k$, and fix $0<\delta\leq1$.  Following \cite
 \label{eq:main-constants}
  m_0=\DHJ(k,\delta/4),\qquad
  \theta=\frac{\delta/4}{(k+1)^{m_0}-k^{m_0}},\qquad
- \eta=\frac{\delta\theta}{48},\qquad
- \gamma=\frac{\delta\eta^2}{k}.
+ \eta=\min\left\{\frac{\delta\theta}{48},\frac\theta4,\frac\delta6\right\},\qquad
+ \gamma=\min\left\{\frac{\delta\eta^2}{k},\frac{\eta^2}{2},3\eta\right\}.
 \end{equation}
 Every denominator is positive.  We record positivity and the elementary consequences
 $\eta<\theta/2$, $\eta\leq\delta/6$, $\gamma\leq\eta^2/2$, and $\gamma\leq3\eta$ as a separate
 arithmetic lemma, so later proofs can use them without unfolding the constants.
+In Lean, the dimension is selected transparently as the least threshold supplied by the density
+Hales--Jewett assertion when it is available (and is otherwise set to $1$); the selected threshold
+is increased by one so that the power difference in the denominator is always positive.  Leastness
+makes the selected dimension antitone in the density threshold, which is used for the uniform
+increment below; the power difference itself is monotone in that dimension.
 
 \begin{lemma}[Numerical facts]
 \label{lem:numerical-facts}
@@ -835,6 +848,8 @@ comparable by inclusion.
 The variable coordinates are precisely the set difference between the larger and smaller subset;
 the fixed $1$ coordinates form their intersection.  Conversely, a strict inclusion has nonempty
 difference and therefore determines a line.
+The Lean proof constructs this line coordinatewise, using a variable coordinate exactly for a
+$0\to1$ transition; finite case analysis verifies both endpoint words.
 \end{proof}
 
 \begin{lemma}[Density Hales--Jewett for two letters]
@@ -872,16 +887,15 @@ $\rho\in[\delta_0,1]$ the increment parameter satisfies
 \end{lemma}
 
 \begin{proof}
-Choose $m_0=\DHJ(k,\delta_0/4)$ once and use this possibly nonminimal dimension for every
-$\rho\geq\delta_0$.  Then
+The Lean definition chooses the least valid dimension at each density.  Its leastness makes the
+dimension antitone, and monotonicity of the power difference then gives
 \[
  \theta(\rho)\geq
- \frac{\delta_0/4}{(k+1)^{m_0}-k^{m_0}},
+ \theta(\delta_0).
 \]
-and the definitions of $\eta$ and $\gamma$ give a positive lower bound obtained by replacing every
-occurrence of $\rho$ by $\delta_0$.  Every proof in Chapter~\ref{chap:increment} only uses the
-inequalities guaranteed by these lower bounds, so Proposition~\ref{prop:density-increment} remains
-valid with increment $\underline\gamma/2$ above the actual density $\rho$.
+The capped definitions of $\eta$ and $\gamma$ are monotone in their positive arguments, so
+$\gamma(k,\rho)\geq\gamma(k,\delta_0)>0$.  We take this latter quantity as
+$\underline\gamma(k,\delta_0)$.
 \end{proof}
 
 \begin{theorem}[Induction on the alphabet]

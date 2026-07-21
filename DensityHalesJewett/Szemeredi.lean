@@ -103,7 +103,7 @@ theorem baseEncodeEquiv_apply (k m : ℕ) (hk : 2 ≤ k) (x : Fin m → Fin k) :
     (baseEncodeEquiv k m (one_le_two.trans hk) x : ℕ) = baseEncode k m x := by
   classical
   by_cases hk_one : k = 1
-  · omega
+  · grind
   · simp [baseEncodeEquiv, hk_one]
 
 namespace Line
@@ -192,28 +192,28 @@ theorem exists_dense_digitBlock {K : ℕ} (hK : 1 ≤ K) {δ : ℝ} (hδ : 0 < �
   refine ⟨q, ?_, ?_⟩
   · exact (Nat.mul_le_mul_right K (Nat.succ_le_iff.mp (Finset.mem_range.mp hqQ))).trans
       (Nat.div_mul_le_self N K)
-  · have hfiber : S.filter (fun x ↦ x / K = q) =
-        A ∩ Finset.Ico (q * K) ((q + 1) * K) := by
-      dsimp only [S]
-      ext x
-      simp only [Finset.mem_filter, Finset.mem_inter, Finset.mem_range, Finset.mem_Ico]
-      constructor
-      · rintro ⟨⟨hxA, _⟩, hxq⟩
-        refine ⟨hxA, ?_, ?_⟩
-        · rw [← hxq]
-          simpa [Nat.mul_comm] using Nat.mul_div_le x K
-        · rw [← hxq]
-          exact (Nat.div_lt_iff_lt_mul (Nat.zero_lt_of_lt hK)).mp (Nat.lt_succ_self _)
-      · rintro ⟨hxA, hxlo, hxhi⟩
-        refine ⟨⟨hxA, hxhi.trans_le ?_⟩, ?_⟩
-        · exact Nat.mul_le_mul_right K
-            (Nat.succ_le_iff.mp (Finset.mem_range.mp hqQ))
-        · apply Nat.le_antisymm
-          · exact Nat.lt_succ_iff.mp
-              ((Nat.div_lt_iff_lt_mul (Nat.zero_lt_of_lt hK)).2 hxhi)
-          · exact (Nat.le_div_iff_mul_le (Nat.zero_lt_of_lt hK)).2 hxlo
-    rw [← hfiber]
-    simpa using hq
+  · convert hq using 1
+    norm_cast
+    simp only [Finset.sum_const, nsmul_eq_mul, mul_one]
+    congr 1
+    ext x
+    dsimp only [S]
+    simp only [Finset.mem_filter, Finset.mem_inter, Finset.mem_range, Finset.mem_Ico]
+    constructor
+    · rintro ⟨hxA, hxlo, hxhi⟩
+      refine ⟨⟨hxA, hxhi.trans_le ?_⟩, ?_⟩
+      · exact Nat.mul_le_mul_right K
+          (Nat.succ_le_iff.mp (Finset.mem_range.mp hqQ))
+      · apply Nat.le_antisymm
+        · exact Nat.lt_succ_iff.mp
+            ((Nat.div_lt_iff_lt_mul (Nat.zero_lt_of_lt hK)).2 hxhi)
+        · exact (Nat.le_div_iff_mul_le (Nat.zero_lt_of_lt hK)).2 hxlo
+    · rintro ⟨⟨hxA, _⟩, hxq⟩
+      refine ⟨hxA, ?_, ?_⟩
+      · rw [← hxq]
+        simpa [Nat.mul_comm] using Nat.mul_div_le x K
+      · rw [← hxq]
+        exact (Nat.div_lt_iff_lt_mul (Nat.zero_lt_of_lt hK)).mp (Nat.lt_succ_self _)
 
 end DensityHalesJewett
 
@@ -228,7 +228,7 @@ theorem exists_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ)
     (hAn : A ⊆ range n) (hAδ : δ * n ≤ #A) :
     ∃ P : ArithmeticProgression ℕ k, P.IsSubset (A : Set ℕ) := by
   classical
-  have hk_two : 2 ≤ k := by omega
+  have hk_two : 2 ≤ k := by grind
   have hk_one : 1 ≤ k := one_le_two.trans hk_two
   let m := Combinatorics.Line.densityTheoremBound k (δ / 2)
   let K := k ^ m

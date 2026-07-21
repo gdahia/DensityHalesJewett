@@ -6,6 +6,9 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.Insensitive
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
 
 /-!
 # The density-increment dichotomy
@@ -35,11 +38,125 @@ structure Data where
   γ : ℝ
   deriving Inhabited
 
+/-- A positive dimension selected from the density Hales--Jewett assertion when available. -/
+noncomputable def dimension (k : ℕ) (δ : ℝ) : ℕ := by
+  classical
+  exact if h : 0 < δ ∧ HasDensityHJ k then
+    Nat.succ <| Nat.find <| h.2 (δ / 4) (by linarith)
+  else 1
+
+theorem dimension_pos (k : ℕ) (δ : ℝ) : 0 < dimension k δ := by
+  classical
+  unfold dimension
+  split <;> simp
+
+/-- The selected dimension is antitone in the density threshold. -/
+theorem dimension_antitone {k : ℕ} (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : dimension k ρ ≤ dimension k δ := by
+  classical
+  rw [dimension, dif_pos ⟨hδ.trans_le hδρ, hDHJ⟩, dimension, dif_pos ⟨hδ, hDHJ⟩]
+  apply Nat.succ_le_succ
+  apply Nat.find_min'
+  intro n hn A hA
+  refine Nat.find_spec (hDHJ (δ / 4) (by linarith)) n hn A (le_trans (by gcongr) hA)
+
+/-- The denominator in the parameter definition grows with the selected dimension. -/
+theorem power_difference_mono (k : ℕ) {m n : ℕ} (hmn : m ≤ n) :
+    ((k + 1 : ℕ) : ℝ) ^ m - (k : ℝ) ^ m ≤
+      ((k + 1 : ℕ) : ℝ) ^ n - (k : ℝ) ^ n := by
+  induction n, hmn using Nat.le_induction with
+  | base => rfl
+  | succ n _ ih =>
+    rw [pow_succ, pow_succ]
+    refine ih.trans ?_
+    rw [Nat.cast_add, Nat.cast_one]
+    suffices 0 ≤ (k : ℝ) * (((k + 1 : ℕ) : ℝ) ^ n - (k : ℝ) ^ n) by
+      rw [Nat.cast_add, Nat.cast_one] at this
+      nlinarith [pow_nonneg (by positivity : 0 ≤ (k : ℝ)) n]
+    apply mul_nonneg
+    · positivity
+    · apply sub_nonneg.mpr
+      apply pow_le_pow_left₀
+      · positivity
+      · exact_mod_cast Nat.le_succ k
+
+/-- The denominator defining `theta` is positive for every admissible alphabet and density. -/
+theorem denominator_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (_hδ : 0 < δ) :
+    0 < ((k + 1 : ℕ) : ℝ) ^ dimension k δ - (k : ℝ) ^ dimension k δ := by
+  apply sub_pos.mpr
+  apply pow_lt_pow_left₀
+  · exact_mod_cast Nat.lt_succ_self k
+  · positivity
+  · exact Nat.ne_of_gt <| dimension_pos k δ
+
+/-- The correlated-fibers threshold attached to an alphabet size and density. -/
+noncomputable def theta (k : ℕ) (δ : ℝ) : ℝ :=
+  (δ / 4) /
+    (((k + 1 : ℕ) : ℝ) ^ dimension k δ - (k : ℝ) ^ dimension k δ)
+
+/-- The threshold is monotone in the density parameter. -/
+theorem theta_mono {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : theta k δ ≤ theta k ρ := by
+  unfold theta
+  refine div_le_div₀ ?_ (by linarith) (denominator_pos hk (hδ.trans_le hδρ)) ?_
+  · exact div_nonneg (hδ.trans_le hδρ).le (by norm_num)
+  · exact power_difference_mono k <| dimension_antitone hDHJ hδ hδρ
+
+/-- The threshold is monotone even when the density Hales--Jewett assertion is unavailable. -/
+theorem theta_mono' {k : ℕ} (hk : 2 ≤ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : theta k δ ≤ theta k ρ := by
+  classical
+  by_cases hDHJ : HasDensityHJ k
+  · exact theta_mono hk hDHJ hδ hδρ
+  · unfold theta
+    rw [dimension, dif_neg (fun h ↦ hDHJ h.2), dimension, dif_neg (fun h ↦ hDHJ h.2)]
+    apply div_le_div_of_nonneg_right
+    · linarith
+    · rw [pow_one, pow_one, Nat.cast_add, Nat.cast_one]
+      linarith
+
+theorem theta_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) : 0 < theta k δ := by
+  unfold theta
+  exact div_pos (by positivity) (denominator_pos hk hδ)
+
+/-- The error tolerance attached to a threshold. -/
+noncomputable def eta (δ θ : ℝ) : ℝ :=
+  min (δ * θ / 48) (min (θ / 4) (δ / 6))
+
+/-- The error tolerance is monotone in its density and threshold arguments. -/
+theorem eta_mono {δ ρ θ τ : ℝ} (hδ : 0 ≤ δ) (hθ : 0 ≤ θ)
+    (hδρ : δ ≤ ρ) (hθτ : θ ≤ τ) : eta δ θ ≤ eta ρ τ := by
+  unfold eta
+  gcongr
+  exact hδ.trans hδρ
+
+theorem eta_pos {δ θ : ℝ} (hδ : 0 < δ) (hθ : 0 < θ) : 0 < eta δ θ := by
+  unfold eta
+  positivity
+
+/-- The density increment attached to an error tolerance. -/
+noncomputable def gamma (k : ℕ) (δ η : ℝ) : ℝ :=
+  min (δ * η ^ 2 / k) (min (η ^ 2 / 2) (3 * η))
+
+/-- The increment is monotone in its density and error-tolerance arguments. -/
+theorem gamma_mono (k : ℕ) {δ ρ η ζ : ℝ} (hδ : 0 ≤ δ) (hη : 0 ≤ η)
+    (hδρ : δ ≤ ρ) (hηζ : η ≤ ζ) : gamma k δ η ≤ gamma k ρ ζ := by
+  unfold gamma
+  gcongr
+  exact hδ.trans hδρ
+
+theorem gamma_pos {k : ℕ} (hk : 2 ≤ k) {δ η : ℝ} (hδ : 0 < δ) (hη : 0 < η) :
+    0 < gamma k δ η := by
+  unfold gamma
+  positivity
+
 /-- Parameters attached to an alphabet size and density. -/
-opaque get (k : ℕ) (δ : ℝ) : Data
+noncomputable def get (k : ℕ) (δ : ℝ) : Data :=
+  let m₀ := dimension k δ
+  ⟨m₀, theta k δ, eta δ (theta k δ), gamma k δ (eta δ (theta k δ))⟩
 
 /-- Positivity and the elementary inequalities needed in the increment argument. -/
-theorem facts {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1) :
+theorem facts {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1) :
     0 < (get k δ).θ ∧
     0 < (get k δ).η ∧
     0 < (get k δ).γ ∧
@@ -47,16 +164,40 @@ theorem facts {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ
     (get k δ).η ≤ δ / 6 ∧
     (get k δ).γ ≤ (get k δ).η ^ 2 / 2 ∧
     (get k δ).γ ≤ 3 * (get k δ).η := by
-  sorry
+  change 0 < theta k δ ∧ 0 < eta δ (theta k δ) ∧
+    0 < gamma k δ (eta δ (theta k δ)) ∧
+    eta δ (theta k δ) < theta k δ / 2 ∧
+    eta δ (theta k δ) ≤ δ / 6 ∧
+    gamma k δ (eta δ (theta k δ)) ≤ eta δ (theta k δ) ^ 2 / 2 ∧
+    gamma k δ (eta δ (theta k δ)) ≤ 3 * eta δ (theta k δ)
+  have hθ : 0 < theta k δ := theta_pos hk hδ₀
+  have hη : 0 < eta δ (theta k δ) := eta_pos hδ₀ hθ
+  refine ⟨hθ, hη, gamma_pos hk hδ₀ hη, ?_, ?_, ?_, ?_⟩
+  · unfold eta
+    refine lt_of_le_of_lt ((min_le_right _ _).trans (min_le_left _ _)) ?_
+    linarith
+  · unfold eta
+    exact (min_le_right _ _).trans (min_le_right _ _)
+  · unfold gamma
+    exact (min_le_right _ _).trans (min_le_left _ _)
+  · unfold gamma
+    exact (min_le_right _ _).trans (min_le_right _ _)
 
 /-- A density-independent positive lower bound for the increment above a fixed density floor. -/
-opaque gammaLowerBound (k : ℕ) (δ₀ : ℝ) : ℝ
+noncomputable def gammaLowerBound (k : ℕ) (δ₀ : ℝ) : ℝ :=
+  gamma k δ₀ (eta δ₀ (theta k δ₀))
 
 /-- The increment parameters can be chosen uniformly above a fixed positive density floor. -/
 theorem gamma_mono_lowerBound {k : ℕ} (hk : 2 ≤ k) {δ₀ : ℝ} (hδ₀ : 0 < δ₀) :
     0 < gammaLowerBound k δ₀ ∧
       ∀ ρ, δ₀ ≤ ρ → ρ ≤ 1 → gammaLowerBound k δ₀ ≤ (get k ρ).γ := by
-  sorry
+  have hθ : 0 < theta k δ₀ := theta_pos hk hδ₀
+  have hη : 0 < eta δ₀ (theta k δ₀) := eta_pos hδ₀ hθ
+  refine ⟨gamma_pos hk hδ₀ hη, ?_⟩
+  intro ρ hδρ _
+  change gamma k δ₀ (eta δ₀ (theta k δ₀)) ≤ gamma k ρ (eta ρ (theta k ρ))
+  refine gamma_mono k hδ₀.le hη.le hδρ ?_
+  exact eta_mono hδ₀.le hθ.le hδρ (theta_mono' hk hδ₀ hδρ)
 
 end Parameters
 
