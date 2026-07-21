@@ -27,7 +27,10 @@ variable {η α ι : Type*}
 /-- Evaluation by a fixed combinatorial subspace is injective when the alphabet is nontrivial. -/
 theorem injective [Nontrivial α] (V : Combinatorics.Subspace η α ι) :
     Function.Injective V := by
-  sorry
+  intro x y hxy
+  funext e
+  obtain ⟨i, hi⟩ := V.proper e
+  simpa only [V.apply_inr hi] using congrFun hxy i
 
 /-- The finite range of a combinatorial subspace. -/
 def range [Fintype (η → α)] [DecidableEq (ι → α)]

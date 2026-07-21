@@ -109,10 +109,9 @@ If the alphabet is nontrivial, evaluation by a subspace is injective.  Consequen
 with direction type $\eta$ has exactly $\card\alpha^{\card\eta}$ points.
 \end{lemma}
 
-The existing lemma states injectivity of the map which sends a subspace structure to its
-evaluation function.  The implementation also needs the elementary injectivity of the evaluation
-map of a fixed subspace; it follows by choosing, for each direction, a coordinate supplied by the
-\texttt{proper} field.
+The Lean proof chooses, for each direction, a coordinate supplied by the \texttt{proper} field.
+Evaluating an equality of parameter words at that coordinate recovers equality in the chosen
+direction, and function extensionality concludes the result.
 
 \begin{definition}[Range and containment]
 \label{def:subspace-range}
