@@ -1,2 +1,10 @@
 import DensityHalesJewett.Basic
 import DensityHalesJewett.Challenge
+import DensityHalesJewett.Word
+import DensityHalesJewett.Subspace
+import DensityHalesJewett.GrahamRothschild
+import DensityHalesJewett.UniformFibers
+import DensityHalesJewett.Insensitive
+import DensityHalesJewett.DensityIncrement
+import DensityHalesJewett.Main
+import DensityHalesJewett.Szemeredi

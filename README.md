@@ -13,8 +13,10 @@ arithmetic progressions of arbitrary finite length.
 ## Status
 
 The formalization is in progress. The public challenge statements are in
-[`DensityHalesJewett/Challenge.lean`](DensityHalesJewett/Challenge.lean), and implementation and
-review provenance is recorded in [`formalization.yaml`](formalization.yaml).
+[`DensityHalesJewett/Challenge.lean`](DensityHalesJewett/Challenge.lean). Type-correct declaration
+stubs following the blueprint's dependency layers live in the remaining files under
+[`DensityHalesJewett`](DensityHalesJewett), and implementation and review provenance is recorded in
+[`formalization.yaml`](formalization.yaml).
 
 ## Building
 

@@ -22,8 +22,9 @@ transport between vectors and functions.
 
 \begin{remark}[Status convention]
 A declaration annotated by \texttt{\textbackslash mathlibok} already exists in mathlib.  A project
-declaration without \texttt{\textbackslash leanok} is part of the proposed implementation.  At the
-time of writing, only the two final challenge statements exist in the project, and both have
+declaration without \texttt{\textbackslash leanok} is part of the proposed implementation.  The
+project contains type-correct declaration stubs for the results in this blueprint; declarations
+without \texttt{\textbackslash leanok}, including the two final challenge statements, still have
 placeholder proofs.
 \end{remark}
 
@@ -160,19 +161,23 @@ coordinate for each direction.
 
 \begin{definition}[Uniform density]
 \label{def:density}
-\lean{DensityHalesJewett.density}
-For a finite set $A\subseteq\mathbb W(\alpha,\iota)$ define
+\lean{Finset.dens}
+\mathlibok
+For a finite set $A\subseteq\mathbb W(\alpha,\iota)$ use mathlib's uniform density
 \[
-  \dens(A)=\frac{\card A}{\card\alpha^{\card\iota}}\in\R.
+  \dens(A)=\frac{\card A}{\card\alpha^{\card\iota}}\in\mathbb Q_{\geq0}.
 \]
-For a subspace $V$, define the relative density
+For a subspace $V$, define the project-specific relative density by pulling back to its parameter
+cube:
 \[
-  \dens_V(A)=\frac{\card{A\cap[V]}}{\card{[V]}}.
+  \dens_V(A)=\dens\{x:V(x)\in A\}.
 \]
 \end{definition}
 
-We will use normalized real-valued density internally.  The cardinal inequalities in the public
-API are converted to density inequalities once, using the cardinality of the full function type.
+The injectivity of $V$ makes this equal to
+$\card(A\cap[V])/\card[V]$.  Quantitative arguments cast the nonnegative rational density to
+$\mathbb R$ only when real arithmetic is needed.  The cardinal inequalities in the public API are
+converted to density inequalities once, using the cardinality of the full function type.
 
 \begin{definition}[Restriction of the alphabet]
 \label{def:alphabet-restriction}
@@ -206,6 +211,8 @@ $x:\iota\to\alpha$, define
 Using sums of coordinate types is more robust than repeatedly proving identities involving
 $n-l$.  Statements over $\operatorname{Fin}n$ are recovered using the standard equivalence
 $\operatorname{Fin}l\sqcup\operatorname{Fin}(n-l)\simeq\operatorname{Fin}n$.
+The implementation uses mathlib's \texttt{Equiv.sumArrowEquivProdArrow} for the underlying
+equivalence and defines only the convenient concatenation and fiber wrappers.
 
 \begin{lemma}[Fiber averaging]
 \label{lem:fiber-average}
@@ -222,6 +229,8 @@ The analogous identity holds when the prefix space is replaced by the range of a
 Double-count the pairs $(x,y)$ for which $x\concat y\in A$, then divide by
 $\card\alpha^{\card\iota+\card\kappa}$.  The subspace version uses
 Lemma~\ref{lem:subspace-injective} to identify its range with a full parameter cube.
+In Lean the full-cube identity is a short consequence of \texttt{Finset.expect\_product}; the
+project lemma packages it in terms of fibers and \texttt{Finset.dens}.
 \end{proof}
 
 \begin{lemma}[Threshold averaging]
@@ -581,7 +590,7 @@ $H_1\cap H_2\neq\varnothing$.  For $y_0$ in the intersection, take $W=U\concat y
 
 \begin{definition}[Insensitive set]
 \label{def:insensitive}
-\lean{DensityHalesJewett.Insensitive}
+\lean{DensityHalesJewett.IsInsensitive}
 Let $i\neq j$ be letters.  Words $x,y\in\alpha^n$ are $(i,j)$-equivalent if they agree at every
 coordinate at which the common letter is not $i$ or $j$; equivalently, for each
 $a\notin\{i,j\}$ the sets of coordinates carrying $a$ in $x$ and $y$ coincide.  A set $D$ is
@@ -590,7 +599,7 @@ $(i,j)$-insensitive if membership is constant on these equivalence classes.
 
 \begin{lemma}[Boolean operations preserve insensitivity]
 \label{lem:insensitive-boolean}
-\lean{DensityHalesJewett.Insensitive.compl}
+\lean{DensityHalesJewett.IsInsensitive.compl}
 \uses{def:insensitive}
 Insensitive subsets are closed under complements, finite unions, and finite intersections.  The
 same is true relative to a subspace after transport through its parameterization.
@@ -698,7 +707,7 @@ Fix $0<\beta\leq1$ and $m\geq1$.  Let
 
 \begin{lemma}[Tiling one insensitive set]
 \label{lem:tile-insensitive}
-\lean{DensityHalesJewett.Insensitive.exists_disjoint_subspaces}
+\lean{DensityHalesJewett.IsInsensitive.exists_disjoint_subspaces}
 \uses{cor:restricted-subspace,lem:fiber-average,lem:threshold-average}
 If $n\geq F(m,\beta)$ and $D\subseteq[k+1]^n$ is $(i,k+1)$-insensitive with
 $\dens(D)\geq2\beta$, then there is a pairwise disjoint family $\cV$ of $m$-subspaces contained
@@ -739,7 +748,7 @@ Define iterates
 
 \begin{corollary}[Tiling an intersection]
 \label{cor:tile-intersection}
-\lean{DensityHalesJewett.Insensitive.exists_disjoint_subspaces_iInter}
+\lean{DensityHalesJewett.IsInsensitive.exists_disjoint_subspaces_iInter}
 \uses{lem:tile-insensitive}
 Let $1\leq r\leq k$, $n\geq F^{(r)}(m,\beta)$, and let $D_i$ be
 $(i,k+1)$-insensitive for $1\leq i\leq r$.  If $D=\bigcap_{i=1}^rD_i$ has density at least
@@ -997,7 +1006,7 @@ The declarations should be implemented in layers so that each file has a narrow 
   Chapter~\ref{chap:increment}.
 \item \texttt{Main.lean}: the binary case, uniform iteration, alphabet transport, and the proof of
   the final density Hales--Jewett challenge declaration.
-\item \texttt{ArithmeticProgression.lean}: digital encoding and the final arithmetic-progression
+\item \texttt{Szemeredi.lean}: digital encoding and the final arithmetic-progression
   challenge declaration.
 \end{enumerate}
 
@@ -1005,6 +1014,15 @@ The most useful implementation invariant is to keep subspaces parameterized.  A 
 the finite set $[V]$ should usually be pulled back to the full parameter cube, proved there, and
 pushed forward using injectivity.  This makes relative density, insensitivity, nested subspaces,
 and line counts all reduce to reusable facts about finite function types.
+
+The implementation should reuse the following existing mathlib interfaces rather than duplicate
+them: \texttt{Finset.dens} and its Boolean API, \texttt{Finset.expect} together with
+\texttt{Finset.expect\_product}, \texttt{Equiv.sumArrowEquivProdArrow},
+\texttt{Combinatorics.Subspace.exists\_mono\_in\_high\_dimension},
+\texttt{IsAntichain.sperner}, and \texttt{Nat.ofDigits}.  The multidimensional coloring theorem
+does not subsume the required Graham--Rothschild theorem, since the latter colors line structures
+rather than points of a cube.  Similarly, \texttt{Nat.ofDigits} supplies the arithmetic operation
+and basic lemmas but not the bounded fixed-length equivalence needed below.
 
 \begin{thebibliography}{9}
 
