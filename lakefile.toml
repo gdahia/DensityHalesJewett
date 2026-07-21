@@ -2,6 +2,8 @@ name = "DensityHalesJewett"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["DensityHalesJewett"]
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["DensityHalesJewett"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
