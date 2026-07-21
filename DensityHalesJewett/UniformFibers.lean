@@ -46,7 +46,7 @@ opaque uniformFibersBound (alphabet dimension : ℕ) (ε : ℝ) : ℕ
 /-- Uniform fibers on a subspace. -/
 theorem exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
     [Fintype (κ → α)] [Fintype (ι ⊕ κ → α)]
-    [DecidableEq (κ → α)] [DecidableEq (ι ⊕ κ → α)]
+    [DecidableEq (ι ⊕ κ → α)]
     (m : ℕ) (hm : 1 ≤ m) (ε : ℝ) (hε₀ : 0 < ε) (hε₁ : ε < 1)
     (hι : uniformFibersBound (Fintype.card α) m ε ≤ Fintype.card ι)
     (A : Finset (ι ⊕ κ → α)) (hA : ε < (A.dens : ℝ)) :

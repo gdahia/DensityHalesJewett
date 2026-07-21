@@ -25,9 +25,13 @@ namespace Parameters
 
 /-- The numerical parameters used in one density-increment step. -/
 structure Data where
+  /-- Dimension used for the auxiliary subspace. -/
   m₀ : ℕ
+  /-- Density threshold for correlated fibers. -/
   θ : ℝ
+  /-- Error tolerance in the density estimates. -/
   η : ℝ
+  /-- Guaranteed density increment. -/
   γ : ℝ
   deriving Inhabited
 
@@ -57,12 +61,12 @@ theorem gamma_mono_lowerBound {k : ℕ} (hk : 2 ≤ k) {δ₀ : ℝ} (hδ₀ : 0
 end Parameters
 
 /-- A finite word family contains no complete combinatorial line. -/
-def IsLineFree {α ι : Type*} [DecidableEq (ι → α)] (A : Finset (ι → α)) : Prop :=
+def IsLineFree {α ι : Type*} (A : Finset (ι → α)) : Prop :=
   ∀ l : Combinatorics.Line α ι, ∃ a, l a ∉ A
 
 /-- Pull a word family back to the parameter cube of a subspace. -/
-def pullback {η α ι : Type*} [Fintype (η → α)] [DecidableEq (η → α)]
-    [DecidableEq (ι → α)] (V : Combinatorics.Subspace η α ι)
+def pullback {η α ι : Type*} [Fintype (η → α)] [DecidableEq (ι → α)]
+    (V : Combinatorics.Subspace η α ι)
     (A : Finset (ι → α)) : Finset (η → α) :=
   Finset.univ.filter fun x ↦ V x ∈ A
 
@@ -75,7 +79,7 @@ theorem exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
-    [DecidableEq (κ → Fin (k + 1))] [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
     (hι : correlatedFibersBound k m δ ≤ Fintype.card ι)
     (A : Finset (ι ⊕ κ → Fin (k + 1)))
     (hA : δ ≤ (A.dens : ℝ)) :

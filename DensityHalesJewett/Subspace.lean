@@ -41,12 +41,11 @@ theorem mem_range [Fintype (η → α)] [DecidableEq (ι → α)]
   simp [range]
 
 /-- A subspace is contained in a finite word family when all its evaluations belong to it. -/
-def IsContained [DecidableEq (ι → α)]
-    (V : Combinatorics.Subspace η α ι) (A : Finset (ι → α)) : Prop :=
+def IsContained (V : Combinatorics.Subspace η α ι) (A : Finset (ι → α)) : Prop :=
   ∀ x, V x ∈ A
 
 /-- Relative density on a subspace, defined on its parameter cube. -/
-def relativeDensity [Fintype (η → α)] [DecidableEq (η → α)] [DecidableEq (ι → α)]
+def relativeDensity [Fintype (η → α)] [DecidableEq (ι → α)]
     (V : Combinatorics.Subspace η α ι) (A : Finset (ι → α)) : ℚ≥0 :=
   (Finset.univ.filter fun x ↦ V x ∈ A).dens
 

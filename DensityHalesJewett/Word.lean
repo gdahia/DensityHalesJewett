@@ -41,21 +41,19 @@ theorem concat_apply_inr {α ι κ : Type*} (x : ι → α) (y : κ → α) (i :
   rfl
 
 /-- The fiber of a word family above a fixed prefix. -/
-def fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (κ → α)]
-    [DecidableEq (ι ⊕ κ → α)]
+def fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
     (A : Finset (ι ⊕ κ → α)) (x : ι → α) : Finset (κ → α) :=
   Finset.univ.filter fun y ↦ concat x y ∈ A
 
 @[simp]
-theorem mem_fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (κ → α)]
-    [DecidableEq (ι ⊕ κ → α)]
+theorem mem_fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
     {A : Finset (ι ⊕ κ → α)} {x : ι → α} {y : κ → α} :
     y ∈ fiber A x ↔ concat x y ∈ A := by
   simp [fiber]
 
 /-- Uniform density is the average of the uniform densities of the fibers. -/
 theorem average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (κ → α)]
-    [Fintype (ι ⊕ κ → α)] [DecidableEq (κ → α)] [DecidableEq (ι ⊕ κ → α)]
+    [Fintype (ι ⊕ κ → α)] [DecidableEq (ι ⊕ κ → α)]
     (A : Finset (ι ⊕ κ → α)) :
     (𝔼 x : ι → α, ((fiber A x).dens : ℝ)) = (A.dens : ℝ) := by
   sorry

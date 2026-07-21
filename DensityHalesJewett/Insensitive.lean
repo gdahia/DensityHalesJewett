@@ -26,8 +26,7 @@ def InsensitiveEquiv {α ι : Type*} (i j : α) (x y : ι → α) : Prop :=
   ∀ a, a ≠ i → a ≠ j → ∀ c, (x c = a ↔ y c = a)
 
 /-- Membership in an `(i,j)`-insensitive family is constant on insensitive-equivalence classes. -/
-def IsInsensitive {α ι : Type*} [DecidableEq (ι → α)]
-    (i j : α) (D : Finset (ι → α)) : Prop :=
+def IsInsensitive {α ι : Type*} (i j : α) (D : Finset (ι → α)) : Prop :=
   ∀ ⦃x y⦄, InsensitiveEquiv i j x y → (x ∈ D ↔ y ∈ D)
 
 namespace IsInsensitive
