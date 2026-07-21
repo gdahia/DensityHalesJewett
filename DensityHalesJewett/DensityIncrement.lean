@@ -26,35 +26,23 @@ namespace DensityHalesJewett
 
 namespace Parameters
 
-/-- The numerical parameters used in one density-increment step. -/
-structure Data where
-  /-- Dimension used for the auxiliary subspace. -/
-  m₀ : ℕ
-  /-- Density threshold for correlated fibers. -/
-  θ : ℝ
-  /-- Error tolerance in the density estimates. -/
-  η : ℝ
-  /-- Guaranteed density increment. -/
-  γ : ℝ
-  deriving Inhabited
-
 /-- A positive dimension selected from the density Hales--Jewett assertion when available. -/
-noncomputable def dimension (k : ℕ) (δ : ℝ) : ℕ := by
+noncomputable def m₀ (k : ℕ) (δ : ℝ) : ℕ := by
   classical
   exact if h : 0 < δ ∧ HasDensityHJ k then
     Nat.succ <| Nat.find <| h.2 (δ / 4) (by linarith)
   else 1
 
-theorem dimension_pos (k : ℕ) (δ : ℝ) : 0 < dimension k δ := by
+theorem m₀_pos (k : ℕ) (δ : ℝ) : 0 < m₀ k δ := by
   classical
-  unfold dimension
+  unfold m₀
   split <;> simp
 
 /-- The selected dimension is antitone in the density threshold. -/
-theorem dimension_antitone {k : ℕ} (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
-    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : dimension k ρ ≤ dimension k δ := by
+theorem m₀_antitone {k : ℕ} (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : m₀ k ρ ≤ m₀ k δ := by
   classical
-  rw [dimension, dif_pos ⟨hδ.trans_le hδρ, hDHJ⟩, dimension, dif_pos ⟨hδ, hDHJ⟩]
+  rw [m₀, dif_pos ⟨hδ.trans_le hδρ, hDHJ⟩, m₀, dif_pos ⟨hδ, hDHJ⟩]
   apply Nat.succ_le_succ
   apply Nat.find_min'
   intro n hn A hA
@@ -80,124 +68,119 @@ theorem power_difference_mono (k : ℕ) {m n : ℕ} (hmn : m ≤ n) :
       · positivity
       · exact_mod_cast Nat.le_succ k
 
-/-- The denominator defining `theta` is positive for every admissible alphabet and density. -/
-theorem denominator_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (_hδ : 0 < δ) :
-    0 < ((k + 1 : ℕ) : ℝ) ^ dimension k δ - (k : ℝ) ^ dimension k δ := by
+/-- The denominator defining `θ` is positive for every admissible alphabet and density. -/
+theorem θ_denominator_pos {k : ℕ} (hk : 2 ≤ k) (δ : ℝ) :
+    0 < ((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ := by
   apply sub_pos.mpr
   apply pow_lt_pow_left₀
   · exact_mod_cast Nat.lt_succ_self k
   · positivity
-  · exact Nat.ne_of_gt <| dimension_pos k δ
+  · exact Nat.ne_of_gt <| m₀_pos k δ
 
 /-- The correlated-fibers threshold attached to an alphabet size and density. -/
-noncomputable def theta (k : ℕ) (δ : ℝ) : ℝ :=
+noncomputable def θ (k : ℕ) (δ : ℝ) : ℝ :=
   (δ / 4) /
-    (((k + 1 : ℕ) : ℝ) ^ dimension k δ - (k : ℝ) ^ dimension k δ)
+    (((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ)
 
 /-- The threshold is monotone in the density parameter. -/
-theorem theta_mono {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
-    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : theta k δ ≤ theta k ρ := by
-  unfold theta
-  refine div_le_div₀ ?_ (by linarith) (denominator_pos hk (hδ.trans_le hδρ)) ?_
+theorem θ_mono_of_dhj {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : θ k δ ≤ θ k ρ := by
+  unfold θ
+  refine div_le_div₀ ?_ (by linarith) (θ_denominator_pos hk ρ) ?_
   · exact div_nonneg (hδ.trans_le hδρ).le (by norm_num)
-  · exact power_difference_mono k <| dimension_antitone hDHJ hδ hδρ
+  · exact power_difference_mono k <| m₀_antitone hDHJ hδ hδρ
 
 /-- The threshold is monotone even when the density Hales--Jewett assertion is unavailable. -/
-theorem theta_mono' {k : ℕ} (hk : 2 ≤ k) {δ ρ : ℝ}
-    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : theta k δ ≤ theta k ρ := by
+theorem θ_mono {k : ℕ} (hk : 2 ≤ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : θ k δ ≤ θ k ρ := by
   classical
   by_cases hDHJ : HasDensityHJ k
-  · exact theta_mono hk hDHJ hδ hδρ
-  · unfold theta
-    rw [dimension, dif_neg (fun h ↦ hDHJ h.2), dimension, dif_neg (fun h ↦ hDHJ h.2)]
+  · exact θ_mono_of_dhj hk hDHJ hδ hδρ
+  · unfold θ
+    rw [m₀, dif_neg (fun h ↦ hDHJ h.2), m₀, dif_neg (fun h ↦ hDHJ h.2)]
     apply div_le_div_of_nonneg_right
     · linarith
     · rw [pow_one, pow_one, Nat.cast_add, Nat.cast_one]
       linarith
 
-theorem theta_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) : 0 < theta k δ := by
-  unfold theta
-  exact div_pos (by positivity) (denominator_pos hk hδ)
+theorem θ_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) : 0 < θ k δ := by
+  unfold θ
+  exact div_pos (by positivity) (θ_denominator_pos hk δ)
 
-/-- The error tolerance attached to a threshold. -/
-noncomputable def eta (δ θ : ℝ) : ℝ :=
-  min (δ * θ / 48) (min (θ / 4) (δ / 6))
+/-- The error tolerance attached to an alphabet size and density. -/
+noncomputable def η (k : ℕ) (δ : ℝ) : ℝ :=
+  min (δ * θ k δ / 48) (min (θ k δ / 4) (δ / 6))
 
-/-- The error tolerance is monotone in its density and threshold arguments. -/
-theorem eta_mono {δ ρ θ τ : ℝ} (hδ : 0 ≤ δ) (hθ : 0 ≤ θ)
-    (hδρ : δ ≤ ρ) (hθτ : θ ≤ τ) : eta δ θ ≤ eta ρ τ := by
-  unfold eta
-  gcongr
-  exact hδ.trans hδρ
+/-- The error tolerance is monotone in the density parameter. -/
+theorem η_mono {k : ℕ} (hk : 2 ≤ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : η k δ ≤ η k ρ := by
+  unfold η
+  refine min_le_min ?_ (min_le_min ?_ ?_)
+  · apply div_le_div_of_nonneg_right
+    · exact mul_le_mul hδρ (θ_mono hk hδ hδρ) (θ_pos hk hδ).le
+        (hδ.trans_le hδρ).le
+    · norm_num
+  · exact div_le_div_of_nonneg_right (θ_mono hk hδ hδρ) (by norm_num)
+  · exact div_le_div_of_nonneg_right hδρ (by norm_num)
 
-theorem eta_pos {δ θ : ℝ} (hδ : 0 < δ) (hθ : 0 < θ) : 0 < eta δ θ := by
-  unfold eta
-  positivity
+theorem η_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) : 0 < η k δ := by
+  unfold η
+  apply lt_min
+  · positivity [θ_pos hk hδ]
+  · apply lt_min
+    · positivity [θ_pos hk hδ]
+    · positivity
 
-/-- The density increment attached to an error tolerance. -/
-noncomputable def gamma (k : ℕ) (δ η : ℝ) : ℝ :=
-  min (δ * η ^ 2 / k) (min (η ^ 2 / 2) (3 * η))
+/-- The density increment attached to an alphabet size and density. -/
+noncomputable def γ (k : ℕ) (δ : ℝ) : ℝ :=
+  min (δ * η k δ ^ 2 / k) (min (η k δ ^ 2 / 2) (3 * η k δ))
 
-/-- The increment is monotone in its density and error-tolerance arguments. -/
-theorem gamma_mono (k : ℕ) {δ ρ η ζ : ℝ} (hδ : 0 ≤ δ) (hη : 0 ≤ η)
-    (hδρ : δ ≤ ρ) (hηζ : η ≤ ζ) : gamma k δ η ≤ gamma k ρ ζ := by
-  unfold gamma
-  gcongr
-  exact hδ.trans hδρ
+/-- The increment is monotone in the density parameter. -/
+theorem γ_mono {k : ℕ} (hk : 2 ≤ k) {δ ρ : ℝ}
+    (hδ : 0 < δ) (hδρ : δ ≤ ρ) : γ k δ ≤ γ k ρ := by
+  unfold γ
+  refine min_le_min ?_ (min_le_min ?_ ?_)
+  · apply div_le_div_of_nonneg_right
+    · apply mul_le_mul hδρ
+      · exact (sq_le_sq₀ (η_pos hk hδ).le
+          (η_pos hk (hδ.trans_le hδρ)).le).mpr (η_mono hk hδ hδρ)
+      · positivity
+      · exact (hδ.trans_le hδρ).le
+    · positivity
+  · apply div_le_div_of_nonneg_right
+    · exact (sq_le_sq₀ (η_pos hk hδ).le
+        (η_pos hk (hδ.trans_le hδρ)).le).mpr (η_mono hk hδ hδρ)
+    · norm_num
+  · exact mul_le_mul_of_nonneg_left (η_mono hk hδ hδρ) (by norm_num)
 
-theorem gamma_pos {k : ℕ} (hk : 2 ≤ k) {δ η : ℝ} (hδ : 0 < δ) (hη : 0 < η) :
-    0 < gamma k δ η := by
-  unfold gamma
-  positivity
+theorem γ_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) : 0 < γ k δ := by
+  unfold γ
+  positivity [η_pos hk hδ]
 
-/-- Parameters attached to an alphabet size and density. -/
-noncomputable def get (k : ℕ) (δ : ℝ) : Data :=
-  let m₀ := dimension k δ
-  ⟨m₀, theta k δ, eta δ (theta k δ), gamma k δ (eta δ (theta k δ))⟩
+theorem η_lt_θ_div_two {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) :
+    η k δ < θ k δ / 2 := by
+  unfold η
+  refine lt_of_le_of_lt ((min_le_right _ _).trans (min_le_left _ _)) ?_
+  linarith [θ_pos hk hδ]
 
-/-- Positivity and the elementary inequalities needed in the increment argument. -/
-theorem facts {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1) :
-    0 < (get k δ).θ ∧
-    0 < (get k δ).η ∧
-    0 < (get k δ).γ ∧
-    (get k δ).η < (get k δ).θ / 2 ∧
-    (get k δ).η ≤ δ / 6 ∧
-    (get k δ).γ ≤ (get k δ).η ^ 2 / 2 ∧
-    (get k δ).γ ≤ 3 * (get k δ).η := by
-  change 0 < theta k δ ∧ 0 < eta δ (theta k δ) ∧
-    0 < gamma k δ (eta δ (theta k δ)) ∧
-    eta δ (theta k δ) < theta k δ / 2 ∧
-    eta δ (theta k δ) ≤ δ / 6 ∧
-    gamma k δ (eta δ (theta k δ)) ≤ eta δ (theta k δ) ^ 2 / 2 ∧
-    gamma k δ (eta δ (theta k δ)) ≤ 3 * eta δ (theta k δ)
-  have hθ : 0 < theta k δ := theta_pos hk hδ₀
-  have hη : 0 < eta δ (theta k δ) := eta_pos hδ₀ hθ
-  refine ⟨hθ, hη, gamma_pos hk hδ₀ hη, ?_, ?_, ?_, ?_⟩
-  · unfold eta
-    refine lt_of_le_of_lt ((min_le_right _ _).trans (min_le_left _ _)) ?_
-    linarith
-  · unfold eta
-    exact (min_le_right _ _).trans (min_le_right _ _)
-  · unfold gamma
-    exact (min_le_right _ _).trans (min_le_left _ _)
-  · unfold gamma
-    exact (min_le_right _ _).trans (min_le_right _ _)
+theorem η_le_δ_div_six (k : ℕ) (δ : ℝ) : η k δ ≤ δ / 6 := by
+  unfold η
+  exact (min_le_right _ _).trans (min_le_right _ _)
 
-/-- A density-independent positive lower bound for the increment above a fixed density floor. -/
-noncomputable def gammaLowerBound (k : ℕ) (δ₀ : ℝ) : ℝ :=
-  gamma k δ₀ (eta δ₀ (theta k δ₀))
+theorem γ_le_η_sq_div_two (k : ℕ) (δ : ℝ) : γ k δ ≤ η k δ ^ 2 / 2 := by
+  unfold γ
+  exact (min_le_right _ _).trans (min_le_left _ _)
+
+theorem γ_le_three_mul_η (k : ℕ) (δ : ℝ) : γ k δ ≤ 3 * η k δ := by
+  unfold γ
+  exact (min_le_right _ _).trans (min_le_right _ _)
 
 /-- The increment parameters can be chosen uniformly above a fixed positive density floor. -/
-theorem gamma_mono_lowerBound {k : ℕ} (hk : 2 ≤ k) {δ₀ : ℝ} (hδ₀ : 0 < δ₀) :
-    0 < gammaLowerBound k δ₀ ∧
-      ∀ ρ, δ₀ ≤ ρ → ρ ≤ 1 → gammaLowerBound k δ₀ ≤ (get k ρ).γ := by
-  have hθ : 0 < theta k δ₀ := theta_pos hk hδ₀
-  have hη : 0 < eta δ₀ (theta k δ₀) := eta_pos hδ₀ hθ
-  refine ⟨gamma_pos hk hδ₀ hη, ?_⟩
-  intro ρ hδρ _
-  change gamma k δ₀ (eta δ₀ (theta k δ₀)) ≤ gamma k ρ (eta ρ (theta k ρ))
-  refine gamma_mono k hδ₀.le hη.le hδρ ?_
-  exact eta_mono hδ₀.le hθ.le hδρ (theta_mono' hk hδ₀ hδρ)
+theorem γ_mono_lowerBound {k : ℕ} (hk : 2 ≤ k) {δ₀ : ℝ} (hδ₀ : 0 < δ₀) :
+    0 < γ k δ₀ ∧ ∀ ρ, δ₀ ≤ ρ → γ k δ₀ ≤ γ k ρ := by
+  refine ⟨γ_pos hk hδ₀, ?_⟩
+  intro ρ hδρ
+  exact γ_mono hk hδ₀ hδρ
 
 end Parameters
 
@@ -225,9 +208,9 @@ theorem exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
     (A : Finset (ι ⊕ κ → Fin (k + 1)))
     (hA : δ ≤ (A.dens : ℝ)) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι,
-      (∀ x, δ - (Parameters.get k δ).η ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
+      (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
       ∀ l : Combinatorics.Line (Fin k) (Fin m),
-        (Parameters.get k δ).θ ≤
+        Parameters.θ k δ ≤
           ((Finset.univ.filter fun y ↦ ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
   sorry
 
@@ -242,10 +225,10 @@ theorem exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ
     (n : ℕ) (hn : manyLinesBound k m δ ≤ n)
     (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
     (∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
-      δ + (Parameters.get k δ).η ^ 2 / 2 ≤ (Subspace.relativeDensity V A : ℝ)) ∨
+      δ + Parameters.η k δ ^ 2 / 2 ≤ (Subspace.relativeDensity V A : ℝ)) ∨
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
-      δ - 2 * (Parameters.get k δ).η ≤ (Subspace.relativeDensity V A : ℝ) ∧
-      (Parameters.get k δ).θ / 2 ≤
+      δ - 2 * Parameters.η k δ ≤ (Subspace.relativeDensity V A : ℝ) ∧
+      Parameters.θ k δ / 2 ≤
         ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
           ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ) := by
   sorry
@@ -262,15 +245,15 @@ theorem exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
     (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ))
     (hfree : IsLineFree A)
     (hsmall : ∀ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
-      (Subspace.relativeDensity V A : ℝ) < δ + (Parameters.get k δ).η ^ 2 / 2) :
+      (Subspace.relativeDensity V A : ℝ) < δ + Parameters.η k δ ^ 2 / 2) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       ∃ C : Fin k → Finset (Fin m → Fin (k + 1)),
         (∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) ∧
-        (Parameters.get k δ).θ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ) ∧
-        (δ + 6 * (Parameters.get k δ).η) *
+        Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ) ∧
+        (δ + 6 * Parameters.η k δ) *
             ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
           ((pullback V A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) ∧
-        δ - 3 * (Parameters.get k δ).η ≤
+        δ - 3 * Parameters.η k δ ≤
           ((pullback V A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) := by
   sorry
 
@@ -285,8 +268,8 @@ theorem exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       ∃ D : Fin k → Finset (Fin m → Fin (k + 1)),
         (∀ i, IsInsensitive i.castSucc (Fin.last k) (D i)) ∧
-        (Parameters.get k δ).γ ≤ ((IsInsensitive.intersection D).dens : ℝ) ∧
-        (δ + (Parameters.get k δ).γ) * ((IsInsensitive.intersection D).dens : ℝ) ≤
+        Parameters.γ k δ ≤ ((IsInsensitive.intersection D).dens : ℝ) ∧
+        (δ + Parameters.γ k δ) * ((IsInsensitive.intersection D).dens : ℝ) ≤
           ((pullback V A ∩ IsInsensitive.intersection D).dens : ℝ) := by
   sorry
 
@@ -301,7 +284,7 @@ theorem density_increment {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
     (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
     (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
       ∃ V : Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin n),
-        δ + (Parameters.get k δ).γ / 2 ≤ (Subspace.relativeDensity V A : ℝ) := by
+        δ + Parameters.γ k δ / 2 ≤ (Subspace.relativeDensity V A : ℝ) := by
   sorry
 
 end DensityHalesJewett

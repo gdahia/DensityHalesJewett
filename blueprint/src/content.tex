@@ -518,19 +518,54 @@ Fix $k\geq2$, assume $\mathsf{DHJ}_k$, and fix $0<\delta\leq1$.  Following \cite
  \gamma=\min\left\{\frac{\delta\eta^2}{k},\frac{\eta^2}{2},3\eta\right\}.
 \end{equation}
 Every denominator is positive.  We record positivity and the elementary consequences
-$\eta<\theta/2$, $\eta\leq\delta/6$, $\gamma\leq\eta^2/2$, and $\gamma\leq3\eta$ as a separate
-arithmetic lemma, so later proofs can use them without unfolding the constants.
+$\eta<\theta/2$, $\eta\leq\delta/6$, $\gamma\leq\eta^2/2$, and $\gamma\leq3\eta$ separately, so
+later proofs can use them without unfolding the constants.
 In Lean, the dimension is selected transparently as the least threshold supplied by the density
 Hales--Jewett assertion when it is available (and is otherwise set to $1$); the selected threshold
 is increased by one so that the power difference in the denominator is always positive.  Leastness
 makes the selected dimension antitone in the density threshold, which is used for the uniform
 increment below; the power difference itself is monotone in that dimension.
 
-\begin{lemma}[Numerical facts]
-\label{lem:numerical-facts}
-\lean{DensityHalesJewett.Parameters.facts}
-The constants in \eqref{eq:main-constants} are positive and satisfy all the inequalities listed
-above, together with every elementary inequality invoked below.
+\begin{lemma}[Positivity of $\theta$]
+\label{lem:theta-pos}
+\lean{DensityHalesJewett.Parameters.θ_pos}
+If $k\geq2$ and $\delta>0$, then $\theta>0$.
+\end{lemma}
+
+\begin{lemma}[Positivity of $\eta$]
+\label{lem:eta-pos}
+\lean{DensityHalesJewett.Parameters.η_pos}
+If $k\geq2$ and $\delta>0$, then $\eta>0$.
+\end{lemma}
+
+\begin{lemma}[Positivity of $\gamma$]
+\label{lem:gamma-pos}
+\lean{DensityHalesJewett.Parameters.γ_pos}
+If $k\geq2$ and $\delta>0$, then $\gamma>0$.
+\end{lemma}
+
+\begin{lemma}[$\eta$ is small relative to $\theta$]
+\label{lem:eta-lt-theta-div-two}
+\lean{DensityHalesJewett.Parameters.η_lt_θ_div_two}
+If $k\geq2$ and $\delta>0$, then $\eta<\theta/2$.
+\end{lemma}
+
+\begin{lemma}[$\eta$ is small relative to $\delta$]
+\label{lem:eta-le-delta-div-six}
+\lean{DensityHalesJewett.Parameters.η_le_δ_div_six}
+We have $\eta\leq\delta/6$.
+\end{lemma}
+
+\begin{lemma}[$\gamma$ is bounded by $\eta^2/2$]
+\label{lem:gamma-le-eta-sq-div-two}
+\lean{DensityHalesJewett.Parameters.γ_le_η_sq_div_two}
+We have $\gamma\leq\eta^2/2$.
+\end{lemma}
+
+\begin{lemma}[$\gamma$ is bounded by $3\eta$]
+\label{lem:gamma-le-three-eta}
+\lean{DensityHalesJewett.Parameters.γ_le_three_mul_η}
+We have $\gamma\leq3\eta$.
 \end{lemma}
 
 For $m\geq1$ and $\varepsilon>0$, abbreviate
@@ -543,7 +578,7 @@ For $m\geq1$ and $\varepsilon>0$, abbreviate
 \begin{lemma}[Every line has correlated fibers]
 \label{lem:correlated-fibers}
 \lean{DensityHalesJewett.exists_subspace_correlated_fibers}
-\uses{lem:uniform-fibers,cor:gr-two-color,lem:threshold-average,lem:lines-equiv,lem:numerical-facts}
+\uses{lem:uniform-fibers,cor:gr-two-color,lem:threshold-average,lem:lines-equiv,lem:eta-pos,lem:eta-le-delta-div-six}
 Let $m\geq m_0$ and
 $n\geq n(\GR(k,m),\eta^2/2)$.  If $A\subseteq[k+1]^n$ has density at least $\delta$, then there
 are $l<n$ and an $m$-dimensional subspace $U\subseteq[k+1]^l$ such that
@@ -575,7 +610,7 @@ Thus $\ell_0$ is good, a contradiction.  Extend $Y$ uniquely to a $(k+1)$-letter
 \begin{lemma}[Many lines in a dense slice]
 \label{lem:many-lines}
 \lean{DensityHalesJewett.exists_subspace_many_lines}
-\uses{lem:correlated-fibers,lem:threshold-average,lem:numerical-facts}
+\uses{lem:correlated-fibers,lem:threshold-average,lem:eta-pos,lem:eta-lt-theta-div-two}
 Under the hypotheses of Lemma~\ref{lem:correlated-fibers}, either some $m$-subspace $X$ satisfies
 $\dens_X(A)\geq\delta+\eta^2/2$, or there is an $m$-subspace $W$ with
 \[
@@ -634,7 +669,7 @@ $(k/(k+1))^M\leq\eta$.  Existence follows from geometric decay.
 \begin{lemma}[A large insensitive intersection]
 \label{lem:large-insensitive-intersection}
 \lean{DensityHalesJewett.exists_large_insensitive_intersection}
-\uses{lem:many-lines,def:insensitive,lem:lines-equiv,lem:numerical-facts}
+\uses{lem:many-lines,def:insensitive,lem:lines-equiv,lem:theta-pos,lem:eta-pos,lem:eta-lt-theta-div-two,lem:eta-le-delta-div-six}
 Let $m\geq M_0$, and suppose $A\subseteq[k+1]^n$ is line-free, has density at least $\delta$, and
 has density below $\delta+\eta^2/2$ in every $m$-subspace.  Then some $m$-subspace $W$ contains
 $C=\bigcap_{i=1}^k C_i$, with each $C_i$ $(i,k+1)$-insensitive in $W$, such that
@@ -675,7 +710,7 @@ $(\delta-3\eta)/(1-\theta/4)\geq\delta+6\eta$, one of the recorded numerical fac
 \begin{corollary}[Correlation with a structured set]
 \label{cor:structured-correlation}
 \lean{DensityHalesJewett.exists_structured_correlation}
-\uses{lem:large-insensitive-intersection,lem:insensitive-boolean,lem:numerical-facts}
+\uses{lem:large-insensitive-intersection,lem:insensitive-boolean,lem:eta-le-delta-div-six,lem:gamma-le-eta-sq-div-two,lem:gamma-le-three-eta}
 Let $m\geq M_0$ and let $A\subseteq[k+1]^n$ have density at least $\delta$ and contain no line.
 Then some $m$-subspace $W$ has subsets $D_1,\ldots,D_k$, with $D_i$ $(i,k+1)$-insensitive in
 $W$, such that for $D=\bigcap_iD_i$,
@@ -877,12 +912,12 @@ density increases.
 
 \begin{lemma}[Monotone parameters]
 \label{lem:uniform-gamma}
-\lean{DensityHalesJewett.Parameters.gamma_mono_lowerBound}
-\uses{lem:numerical-facts}
+\lean{DensityHalesJewett.Parameters.γ_mono_lowerBound}
+\uses{lem:gamma-pos}
 Fix $\delta_0>0$.  The bounds in \eqref{eq:main-constants} may be chosen so that for every
 $\rho\in[\delta_0,1]$ the increment parameter satisfies
 \[
-  \gamma(k,\rho)\geq\underline\gamma(k,\delta_0)>0.
+  \gamma(k,\rho)\geq\gamma(k,\delta_0)>0.
 \]
 \end{lemma}
 
@@ -894,8 +929,7 @@ dimension antitone, and monotonicity of the power difference then gives
  \theta(\delta_0).
 \]
 The capped definitions of $\eta$ and $\gamma$ are monotone in their positive arguments, so
-$\gamma(k,\rho)\geq\gamma(k,\delta_0)>0$.  We take this latter quantity as
-$\underline\gamma(k,\delta_0)$.
+$\gamma(k,\rho)\geq\gamma(k,\delta_0)>0$.
 \end{proof}
 
 \begin{theorem}[Induction on the alphabet]
@@ -907,7 +941,7 @@ For every $k\geq2$, $\mathsf{DHJ}_k$ holds.
 
 \begin{proof}
 Induct on $k$, starting with Lemma~\ref{lem:dhj-two}.  Assume $\mathsf{DHJ}_k$ and fix a density
-floor $\delta_0>0$.  Let $\varepsilon=\underline\gamma(k,\delta_0)/2$ and choose
+floor $\delta_0>0$.  Let $\varepsilon=\gamma(k,\delta_0)/2$ and choose
 $R\in\N$ with $\delta_0+R\varepsilon>1$.
 
 Build required dimensions backwards.  Put $d_R=1$, and for $j=R-1,\ldots,0$ choose $d_j$ large
