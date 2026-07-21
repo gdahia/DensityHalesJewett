@@ -1,9 +1,9 @@
 import DensityHalesJewett.Basic
-import DensityHalesJewett.Word
-import DensityHalesJewett.Subspace
-import DensityHalesJewett.GrahamRothschild
-import DensityHalesJewett.UniformFibers
-import DensityHalesJewett.Insensitive
 import DensityHalesJewett.DensityIncrement
+import DensityHalesJewett.GrahamRothschild
+import DensityHalesJewett.Insensitive
 import DensityHalesJewett.Main
+import DensityHalesJewett.Subspace
 import DensityHalesJewett.Szemeredi
+import DensityHalesJewett.UniformFibers
+import DensityHalesJewett.Word
