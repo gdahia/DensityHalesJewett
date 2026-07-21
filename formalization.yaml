@@ -20,8 +20,6 @@ formalizations:
         role: primary implementer
       - author: GPT-5.6 Lua
         role: primary implementer
-      - author: Aristotle
-        role: secondary implementer
     review:
       - reviewer: Gabriel Dahia
         scope:
@@ -41,8 +39,6 @@ formalizations:
         role: primary implementer
       - author: GPT-5.6 Lua
         role: primary implementer
-      - author: Aristotle
-        role: secondary implementer
     review:
       - reviewer: Gabriel Dahia
         scope:
