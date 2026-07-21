@@ -1,0 +1,50 @@
+version: 1
+
+project:
+  name: DensityHalesJewett
+  proof_assistant: Lean 4
+  library: mathlib
+  challenge_file: DensityHalesJewett/Challenge.lean
+
+formalizations:
+  - declaration: Combinatorics.ArithmeticProgression.exists_of_density_nat
+    description: >-
+      Every sufficiently large dense subset of an initial interval of the natural numbers contains
+      a nonconstant arithmetic progression of any prescribed finite length.
+    status: challenge
+    proof: sorry
+    implementation:
+      - author: GPT-5.6 Sol
+        role: planner
+      - author: GPT-5.6 Terra
+        role: primary implementer
+      - author: GPT-5.6 Lua
+        role: primary implementer
+      - author: Aristotle
+        role: secondary implementer
+    review:
+      - reviewer: Gabriel Dahia
+        scope:
+          - mathematical correctness
+          - mathlib style
+
+  - declaration: Combinatorics.Line.exists_of_density
+    description: >-
+      Every sufficiently high-dimensional dense family of words over a finite alphabet contains a
+      combinatorial line.
+    status: challenge
+    proof: sorry
+    implementation:
+      - author: GPT-5.6 Sol
+        role: planner
+      - author: GPT-5.6 Terra
+        role: primary implementer
+      - author: GPT-5.6 Lua
+        role: primary implementer
+      - author: Aristotle
+        role: secondary implementer
+    review:
+      - reviewer: Gabriel Dahia
+        scope:
+          - mathematical correctness
+          - mathlib style
