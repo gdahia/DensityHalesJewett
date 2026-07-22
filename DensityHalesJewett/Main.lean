@@ -235,7 +235,14 @@ lemma dhj_two : HasDensityHJ 2 := by
 /-- **Easy helper:** a positive uniform increment eventually raises the density floor above one. -/
 lemma exists_density_increment_steps {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) :
     ∃ R : ℕ, 1 < δ + (R : ℝ) * (Parameters.γ k δ / 2) := by
-  sorry
+  refine ⟨⌈2 / (Parameters.γ k δ)⌉₊ + 1, ?_⟩
+  refine lt_trans (?_) (lt_add_of_pos_left _ hδ)
+  simp only [Nat.cast_add, Nat.cast_one]
+  rw [← mul_div_assoc]
+  apply (lt_div_iff₀ zero_lt_two).2
+  simp only [one_mul]
+  apply (div_lt_iff₀ (Parameters.γ_pos hk hδ)).1
+  apply lt_of_le_of_lt (Nat.ceil_le.mp le_rfl) (by grind)
 
 /-- **Medium helper:** choose the dimensions for a finite density-increment iteration backwards.
 
