@@ -198,6 +198,57 @@ def pullback {η α ι : Type*} [Fintype (η → α)] [DecidableEq (ι → α)]
 /-- A bound for the correlated-fibers lemma. -/
 opaque correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ
 
+/-- **Hard helper:** uniformize the fibers and canonize their line-density coloring.
+
+The working parameter dimension is chosen large enough both for the requested `m`-dimensional
+output and for the density Hales--Jewett argument at dimension `Parameters.m₀ k δ`.  In the
+monochromatic good case, restrict the working subspace to `m` parameters.  In the bad case, retain
+the larger subspace as a certificate whose every restricted-alphabet line has common-suffix density
+strictly below `Parameters.θ k δ`. -/
+lemma exists_correlated_fibers_or_sparse_certificate {k : ℕ} (hk : 2 ≤ k)
+    (hDHJ : HasDensityHJ k) (m : ℕ) (hm : 1 ≤ m)
+    (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
+    [Fintype (ι ⊕ κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (hι : correlatedFibersBound k m δ ≤ Fintype.card ι)
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (hA : δ ≤ (A.dens : ℝ)) :
+    (∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι,
+      (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
+      ∀ l : Combinatorics.Line (Fin k) (Fin m),
+        Parameters.θ k δ ≤
+          ((Finset.univ.filter fun y ↦
+            ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)) ∨
+      ∃ M : ℕ, Parameters.m₀ k δ ≤ M ∧
+        ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
+          (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ)) ∧
+          ∀ l : Combinatorics.Line (Fin k) (Fin M),
+            ((Finset.univ.filter fun y ↦
+              ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
+                Parameters.θ k δ := by
+  sorry
+
+/-- **Hard helper:** the uniformly sparse certificate is impossible.
+
+Average the dense fibers over suffixes, find many suffix slices of density at least `δ / 4`, and
+apply `hDHJ` on an embedded `Parameters.m₀ k δ`-dimensional parameter cube in each such slice.
+Pigeonholing the resulting lines gives one line with common-suffix density at least
+`Parameters.θ k δ`, contradicting the certificate. -/
+lemma not_exists_sparse_correlated_fibers_certificate {k : ℕ} (hk : 2 ≤ k)
+    (hDHJ : HasDensityHJ k) (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) :
+    ¬ ∃ M : ℕ, Parameters.m₀ k δ ≤ M ∧
+      ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
+        (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ)) ∧
+        ∀ l : Combinatorics.Line (Fin k) (Fin M),
+          ((Finset.univ.filter fun y ↦
+            ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
+              Parameters.θ k δ := by
+  sorry
+
 /-- Every parameter-cube line in a suitable subspace has a dense common fiber. -/
 lemma exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m : ℕ) (hm : 1 ≤ m)
@@ -213,7 +264,11 @@ lemma exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
       ∀ l : Combinatorics.Line (Fin k) (Fin m),
         Parameters.θ k δ ≤
           ((Finset.univ.filter fun y ↦ ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
-  sorry
+  obtain hV | hsparse :=
+    exists_correlated_fibers_or_sparse_certificate hk hDHJ m hm δ hδ₀ hδ₁ hι A hA
+  · exact hV
+  · exact (not_exists_sparse_correlated_fibers_certificate hk hDHJ δ hδ₀ hδ₁ A
+      hsparse).elim
 
 /-- The pullback of a word family to a subspace after fixing the suffix coordinates. -/
 def suffixPullback {α η ι κ : Type*} [Fintype (η → α)]
