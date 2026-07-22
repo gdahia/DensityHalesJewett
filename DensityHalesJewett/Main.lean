@@ -7,6 +7,10 @@ module
 
 public import DensityHalesJewett.DensityIncrement
 public import Mathlib.Combinatorics.SetFamily.LYM
+public import Mathlib.Analysis.Real.Sqrt
+import Mathlib.Analysis.SpecificLimits.Basic
+public import Mathlib.Data.Nat.Choose.Central
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # Density Hales--Jewett
@@ -101,9 +105,143 @@ lemma binary_line_iff_ssubset {ι : Type*} [Fintype ι] (x y : ι → Fin 2) :
           simp only [binarySupport, mem_filter, mem_univ, true_and]
           exact hxj
 
+/-- Binary support faithfully records a binary word. -/
+lemma binarySupport_injective {ι : Type*} [Fintype ι] :
+    Function.Injective (binarySupport : (ι → Fin 2) → Finset ι) := by
+  intro x y hxy
+  funext i
+  have hi : x i = 1 ↔ y i = 1 := by
+    simpa only [binarySupport, mem_filter, mem_univ, true_and] using Finset.ext_iff.mp hxy i
+  apply Fin.ext
+  by_cases hx : x i = 1
+  · rw [hx, hi.mp hx]
+  have hx₀ : x i = 0 := by
+    apply Fin.ext
+    omega
+  have hy₀ : y i = 0 := by
+    apply Fin.ext
+    omega
+  rw [hx₀, hy₀]
+
+/-- A squared elementary upper bound for the normalized central binomial coefficient. -/
+lemma centralBinom_ratio_sq_mul_le (m : ℕ) :
+    ((Nat.centralBinom m : ℝ) / 4 ^ m) ^ 2 * (3 * m + 1) ≤ 1 := by
+  induction m with
+  | zero => norm_num [Nat.centralBinom]
+  | succ m ih =>
+      have hrec : ((m + 1 : ℕ) : ℝ) * Nat.centralBinom (m + 1) =
+          2 * (2 * m + 1) * Nat.centralBinom m := by
+        exact_mod_cast Nat.succ_mul_centralBinom_succ m
+      have hratio : (Nat.centralBinom (m + 1) : ℝ) / 4 ^ (m + 1) =
+          ((Nat.centralBinom m : ℝ) / 4 ^ m) *
+            ((2 * m + 1 : ℝ) / (2 * (m + 1))) := by
+        rw [pow_succ]
+        field_simp
+        push_cast at hrec ⊢
+        linear_combination 2 * hrec
+      rw [hratio]
+      rw [mul_pow, mul_assoc]
+      refine le_trans (mul_le_mul_of_nonneg_left ?_ (sq_nonneg _)) ih
+      have hm : (0 : ℝ) < 2 * (m + 1) := by positivity
+      rw [div_pow]
+      rw [div_mul_eq_mul_div]
+      refine (div_le_iff₀ (sq_pos_of_pos hm)).mpr ?_
+      push_cast
+      ring_nf
+      nlinarith
+
+/-- The middle binomial coefficient is at most the reciprocal square-root proportion of the
+Boolean cube. -/
+lemma centralBinom_ratio_le_inv_sqrt (m : ℕ) :
+    (Nat.centralBinom m : ℝ) / 4 ^ m ≤ (√(3 * m + 1))⁻¹ := by
+  rw [inv_eq_one_div, le_div_iff₀ (Real.sqrt_pos.2 (by positivity))]
+  rw [← sq_le_sq₀ (by positivity) (by positivity), mul_pow, Real.sq_sqrt (by positivity)]
+  simpa only [one_pow] using centralBinom_ratio_sq_mul_le m
+
+/-- Reduce the normalized middle binomial coefficient in any dimension to the central coefficient
+in half that dimension. -/
+lemma middleBinomial_ratio_le_central (n : ℕ) :
+    (n.choose (n / 2) : ℝ) / 2 ^ n ≤
+      (Nat.centralBinom (n / 2) : ℝ) / 4 ^ (n / 2) := by
+  obtain ⟨m, hm | hm⟩ := Nat.even_or_odd' n
+  · subst n
+    have hdiv : 2 * m / 2 = m := by omega
+    rw [hdiv, Nat.centralBinom]
+    rw [show (2 : ℝ) ^ (2 * m) = 4 ^ m by
+      rw [show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul, mul_comm]]
+  · subst n
+    have hdiv : (2 * m + 1) / 2 = m := by omega
+    rw [hdiv, Nat.centralBinom]
+    cases m with
+    | zero => norm_num
+    | succ m =>
+      have hchoose : (2 * (m + 1) + 1).choose (m + 1) ≤
+          2 * Nat.centralBinom (m + 1) := by
+        rw [Nat.choose_succ_left (2 * (m + 1)) (m + 1) (by omega)]
+        simpa only [Nat.add_sub_cancel, two_mul] using
+          add_le_add (Nat.choose_le_centralBinom m (m + 1))
+            (Nat.choose_le_centralBinom (m + 1) (m + 1))
+      rw [pow_succ, show (2 : ℝ) ^ (2 * (m + 1)) = 4 ^ (m + 1) by
+        rw [show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul, mul_comm]]
+      rw [mul_comm (4 ^ (m + 1) : ℝ) 2]
+      refine le_trans (b := (2 * Nat.centralBinom (m + 1) : ℝ) /
+        (2 * 4 ^ (m + 1))) ?_ ?_
+      · exact (div_le_div_iff_of_pos_right
+          (by positivity : (0 : ℝ) < 2 * 4 ^ (m + 1))).mpr <| by
+            exact_mod_cast hchoose
+      · field_simp
+        rfl
+
+/-- Eventually the middle layer occupies less than any prescribed positive proportion of the
+Boolean cube. -/
+lemma exists_middleBinomial_lt (δ : ℝ) (hδ : 0 < δ) :
+    ∃ N, ∀ n, N ≤ n → (n.choose (n / 2) : ℝ) < δ * 2 ^ n := by
+  have ht : Filter.Tendsto (fun m : ℕ ↦ (√(3 * (m : ℝ) + 1))⁻¹)
+      Filter.atTop (nhds 0) := by
+    refine tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp ?_)
+    simpa only [add_comm] using
+      tendsto_const_nhds.add_atTop
+        ((tendsto_natCast_atTop_atTop : Filter.Tendsto (fun m : ℕ ↦ (m : ℝ))
+          Filter.atTop Filter.atTop).const_mul_atTop (by norm_num : (0 : ℝ) < 3))
+  obtain ⟨M, hM⟩ := Filter.eventually_atTop.mp (ht.eventually_lt_const hδ)
+  refine ⟨2 * M, ?_⟩
+  intro n hn
+  have hMn : M ≤ n / 2 := (Nat.le_div_iff_mul_le (by norm_num)).mpr (by omega)
+  refine (div_lt_iff₀ (by positivity : (0 : ℝ) < 2 ^ n)).mp ?_
+  refine (middleBinomial_ratio_le_central n).trans_lt <|
+    (centralBinom_ratio_le_inv_sqrt (n / 2)).trans_lt ?_
+  exact hM (n / 2) hMn
+
 /-- Density Hales--Jewett for the binary alphabet. -/
 lemma dhj_two : HasDensityHJ 2 := by
-  sorry
+  intro δ hδ
+  obtain ⟨N, hN⟩ := exists_middleBinomial_lt δ hδ
+  refine ⟨N, ?_⟩
+  intro n hn A hA
+  by_contra hline
+  let B := A.image binarySupport
+  have hB : IsAntichain (· ⊆ ·) (B : Set (Finset (Fin n))) := by
+    intro s hs t ht hst hsub
+    change s ∈ B at hs
+    change t ∈ B at ht
+    obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp hs
+    obtain ⟨y, hy, rfl⟩ := Finset.mem_image.mp ht
+    apply hline
+    obtain ⟨l, hlx, hly⟩ := (binary_line_iff_ssubset x y).2 <|
+      Finset.ssubset_iff_subset_ne.2 ⟨hsub, hst⟩
+    refine ⟨l, ?_⟩
+    intro a
+    obtain rfl | ⟨i, rfl⟩ := a.eq_zero_or_eq_succ
+    · rw [hlx]
+      exact hx
+    · simp only [Fin.eq_zero i]
+      change l 1 ∈ A
+      rw [hly]
+      exact hy
+  have hcard : #A ≤ n.choose (n / 2) := by
+    rw [← Finset.card_image_of_injective A binarySupport_injective]
+    simpa only [B, Fintype.card_fin] using hB.sperner
+  exact (not_lt_of_ge (hA.trans <| by exact_mod_cast hcard)) (hN n hn)
 
 /-- Density Hales--Jewett for every finite alphabet of cardinality at least two. -/
 lemma density_hales_jewett_fin (k : ℕ) (hk : 2 ≤ k) : HasDensityHJ k := by

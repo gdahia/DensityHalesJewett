@@ -273,7 +273,7 @@ uses $b<1$ to divide by $1-b$.
 The density argument needs a two-color Ramsey theorem for the lines of a word cube.  We prove the
 exact special case required by \cite{DKT}, rather than formalizing the full parameter-sets theorem.
 
-\section{Finite unions from Hales--Jewett}
+\section{Finite unions}
 
 For finite nonempty subsets $B,C\subseteq\N$, write $B<C$ if every element of $B$ is smaller than
 every element of $C$.  A block sequence is a tuple $B_1<\cdots<B_t$ of nonempty sets, and
@@ -327,35 +327,44 @@ alphabets, profile indices, and color types through their equivalences with \tex
 \begin{theorem}[Finite unions theorem]
 \label{thm:finite-unions}
 \lean{DensityHalesJewett.FiniteUnions.exists_mono}
-\uses{lem:fu-focus}
 For every finite color type $C$ and every $m\in\N$, there is $L$ such that every coloring of the
 nonempty subsets of $\operatorname{Fin}L$ by $C$ admits a block sequence
 $B_1<\cdots<B_m$ for which $\FU(B_1,\ldots,B_m)$ is monochromatic.
 \end{theorem}
 
 \begin{proof}
-We give the finite color-focusing proof.  Induct on $m$.  There is nothing to prove for $m=0$,
-and $L=1$ works for $m=1$.
+We first prove the infinite ordered-block statement from the strong Hindman theorem.  Regard finite
+words in $\N$ as the free monoid under concatenation, and begin with the stream of singleton words
+$[0],[1],\ldots$.  Every finite product from this stream is a nonempty strictly increasing word.
+For each $c\in C$, let $A_c$ consist of the nonempty strictly increasing words $w$ for which
+$\chi(\operatorname{set}(w))=c$.  These finitely many sets cover all finite products of the
+singleton stream, so strong Hindman supplies a stream $(b_i)_{i\in\N}$ and a color $c$ such that
+every finite product of the $b_i$ belongs to $A_c$.
 
-For the induction step, reserve enough consecutive packets to perform the focusing step once for
-every member of
-$\FU(B_1,\ldots,B_m)\cup\{\varnothing\}$; this is a finite list of size $2^m$.
-Apply Lemma~\ref{lem:fu-focus} successively, each time coloring by the full profile already fixed.
-At the end there is a new block $B_{m+1}$, later than the existing blocks, such that
-\[
-  \chi(U\cup B_{m+1})=\chi(U)
-  \quad\text{for every }U\in\FU(B_1,\ldots,B_m),                 \tag{\(*\)}
-\]
-and the focusing profile also makes $\chi(B_{m+1})$ equal to this common color.  Before this final
-selection, apply the induction hypothesis to the induced profile-coloring of candidate earlier
-blocks.  It makes all nonempty $U$ on the right of \((*)\) have one color.  Thus every nonempty
-union of $B_1,\ldots,B_{m+1}$ has that color: unions not using $B_{m+1}$ by induction, the singleton
-$B_{m+1}$ by the last profile coordinate, and the remaining unions by \((*)\).
+Put $B_i=\operatorname{set}(b_i)$.  Applying the conclusion to $b_i$ shows that $B_i$ is nonempty,
+and applying it to $b_i b_j$ for $i<j$ shows that every element of $B_i$ is smaller than every
+element of $B_j$.  For a nonempty finite index set $I$, concatenate the $b_i$ with $i\in I$ in
+increasing order.  This is again a finite product, and its underlying set is
+$\bigcup_{i\in I}B_i$, so every member of $\FU(B_1,\ldots,B_m)$ has color $c$.
 
-All choices are finite.  Reading the construction backwards gives a primitive recursive bound:
-at each focusing call use a Hales--Jewett number with color type a finite power of $C$, and take the
-sum of the required packet lengths.  The implementation will define the bound by this recursion;
-no least-number construction is needed.
+It remains to make the ambient set finite.  Suppose contrariwise that every $L$ admits a bad
+coloring $\chi_L$ of $\operatorname{Fin}L$.  Given a finite family $s$ of finite subsets of $\N$,
+choose an initial segment containing the support of $s$ and color every member of $s$ by the
+corresponding $\chi_L$.  The Rado selection principle stitches these compatible finite requests
+into a global coloring $\chi$ of the finite subsets of $\N$.  Apply the infinite result to $\chi$
+and then ask for agreement on the finite family of all unions of the first $m$ blocks.  Rado gives
+one local bad coloring agreeing on that entire family, but the transported blocks make all those
+unions monochromatic, a contradiction.
+
+In Lean, \texttt{BlockWord.mem\_fp\_singletonStream} proves that the initial finite products are
+increasing, while \texttt{BlockWord.select\_mem\_fp} and
+\texttt{BlockWord.mem\_toFinset\_select} implement the Boolean selection of an arbitrary nonempty
+union.  The finite compactness step uses \texttt{Finset.rado\_selection\_subtype}.
+The theorem \texttt{exists\_mono\_in\_high\_dimension} transports a witness along the initial
+order embedding $\operatorname{Fin}L\hookrightarrow\operatorname{Fin}n$.  Finally,
+\texttt{FiniteUnions.bound} is the least resulting witness for \texttt{Fin colors}, and
+\texttt{FiniteUnions.bound\_spec} transports the colors through
+\texttt{Fintype.equivFin}; downstream proofs therefore use only its upward-closed specification.
 \end{proof}
 
 \section{Canonizing colors of variable words}
@@ -918,7 +927,9 @@ The variable coordinates are precisely the set difference between the larger and
 the fixed $1$ coordinates form their intersection.  Conversely, a strict inclusion has nonempty
 difference and therefore determines a line.
 The Lean proof constructs this line coordinatewise, using a variable coordinate exactly for a
-$0\to1$ transition; finite case analysis verifies both endpoint words.
+$0\to1$ transition; finite case analysis verifies both endpoint words.  It also records separately
+that binary support is injective, since membership of a coordinate in the support determines its
+binary letter.
 \end{proof}
 
 \begin{lemma}[Density Hales--Jewett for two letters]
@@ -937,6 +948,18 @@ its cardinality by $\binom n{\lfloor n/2\rfloor}$.  Use the standard estimate
 (or the elementary bound $\leq C/\sqrt n$ already available in mathlib) and choose $N$ so that
 this ratio is below $\delta$ for $n\geq N$.
 \end{proof}
+
+The Lean proof supplies the required estimate directly.  From the central-binomial recurrence it
+proves by induction that
+\[
+ \left(\binom{2m}{m}/4^m\right)^2(3m+1)\leq1,
+ \qquad\text{hence}\qquad
+ \binom{2m}{m}/4^m\leq(3m+1)^{-1/2}.
+\]
+Pascal's identity bounds the normalized middle layer in odd dimension by the preceding even
+central layer.  Since $(3m+1)^{-1/2}\to0$, this gives the eventual strict inequality used after
+Sperner's theorem.  A hypothetical line-free family has injective binary-support image, and the
+strict-comparability characterization shows that image is an antichain.
 
 \section{Making the increment uniform}
 
