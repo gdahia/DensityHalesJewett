@@ -460,6 +460,41 @@ lemma exists_canonized_finiteUnions_blocks (α C : Type*) [Fintype α] [Nontrivi
           χ (Subspace.mapLine V p) = c := by
   sorry
 
+/-- The variable support of a combinatorial line is nonempty. -/
+lemma variableSet_nonempty {α : Type*} {m : ℕ} (l : Combinatorics.Line α (Fin m)) :
+    (variableSet l).Nonempty := by
+  sorry
+
+/-- Ordered nonempty blocks determine a subspace whose parameter directions occur exactly on
+their corresponding blocks. -/
+lemma exists_subspace_indexed_by_ordered_blocks (α : Type*) [Nontrivial α]
+    {m L : ℕ} (B : Fin m → Finset (Fin L))
+    (hBne : ∀ i, (B i).Nonempty)
+    (hBorder : ∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) :
+    ∃ W : Combinatorics.Subspace (Fin m) α (Fin L),
+      ∀ i j, W.idxFun i = Sum.inr j ↔ i ∈ B j := by
+  sorry
+
+/-- The variable support of a line mapped through a block-indexed subspace is the union of the
+blocks indexed by the original variable support. -/
+lemma variableSet_mapLine_of_indexed_blocks (α : Type*) [Fintype α] [Nontrivial α]
+    [DecidableEq α] {m L : ℕ} (W : Combinatorics.Subspace (Fin m) α (Fin L))
+    (B : Fin m → Finset (Fin L))
+    (hW : ∀ i j, W.idxFun i = Sum.inr j ↔ i ∈ B j)
+    (l : Combinatorics.Line α (Fin m)) :
+    variableSet (Subspace.mapLine W l) = (variableSet l).biUnion B := by
+  sorry
+
+/-- Mapping a line through a composite subspace agrees with mapping it through the two subspaces
+successively. -/
+lemma mapLine_compose (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
+    {m L n : ℕ} (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (W : Combinatorics.Subspace (Fin m) α (Fin L))
+    (l : Combinatorics.Line α (Fin m)) :
+    Subspace.mapLine (Subspace.compose V W) l =
+      Subspace.mapLine V (Subspace.mapLine W l) := by
+  sorry
+
 /-- Assemble ordered finite-unions blocks into a subspace.
 
 Every parameter line of the resulting subspace has variable support equal to the union of the
@@ -475,7 +510,13 @@ lemma exists_ordered_block_subspace (α : Type*) [Fintype α] [Nontrivial α]
           variableSet (Subspace.mapLine W l) = I.biUnion B ∧
           Subspace.mapLine (Subspace.compose V W) l =
             Subspace.mapLine V (Subspace.mapLine W l) := by
-  sorry
+  obtain ⟨W, hW⟩ :=
+    exists_subspace_indexed_by_ordered_blocks α B hBne hBorder
+  refine ⟨W, ?_⟩
+  intro l
+  refine ⟨variableSet l, variableSet_nonempty l, ?_, ?_⟩
+  · exact variableSet_mapLine_of_indexed_blocks α W B hW l
+  · exact mapLine_compose α V W l
 
 /-- A Graham--Rothschild dimension for colorings of combinatorial lines. -/
 noncomputable def bound (alphabet colors dimension : ℕ) : ℕ :=

@@ -781,11 +781,20 @@ lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X
     Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ := by
   sorry
 
-/-- Distinct first-failure pieces are disjoint. -/
+/-- A first-failure piece is disjoint from every piece at a later index. -/
+lemma firstFailurePiece_disjoint_of_lt {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
+    (C : Fin k → Finset X) {i j : Fin k} (hij : i < j) :
+    Disjoint (firstFailurePiece C i : Set X) (firstFailurePiece C j : Set X) := by
+  sorry
+
+/-- Distinct first-failure pieces are pairwise disjoint. -/
 lemma firstFailurePiece_pairwiseDisjoint {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) :
     (Set.univ : Set (Fin k)).PairwiseDisjoint fun i ↦ (firstFailurePiece C i : Set X) := by
-  sorry
+  intro i _ j _ hij
+  obtain hij | hji := lt_or_gt_of_ne hij
+  · exact firstFailurePiece_disjoint_of_lt C hij
+  · exact (firstFailurePiece_disjoint_of_lt C hji).symm
 
 /-- The first-failure partition and its quantitative weighted averaging.
 

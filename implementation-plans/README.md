@@ -28,8 +28,8 @@ upward safe even when the color type is empty.
 
 ## Inventory
 
-- `easy/`: 1 plan
-- `medium/`: 8 plans
+- `easy/`: 2 plans
+- `medium/`: 3 plans
 - `hard/`: 9 plans
 - `very-hard/`: 4 plans
 
