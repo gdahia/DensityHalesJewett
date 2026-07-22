@@ -719,6 +719,34 @@ def firstFailureFamily {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) (i : Fin k) : Fin k → Finset X :=
   fun j ↦ if j < i then C j else if j = i then (C j)ᶜ else Finset.univ
 
+/-- **Medium helper:** every member of the first-failure family has the required sensitivity
+pair. -/
+lemma firstFailureFamily_isInsensitive {k : ℕ} {ι : Type*}
+    [Fintype (ι → Fin (k + 1))] [DecidableEq (ι → Fin (k + 1))]
+    (C : Fin k → Finset (ι → Fin (k + 1)))
+    (hC : ∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) (i : Fin k) :
+    ∀ j, IsInsensitive j.castSucc (Fin.last k) (firstFailureFamily C i j) := by
+  sorry
+
+/-- **Medium helper:** intersecting the first-failure family recovers its selected piece. -/
+lemma firstFailureFamily_intersection {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
+    (C : Fin k → Finset X) (i : Fin k) :
+    IsInsensitive.intersection (firstFailureFamily C i) = firstFailurePiece C i := by
+  sorry
+
+/-- **Medium helper:** the first-failure pieces cover the complement of the original
+intersection. -/
+lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
+    (C : Fin k → Finset X) :
+    Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ := by
+  sorry
+
+/-- **Medium helper:** distinct first-failure pieces are disjoint. -/
+lemma firstFailurePiece_pairwiseDisjoint {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
+    (C : Fin k → Finset X) :
+    (Set.univ : Set (Fin k)).PairwiseDisjoint fun i ↦ (firstFailurePiece C i : Set X) := by
+  sorry
+
 /-- **Hard helper:** the first-failure partition and its quantitative weighted averaging.
 
 The complement of `intersection C` is partitioned by `firstFailurePiece C i`.  The two global
@@ -740,8 +768,7 @@ lemma exists_dense_firstFailurePiece {k : ℕ} (hk : 2 ≤ k)
         ((A ∩ firstFailurePiece C i).dens : ℝ) := by
   sorry
 
-/-- **Hard helper:** the Boolean reconstruction of a first-failure piece as an insensitive
-intersection.
+/-- The Boolean reconstruction of a first-failure piece as an insensitive intersection.
 
 Complement closure preserves the sensitivity pair at the failure index, while the universal
 sets after that index impose no constraints. -/
@@ -754,7 +781,9 @@ lemma firstFailureFamily_facts {k : ℕ} {ι : Type*}
       Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ ∧
       (Set.univ : Set (Fin k)).PairwiseDisjoint fun j ↦
         (firstFailurePiece C j : Set (ι → Fin (k + 1))) := by
-  sorry
+  exact ⟨firstFailureFamily_isInsensitive C hC i,
+    firstFailureFamily_intersection C i, firstFailurePiece_biUnion C,
+    firstFailurePiece_pairwiseDisjoint C⟩
 
 /-- Correlation with a positive-density intersection of insensitive families. -/
 lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
@@ -815,6 +844,45 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
 /-- A sufficient ambient dimension for the density-increment dichotomy. -/
 opaque incrementBound (k d : ℕ) (δ : ℝ) : ℕ
 
+/-- **Hard helper:** select one working dimension supporting both structured correlation and the
+final tiling argument.
+
+The bound simultaneously leaves enough ambient coordinates for the many-lines construction and
+makes the resulting parameter cube large enough for the insensitive-intersection construction and
+for tiling that intersection by `d`-subspaces. -/
+lemma incrementBound_spec {k d : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) (hd : 1 ≤ d)
+    {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {n : ℕ} (hn : incrementBound k d δ ≤ n) :
+    ∃ m, 1 ≤ m ∧
+      insensitiveIntersectionDimension k δ ≤ m ∧
+      manyLinesBound k m δ ≤ n ∧
+      IsInsensitive.intersectionTilingBound k k d
+        (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m := by
+  sorry
+
+/-- **Hard helper:** tile a structured insensitive intersection and extract a dense tile.
+
+Apply `IsInsensitive.exists_disjoint_subspaces_iInter` with error
+`γ² / (4k)`.  Pairwise disjointness turns the densities on the tile ranges into finite sums, and
+the uncovered-density estimate preserves half of the correlation gain.  Finite averaging then
+selects one `d`-tile of relative `A`-density at least `δ + γ/2`; composing that tile with `V`
+gives the required ambient subspace. -/
+lemma exists_density_increment_subspace_of_structured_correlation {k d m n : ℕ}
+    (hk : 2 ≤ k) (hd : 1 ≤ d) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hm_tiling : IsInsensitive.intersectionTilingBound k k d
+      (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m)
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (D : Fin k → Finset (Fin m → Fin (k + 1)))
+    (hD : ∀ i, IsInsensitive i.castSucc (Fin.last k) (D i))
+    (hDdense : Parameters.γ k δ ≤ ((IsInsensitive.intersection D).dens : ℝ))
+    (hcorrelation : (δ + Parameters.γ k δ) *
+        ((IsInsensitive.intersection D).dens : ℝ) ≤
+      ((pullback V A ∩ IsInsensitive.intersection D).dens : ℝ)) :
+    ∃ W : Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin n),
+      δ + Parameters.γ k δ / 2 ≤ (Subspace.relativeDensity W A : ℝ) := by
+  sorry
+
 /-- A dense word family either contains a line or has increased density on a prescribed-dimensional
 subspace. -/
 lemma density_increment {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
@@ -824,6 +892,20 @@ lemma density_increment {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
     (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
       ∃ V : Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin n),
         δ + Parameters.γ k δ / 2 ≤ (Subspace.relativeDensity V A : ℝ) := by
-  sorry
+  classical
+  by_cases hfree : IsLineFree A
+  · obtain ⟨m, hm, hm_large, hmn, hm_tiling⟩ :=
+      incrementBound_spec hk hDHJ hd hδ₀ hδ₁ hn
+    letI : Nonempty (Fin m) := ⟨⟨0, hm⟩⟩
+    letI : Nonempty (Combinatorics.Line (Fin k) (Fin m)) :=
+      ⟨Combinatorics.Line.diagonal (Fin k) (Fin m)⟩
+    obtain ⟨V, D, hD, hDdense, hcorrelation⟩ :=
+      exists_structured_correlation hk hDHJ m n hm δ hδ₀ hδ₁ hm_large hmn A hA hfree
+    exact Or.inr <|
+      exists_density_increment_subspace_of_structured_correlation hk hd hδ₀ hδ₁ hm_tiling
+        A V D hD hDdense hcorrelation
+  · rw [IsLineFree] at hfree
+    push Not at hfree
+    exact Or.inl hfree
 
 end DensityHalesJewett
