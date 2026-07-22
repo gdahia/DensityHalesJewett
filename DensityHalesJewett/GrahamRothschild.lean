@@ -6,6 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.Subspace
+import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # The Graham--Rothschild theorem for combinatorial lines
@@ -24,14 +25,73 @@ namespace DensityHalesJewett
 namespace FiniteUnions
 
 /-- A Hales--Jewett dimension sufficient to focus `q` color profiles simultaneously. -/
-opaque focusBound (alphabet colors q : ℕ) : ℕ
+lemma exists_focus_dimension (alphabet colors q : ℕ) (halphabet : 0 < alphabet) :
+    ∃ N, ∀ n ≥ N, ∀ χ : (Fin n → Fin alphabet) → Fin q → Fin colors,
+      ∃ l : Combinatorics.Line (Fin alphabet) (Fin n), ∃ c, ∀ a, χ (l a) = c := by
+  obtain ⟨ι, _, hι⟩ := Combinatorics.Line.exists_mono_in_high_dimension
+    (Fin alphabet) (Fin q → Fin colors)
+  let e := Fintype.equivFin ι
+  let N := Fintype.card ι
+  refine ⟨N, ?_⟩
+  intro n hn
+  rw [← Nat.add_sub_of_le hn]
+  intro χ
+  let x₀ : Fin alphabet := ⟨0, halphabet⟩
+  obtain ⟨l, c, hc⟩ := hι fun w i ↦
+    χ (Fin.addCases (fun j ↦ w (e.symm j)) (fun _ ↦ x₀)) i
+  let l' : Combinatorics.Line (Fin alphabet) (Fin (N + (n - N))) :=
+    { idxFun := Fin.addCases (fun i ↦ l.idxFun (e.symm i)) (fun _ ↦ some x₀)
+      proper := by
+        obtain ⟨i, hi⟩ := l.proper
+        refine ⟨Fin.castAdd (n - N) (e i), ?_⟩
+        simp only [Fin.addCases_left, e, Equiv.symm_apply_apply, hi] }
+  refine ⟨l', c, ?_⟩
+  intro a
+  funext i
+  convert congrFun (hc a) i using 1
+  apply congrArg (fun w ↦ χ w i)
+  funext j
+  refine Fin.addCases ?_ ?_ j
+  · intro i
+    simp only [l', Combinatorics.Line.coe_apply, Fin.addCases_left]
+  · intro i
+    simp only [l', Combinatorics.Line.coe_apply, Fin.addCases_right, Option.getD_some]
+
+/-- A Hales--Jewett dimension sufficient to focus `q` color profiles simultaneously. -/
+noncomputable def focusBound (alphabet colors q : ℕ) : ℕ :=
+  by
+    classical
+    exact if halphabet : 0 < alphabet then
+      Nat.find (exists_focus_dimension alphabet colors q halphabet)
+    else 0
+
+lemma focusBound_spec (alphabet colors q n : ℕ) (halphabet : 0 < alphabet)
+    (hn : focusBound alphabet colors q ≤ n) :
+    ∀ χ : (Fin n → Fin alphabet) → Fin q → Fin colors,
+      ∃ l : Combinatorics.Line (Fin alphabet) (Fin n), ∃ c, ∀ a, χ (l a) = c := by
+  classical
+  rw [focusBound, dif_pos halphabet] at hn
+  exact (Nat.find_spec (exists_focus_dimension alphabet colors q halphabet)) n hn
 
 /-- The simultaneous color-profile focusing step used in the finite-unions argument. -/
 lemma focus (A C U : Type*) [Fintype A] [Nonempty A] [Fintype C] [Fintype U]
     (n : ℕ) (hn : focusBound (Fintype.card A) (Fintype.card C) (Fintype.card U) ≤ n)
     (χ : U → (Fin n → A) → C) :
     ∃ l : Combinatorics.Line A (Fin n), ∀ u, ∃ c, ∀ a, χ u (l a) = c := by
-  sorry
+  let eA := Fintype.equivFin A
+  let eC := Fintype.equivFin C
+  let eU := Fintype.equivFin U
+  obtain ⟨l, c, hc⟩ := focusBound_spec (Fintype.card A) (Fintype.card C) (Fintype.card U) n
+    (Fintype.card_pos_iff.mpr inferInstance) hn fun w u ↦
+      eC (χ (eU.symm u) (eA.symm ∘ w))
+  refine ⟨l.map eA.symm, ?_⟩
+  intro u
+  refine ⟨eC.symm (c (eU u)), ?_⟩
+  intro a
+  apply eC.injective
+  rw [← eA.symm_apply_apply a, Combinatorics.Line.map_apply]
+  simpa only [eA, eC, eU, Equiv.apply_symm_apply, Equiv.symm_apply_apply,
+    Function.comp_apply] using congrFun (hc (eA a)) (eU u)
 
 /-- A dimension sufficient for the finite-unions theorem. -/
 opaque bound (colors m : ℕ) : ℕ

@@ -136,6 +136,13 @@ parameter word representing each point of an ambient line and one proper coordin
 direction of $V$.  Reading the ambient line at these coordinates recovers a parameter line; its
 properness follows because a variable coordinate of the ambient line cannot be fixed by $V$.
 
+Nested parameter subspaces are composed by substituting the inner generating word for every
+variable direction of the outer one.  The resulting evaluation satisfies
+$(V\circ W)(x)=V(W(x))$; this is the form used to pull line-free and containment hypotheses back
+through every density increment.
+Subspaces on disjoint coordinate blocks are concatenated in the same parameterized form, and their
+evaluation is the concatenation of their separate evaluations.
+
 \begin{lemma}[Lines in a subspace]
 \label{lem:lines-equiv}
 \lean{DensityHalesJewett.Subspace.linesEquiv}
@@ -306,6 +313,12 @@ packet pieces at the variable coordinates is nonempty and becomes the new block 
 coordinates are absorbed into the fixed part of the reservoir.  Monochromaticity of the line is
 exactly the asserted simultaneous invariance.  Empty unions are assigned an arbitrary dummy color
 when constructing the profile and are never used in the conclusion.
+
+In Lean, the noncomputable bound \texttt{focusBound} is the least dimension obtained from this
+coloring theorem for the finite profile type.  Its specification is upward closed: a line in the
+chosen initial coordinates is extended by fixing every added coordinate.  This permits the theorem
+to use the bound solely through \texttt{focusBound\_spec} and to transport arbitrary finite
+alphabets, profile indices, and color types through their equivalences with \texttt{Fin}.
 \end{proof}
 
 \begin{theorem}[Finite unions theorem]

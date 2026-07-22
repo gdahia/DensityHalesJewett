@@ -47,6 +47,54 @@ lemma mem_range [Fintype (η → α)] [DecidableEq (ι → α)]
 def IsContained (V : Combinatorics.Subspace η α ι) (A : Finset (ι → α)) : Prop :=
   ∀ x, V x ∈ A
 
+/-- Compose a parameter subspace with an ambient subspace. -/
+def compose (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ α η) :
+    Combinatorics.Subspace θ α ι where
+  idxFun i := (V.idxFun i).elim Sum.inl W.idxFun
+  proper e := by
+    obtain ⟨j, hj⟩ := W.proper e
+    obtain ⟨i, hi⟩ := V.proper j
+    refine ⟨i, ?_⟩
+    simp only [hi, Sum.elim_inr, hj]
+
+@[simp]
+lemma compose_apply (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ α η)
+    (x : θ → α) : compose V W x = V (W x) := by
+  funext i
+  cases hi : V.idxFun i
+  · simp [compose, Combinatorics.Subspace.coe_apply, hi]
+  · simp [compose, Combinatorics.Subspace.coe_apply, hi]
+
+/-- Concatenate subspaces on disjoint coordinate blocks. -/
+def concat (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ α κ) :
+    Combinatorics.Subspace (η ⊕ θ) α (ι ⊕ κ) where
+  idxFun := Sum.elim
+    (fun i ↦ (V.idxFun i).elim Sum.inl (fun e ↦ Sum.inr <| Sum.inl e))
+    (fun i ↦ (W.idxFun i).elim Sum.inl (fun e ↦ Sum.inr <| Sum.inr e))
+  proper e := by
+    cases e with
+    | inl e =>
+      obtain ⟨i, hi⟩ := V.proper e
+      refine ⟨Sum.inl i, ?_⟩
+      simp only [hi, Sum.elim_inl, Sum.elim_inr]
+    | inr e =>
+      obtain ⟨i, hi⟩ := W.proper e
+      refine ⟨Sum.inr i, ?_⟩
+      simp only [hi, Sum.elim_inr]
+
+@[simp]
+lemma concat_apply (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ α κ)
+    (x : η → α) (y : θ → α) : concat V W (DensityHalesJewett.concat x y) =
+      DensityHalesJewett.concat (V x) (W y) := by
+  funext i
+  cases i with
+  | inl i =>
+    cases hi : V.idxFun i <;>
+      simp [concat, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply, hi]
+  | inr i =>
+    cases hi : W.idxFun i <;>
+      simp [concat, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply, hi]
+
 /-- Relative density on a subspace, defined on its parameter cube. -/
 def relativeDensity [Fintype (η → α)] [DecidableEq (ι → α)]
     (V : Combinatorics.Subspace η α ι) (A : Finset (ι → α)) : ℚ≥0 :=
