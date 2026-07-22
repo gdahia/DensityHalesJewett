@@ -232,7 +232,7 @@ lemma dhj_two : HasDensityHJ 2 := by
     simpa only [B, Fintype.card_fin] using hB.sperner
   exact (not_lt_of_ge (hA.trans <| by exact_mod_cast hcard)) (hN n hn)
 
-/-- **Easy helper:** a positive uniform increment eventually raises the density floor above one. -/
+/-- A positive uniform increment eventually raises the density floor above one. -/
 lemma exists_density_increment_steps {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) :
     ∃ R : ℕ, 1 < δ + (R : ℝ) * (Parameters.γ k δ / 2) := by
   refine ⟨⌈2 / (Parameters.γ k δ)⌉₊ + 1, ?_⟩
@@ -244,7 +244,7 @@ lemma exists_density_increment_steps {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 
   apply (div_lt_iff₀ (Parameters.γ_pos hk hδ)).1
   apply lt_of_le_of_lt (Nat.ceil_le.mp le_rfl) (by grind)
 
-/-- **Medium helper:** choose the dimensions for a finite density-increment iteration backwards.
+/-- Choose the dimensions for a finite density-increment iteration backwards.
 
 The last parameter cube has dimension one.  At stage `j`, the preceding dimension is large enough
 to apply `density_increment` with density floor `δ + j * (γ k δ / 2)` and target dimension
@@ -281,7 +281,7 @@ lemma exists_density_increment_schedule (k R : ℕ) (δ : ℝ) :
     exact le_max_right _ _
   exact ⟨d, h_d_R, h_d_one, h_d_step⟩
 
-/-- **Hard helper:** iterate the density-increment dichotomy along a backward dimension schedule.
+/-- Iterate the density-increment dichotomy along a backward dimension schedule.
 
 Pull back the family after each increment and compose the resulting nested subspaces.  A line in
 any parameter cube gives a line in the original family.  Otherwise monotonicity of `Parameters.γ`

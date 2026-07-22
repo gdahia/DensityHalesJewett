@@ -198,7 +198,7 @@ def pullback {η α ι : Type*} [Fintype (η → α)] [DecidableEq (ι → α)]
 /-- A bound for the correlated-fibers lemma. -/
 opaque correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ
 
-/-- **Hard helper:** uniformize the fibers and canonize their line-density coloring.
+/-- Uniformize the fibers and canonize their line-density coloring.
 
 The working parameter dimension is chosen large enough both for the requested `m`-dimensional
 output and for the density Hales--Jewett argument at dimension `Parameters.m₀ k δ`.  In the
@@ -229,7 +229,7 @@ lemma exists_correlated_fibers_or_sparse_certificate {k : ℕ} (hk : 2 ≤ k)
                 Parameters.θ k δ := by
   sorry
 
-/-- **Hard helper:** the uniformly sparse certificate is impossible.
+/-- The uniformly sparse certificate is impossible.
 
 Average the dense fibers over suffixes, find many suffix slices of density at least `δ / 4`, and
 apply `hDHJ` on an embedded `Parameters.m₀ k δ`-dimensional parameter cube in each such slice.
@@ -574,11 +574,9 @@ lemma Subspace.fixSuffixReindex_statistics {k m : ℕ} {ι κ ζ : Type*}
     ext j
     cases j with
     | inl i =>
-      simp [Subspace.fixSuffix, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply,
-        concat_apply_inl]
+      simp [Subspace.fixSuffix, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply]
     | inr k =>
-      simp [Subspace.fixSuffix, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply,
-        concat_apply_inr]
+      simp [Subspace.fixSuffix, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply]
   have h_eval (x : Fin m → Fin (k + 1)) :
       Subspace.fixSuffixReindex e V y x = DensityHalesJewett.concat (V x) y ∘ e.symm := by
     calc
@@ -756,8 +754,7 @@ def firstFailureFamily {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) (i : Fin k) : Fin k → Finset X :=
   fun j ↦ if j < i then C j else if j = i then (C j)ᶜ else Finset.univ
 
-/-- **Medium helper:** every member of the first-failure family has the required sensitivity
-pair. -/
+/-- Every member of the first-failure family has the required sensitivity pair. -/
 lemma firstFailureFamily_isInsensitive {k : ℕ} {ι : Type*}
     [Fintype (ι → Fin (k + 1))] [DecidableEq (ι → Fin (k + 1))]
     (C : Fin k → Finset (ι → Fin (k + 1)))
@@ -772,26 +769,25 @@ lemma firstFailureFamily_isInsensitive {k : ℕ} {ι : Type*}
       simpa using (hC i).compl
     · simp [hij, hej, IsInsensitive]
 
-/-- **Medium helper:** intersecting the first-failure family recovers its selected piece. -/
+/-- Intersecting the first-failure family recovers its selected piece. -/
 lemma firstFailureFamily_intersection {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) (i : Fin k) :
     IsInsensitive.intersection (firstFailureFamily C i) = firstFailurePiece C i := by
   sorry
 
-/-- **Medium helper:** the first-failure pieces cover the complement of the original
-intersection. -/
+/-- The first-failure pieces cover the complement of the original intersection. -/
 lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) :
     Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ := by
   sorry
 
-/-- **Medium helper:** distinct first-failure pieces are disjoint. -/
+/-- Distinct first-failure pieces are disjoint. -/
 lemma firstFailurePiece_pairwiseDisjoint {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) :
     (Set.univ : Set (Fin k)).PairwiseDisjoint fun i ↦ (firstFailurePiece C i : Set X) := by
   sorry
 
-/-- **Hard helper:** the first-failure partition and its quantitative weighted averaging.
+/-- The first-failure partition and its quantitative weighted averaging.
 
 The complement of `intersection C` is partitioned by `firstFailurePiece C i`.  The two global
 density estimates ensure that one piece is both large enough and has the required relative
@@ -888,8 +884,8 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
 /-- A sufficient ambient dimension for the density-increment dichotomy. -/
 opaque incrementBound (k d : ℕ) (δ : ℝ) : ℕ
 
-/-- **Hard helper:** select one working dimension supporting both structured correlation and the
-final tiling argument.
+/-- Select one working dimension supporting both structured correlation and the final tiling
+argument.
 
 The bound simultaneously leaves enough ambient coordinates for the many-lines construction and
 makes the resulting parameter cube large enough for the insensitive-intersection construction and
@@ -904,7 +900,7 @@ lemma incrementBound_spec {k d : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) (hd
         (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m := by
   sorry
 
-/-- **Hard helper:** tile a structured insensitive intersection and extract a dense tile.
+/-- Tile a structured insensitive intersection and extract a dense tile.
 
 Apply `IsInsensitive.exists_disjoint_subspaces_iInter` with error
 `γ² / (4k)`.  Pairwise disjointness turns the densities on the tile ranges into finite sums, and

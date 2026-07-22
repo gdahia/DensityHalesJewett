@@ -440,7 +440,7 @@ lemma canonize (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
         χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q) := by
   sorry
 
-/-- **Hard helper:** finite unions applied to a canonized line coloring.
+/-- Finite unions applied to a canonized line coloring.
 
 The coloring induced on nonempty variable supports is monochromatic on every nonempty union of
 an ordered block sequence.  Constructing the induced support coloring requires handling the empty
@@ -460,7 +460,7 @@ lemma exists_canonized_finiteUnions_blocks (α C : Type*) [Fintype α] [Nontrivi
           χ (Subspace.mapLine V p) = c := by
   sorry
 
-/-- **Hard helper:** assemble ordered finite-unions blocks into a subspace.
+/-- Assemble ordered finite-unions blocks into a subspace.
 
 Every parameter line of the resulting subspace has variable support equal to the union of the
 blocks indexed by its variable directions.  The final equality records compatibility of this
