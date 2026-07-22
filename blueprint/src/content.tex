@@ -142,6 +142,9 @@ $(V\circ W)(x)=V(W(x))$; this is the form used to pull line-free and containment
 through every density increment.
 Subspaces on disjoint coordinate blocks are concatenated in the same parameterized form, and their
 evaluation is the concatenation of their separate evaluations.
+For finite blocks, Lean then reindexes the two sums by \texttt{finSumFinEquiv}; the resulting
+\texttt{concatFin} subspace has the expected dimensions and exposes separate evaluation formulas
+on its left and right coordinate blocks.
 
 \begin{lemma}[Lines in a subspace]
 \label{lem:lines-equiv}
@@ -468,6 +471,24 @@ There are fewer than $(k+1)^M$ possible line structures, so one line $\ell$ occu
 of prefixes of density at least $\frac\delta2(k+1)^{-M}$.  The induction hypothesis gives an
 $m$-subspace $W\subseteq C$, and $W\concat\ell$ is an $(m+1)$-subspace contained in $A$.
 \end{proof}
+
+The Lean development first packages the $m=1$ case in
+\texttt{densityOneBound}: it chooses the threshold supplied by $\mathsf{DHJ}_k$ and reindexes a
+line viewed as a unit-dimensional subspace to one with parameter type \texttt{Fin 1}.  To ensure
+that the suffix line type is nonempty, the successor step takes the suffix dimension to be the
+maximum of $1$ and the threshold at density $\delta/2$.  It enumerates the finite line type through
+the injective map from lines to their index words; the separate cardinal bound by
+$(k+1)^M$ is also available.
+For the degenerate alphabet $k=0$, it instead repeats the $m$ parameter coordinates across the
+ambient cube; there are no parameter words, so this subspace is vacuously contained in every
+family.  In the positive-alphabet branch, Lean converts between the cardinal hypothesis and
+\texttt{Finset.dens}, then applies the threshold-averaging lemma to obtain the dense prefix family.
+It then uses a finite fiber-averaging lemma to select one suffix line occurring on at least its
+average relative density of those prefixes, namely at least $\delta/(2\#\Lines([k]^M))$.
+Each selected line is obtained by applying the one-dimensional density assertion to its dense
+suffix fiber.  The induction produces a threshold valid in every larger dimension; Lean defines
+\texttt{densityBound} by \texttt{Nat.find} from this eventual statement and exposes
+\texttt{densityBound\_spec} as its downstream interface.
 
 \begin{lemma}[Uniform fibers on a subspace]
 \label{lem:uniform-fibers}

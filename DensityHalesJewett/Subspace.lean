@@ -6,6 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.Word
+public import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # Combinatorial subspaces
@@ -94,6 +95,43 @@ lemma concat_apply (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subs
   | inr i =>
     cases hi : W.idxFun i <;>
       simp [concat, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply, hi]
+
+/-- Concatenate finite-dimensional subspaces and reindex both coordinate sums as finite types. -/
+def concatFin {m p q r : ℕ} (V : Combinatorics.Subspace (Fin m) α (Fin p))
+    (W : Combinatorics.Subspace (Fin q) α (Fin r)) :
+    Combinatorics.Subspace (Fin (m + q)) α (Fin (p + r)) :=
+  (concat V W).reindex finSumFinEquiv (Equiv.refl _) finSumFinEquiv
+
+@[simp]
+lemma concatFin_apply_left {m p q r : ℕ} (V : Combinatorics.Subspace (Fin m) α (Fin p))
+    (W : Combinatorics.Subspace (Fin q) α (Fin r)) (x : Fin (m + q) → α) (i : Fin p) :
+    concatFin V W x (Fin.castAdd r i) = V (fun e ↦ x (Fin.castAdd q e)) i := by
+  rw [concatFin, Combinatorics.Subspace.reindex_apply]
+  simp only [Equiv.refl_apply, Equiv.refl_symm, finSumFinEquiv_symm_apply_castAdd]
+  cases hi : V.idxFun i <;>
+    simp [concat, Combinatorics.Subspace.coe_apply, hi]
+
+@[simp]
+lemma concatFin_apply_right {m p q r : ℕ} (V : Combinatorics.Subspace (Fin m) α (Fin p))
+    (W : Combinatorics.Subspace (Fin q) α (Fin r)) (x : Fin (m + q) → α) (i : Fin r) :
+    concatFin V W x (Fin.natAdd p i) = W (fun e ↦ x (Fin.natAdd m e)) i := by
+  rw [concatFin, Combinatorics.Subspace.reindex_apply]
+  simp only [Equiv.refl_apply, Equiv.refl_symm, finSumFinEquiv_symm_apply_natAdd]
+  cases hi : W.idxFun i <;>
+    simp [concat, Combinatorics.Subspace.coe_apply, hi]
+
+/-- Regard a line as a one-dimensional subspace parameterized by `Fin 1`. -/
+def lineToSubspaceFinOne (l : Combinatorics.Line α ι) :
+    Combinatorics.Subspace (Fin 1) α ι :=
+  l.toSubspaceUnit.reindex finOneEquiv.symm (Equiv.refl _) (Equiv.refl _)
+
+@[simp]
+lemma lineToSubspaceFinOne_apply (l : Combinatorics.Line α ι) (x : Fin 1 → α) :
+    lineToSubspaceFinOne l x = l (x 0) := by
+  funext i
+  simp only [lineToSubspaceFinOne, Combinatorics.Subspace.reindex_apply, Equiv.refl_apply,
+    Equiv.refl_symm, Function.comp_apply, Combinatorics.Line.toSubspaceUnit_apply]
+  exact congrArg (fun a ↦ l a i) (congrArg x (Fin.eq_zero _))
 
 /-- Relative density on a subspace, defined on its parameter cube. -/
 def relativeDensity [Fintype (η → α)] [DecidableEq (ι → α)]
