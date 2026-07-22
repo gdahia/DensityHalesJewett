@@ -516,6 +516,54 @@ lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
   · exact hAC
   · exact Parameters.large_intersection_complement_gain hk hδ₀
 
+/-- The part of the complement of an indexed intersection at which membership first fails. -/
+def firstFailurePiece {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
+    (C : Fin k → Finset X) (i : Fin k) : Finset X :=
+  (C i)ᶜ ∩ Finset.univ.filter fun x ↦ ∀ j, j < i → x ∈ C j
+
+/-- Replace the first failed set by its complement, retain the preceding sets, and make all
+subsequent constraints vacuous. -/
+def firstFailureFamily {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
+    (C : Fin k → Finset X) (i : Fin k) : Fin k → Finset X :=
+  fun j ↦ if j < i then C j else if j = i then (C j)ᶜ else Finset.univ
+
+/-- **Hard helper:** the first-failure partition and its quantitative weighted averaging.
+
+The complement of `intersection C` is partitioned by `firstFailurePiece C i`.  The two global
+density estimates ensure that one piece is both large enough and has the required relative
+`A`-density. -/
+lemma exists_dense_firstFailurePiece {k : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
+    (A : Finset X) (C : Fin k → Finset X)
+    (hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
+    (hweighted : (δ + 6 * Parameters.η k δ) *
+        ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
+      ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ))
+    (hlarge : δ - 3 * Parameters.η k δ ≤
+      ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ)) :
+    ∃ i : Fin k,
+      Parameters.γ k δ ≤ ((firstFailurePiece C i).dens : ℝ) ∧
+      (δ + Parameters.γ k δ) * ((firstFailurePiece C i).dens : ℝ) ≤
+        ((A ∩ firstFailurePiece C i).dens : ℝ) := by
+  sorry
+
+/-- **Hard helper:** the Boolean reconstruction of a first-failure piece as an insensitive
+intersection.
+
+Complement closure preserves the sensitivity pair at the failure index, while the universal
+sets after that index impose no constraints. -/
+lemma firstFailureFamily_facts {k : ℕ} {ι : Type*}
+    [Fintype (ι → Fin (k + 1))] [DecidableEq (ι → Fin (k + 1))]
+    (C : Fin k → Finset (ι → Fin (k + 1)))
+    (hC : ∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) (i : Fin k) :
+    (∀ j, IsInsensitive j.castSucc (Fin.last k) (firstFailureFamily C i j)) ∧
+      IsInsensitive.intersection (firstFailureFamily C i) = firstFailurePiece C i ∧
+      Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ ∧
+      (Set.univ : Set (Fin k)).PairwiseDisjoint fun j ↦
+        (firstFailurePiece C j : Set (ι → Fin (k + 1))) := by
+  sorry
+
 /-- Correlation with a positive-density intersection of insensitive families. -/
 lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m n : ℕ) (hm : 1 ≤ m)
@@ -530,7 +578,46 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
         Parameters.γ k δ ≤ ((IsInsensitive.intersection D).dens : ℝ) ∧
         (δ + Parameters.γ k δ) * ((IsInsensitive.intersection D).dens : ℝ) ≤
           ((pullback V A ∩ IsInsensitive.intersection D).dens : ℝ) := by
-  sorry
+  classical
+  by_cases hlarge : ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
+      δ + Parameters.η k δ ^ 2 / 2 ≤ (Subspace.relativeDensity V A : ℝ)
+  · obtain ⟨V, hV⟩ := hlarge
+    letI : Nonempty (Fin k) := ⟨⟨0, by omega⟩⟩
+    letI : DecidableEq (Fin m → Fin (k + 1)) := Classical.decEq _
+    let D := fun _ : Fin k ↦ (Finset.univ : Finset (Fin m → Fin (k + 1)))
+    have hD : IsInsensitive.intersection D = Finset.univ := by
+      simpa only [IsInsensitive.intersection, D] using
+        (Finset.inf_const (s := (Finset.univ : Finset (Fin k))) Finset.univ_nonempty
+          (Finset.univ : Finset (Fin m → Fin (k + 1))))
+    refine ⟨V, D, ?_, ?_, ?_⟩
+    · intro i x y _
+      simp only [D, Finset.mem_univ]
+    · rw [hD]
+      norm_num
+      nlinarith [Parameters.η_le_δ_div_six k δ,
+        Parameters.γ_le_η_sq_div_two k δ, Parameters.η_pos hk hδ₀,
+        sq_nonneg (1 - Parameters.η k δ)]
+    · rw [hD]
+      norm_num
+      change δ + Parameters.γ k δ ≤ (Subspace.relativeDensity V A : ℝ)
+      linarith [Parameters.γ_le_η_sq_div_two k δ]
+  · have hsmall : ∀ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
+        (Subspace.relativeDensity V A : ℝ) <
+          δ + Parameters.η k δ ^ 2 / 2 := by
+      intro V
+      exact lt_of_not_ge fun hV ↦ hlarge ⟨V, hV⟩
+    obtain ⟨V, C, hC, hCdense, hweighted, houtside⟩ :=
+      exists_large_insensitive_intersection hk hDHJ m n hm δ hδ₀ hδ₁ hm_large hn A hA
+        hfree hsmall
+    obtain ⟨i, hidense, hicorrelation⟩ :=
+      exists_dense_firstFailurePiece hk hδ₀ hδ₁ (pullback V A) C hCdense hweighted
+        houtside
+    obtain ⟨hD, hintersection, _, _⟩ := firstFailureFamily_facts C hC i
+    refine ⟨V, firstFailureFamily C i, hD, ?_, ?_⟩
+    · rw [hintersection]
+      exact hidense
+    · rw [hintersection]
+      exact hicorrelation
 
 /-- A sufficient ambient dimension for the density-increment dichotomy. -/
 opaque incrementBound (k d : ℕ) (δ : ℝ) : ℕ
