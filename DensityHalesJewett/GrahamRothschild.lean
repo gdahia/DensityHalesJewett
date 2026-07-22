@@ -440,8 +440,46 @@ lemma canonize (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
         χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q) := by
   sorry
 
+/-- **Hard helper:** finite unions applied to a canonized line coloring.
+
+The coloring induced on nonempty variable supports is monochromatic on every nonempty union of
+an ordered block sequence.  Constructing the induced support coloring requires handling the empty
+support without assuming `C` is inhabited. -/
+lemma exists_canonized_finiteUnions_blocks (α C : Type*) [Fintype α] [Nontrivial α]
+    [Fintype C] [DecidableEq α] (m L n : ℕ) (hm : 1 ≤ m)
+    (hL : FiniteUnions.bound (Fintype.card C) m ≤ L)
+    (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (χ : Combinatorics.Line α (Fin n) → C)
+    (hχ : ∀ p q : Combinatorics.Line α (Fin L), variableSet p = variableSet q →
+      χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q)) :
+    ∃ B : Fin m → Finset (Fin L),
+      (∀ i, (B i).Nonempty) ∧
+      (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
+      ∃ c, ∀ I : Finset (Fin m), I.Nonempty →
+        ∀ p : Combinatorics.Line α (Fin L), variableSet p = I.biUnion B →
+          χ (Subspace.mapLine V p) = c := by
+  sorry
+
+/-- **Hard helper:** assemble ordered finite-unions blocks into a subspace.
+
+Every parameter line of the resulting subspace has variable support equal to the union of the
+blocks indexed by its variable directions.  The final equality records compatibility of this
+construction with mapping a line through a composite subspace. -/
+lemma exists_ordered_block_subspace (α : Type*) [Fintype α] [Nontrivial α]
+    [DecidableEq α] {m L n : ℕ} (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (B : Fin m → Finset (Fin L)) (hBne : ∀ i, (B i).Nonempty)
+    (hBorder : ∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) :
+    ∃ W : Combinatorics.Subspace (Fin m) α (Fin L),
+      ∀ l : Combinatorics.Line α (Fin m),
+        ∃ I : Finset (Fin m), I.Nonempty ∧
+          variableSet (Subspace.mapLine W l) = I.biUnion B ∧
+          Subspace.mapLine (Subspace.compose V W) l =
+            Subspace.mapLine V (Subspace.mapLine W l) := by
+  sorry
+
 /-- A Graham--Rothschild dimension for colorings of combinatorial lines. -/
-opaque bound (alphabet colors dimension : ℕ) : ℕ
+noncomputable def bound (alphabet colors dimension : ℕ) : ℕ :=
+  canonizationBound alphabet colors (FiniteUnions.bound colors dimension)
 
 /-- The line case of the Graham--Rothschild theorem. -/
 lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
@@ -450,7 +488,16 @@ lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
     (χ : Combinatorics.Line α (Fin n) → C) :
     ∃ V : Combinatorics.Subspace (Fin m) α (Fin n),
       ∃ c, ∀ l : Combinatorics.Line α (Fin m), χ (Subspace.mapLine V l) = c := by
-  sorry
+  let L := FiniteUnions.bound (Fintype.card C) m
+  obtain ⟨V, hV⟩ := canonize α C L n (by simpa only [bound, L] using hn) χ
+  obtain ⟨B, hBne, hBorder, c, hBc⟩ :=
+    exists_canonized_finiteUnions_blocks α C m L n hm le_rfl V χ hV
+  obtain ⟨W, hW⟩ := exists_ordered_block_subspace α V B hBne hBorder
+  refine ⟨Subspace.compose V W, c, ?_⟩
+  intro l
+  obtain ⟨I, hI, hvariable, hmap⟩ := hW l
+  rw [hmap]
+  exact hBc I hI (Subspace.mapLine W l) hvariable
 
 /-- The two-color form of Graham--Rothschild used by the density argument. -/
 lemma lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
