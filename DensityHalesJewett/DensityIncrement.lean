@@ -387,6 +387,7 @@ fixed-suffix line density.  This is the second finite double-counting step. -/
 lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
     [Fintype (κ → Fin (k + 1))]
     [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    [Nonempty (Combinatorics.Line (Fin k) (Fin m))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι)
     (A : Finset (ι ⊕ κ → Fin (k + 1))) (θ : ℝ)
@@ -394,7 +395,46 @@ lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
       θ ≤ ((Finset.univ.filter fun y ↦
         ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)) :
     θ ≤ 𝔼 y : κ → Fin (k + 1), ((suffixLines V A y).dens : ℝ) := by
-  sorry
+  have h_expect_eq : 𝔼 l : Combinatorics.Line (Fin k) (Fin m),
+      ((Finset.univ.filter fun y ↦
+        ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) =
+      𝔼 y : κ → Fin (k + 1), ((suffixLines V A y).dens : ℝ) := by
+    calc
+      𝔼 l : Combinatorics.Line (Fin k) (Fin m),
+          ((Finset.univ.filter fun y ↦
+            ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)
+          = 𝔼 l : Combinatorics.Line (Fin k) (Fin m),
+            𝔼 y : κ → Fin (k + 1),
+            (Set.indicator (Finset.univ.filter fun y ↦
+              ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A)
+              (1 : (κ → Fin (k + 1)) → ℝ) y : ℝ) := by
+        refine Finset.expect_congr rfl fun l _ => ?_
+        rw [← Finset.expect_indicator_one]
+      _ = 𝔼 y : κ → Fin (k + 1),
+          𝔼 l : Combinatorics.Line (Fin k) (Fin m),
+          (Set.indicator (Finset.univ.filter fun y ↦
+            ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A)
+            (1 : (κ → Fin (k + 1)) → ℝ) y : ℝ) := by
+        rw [Finset.expect_comm (Finset.univ : Finset (Combinatorics.Line (Fin k) (Fin m)))
+          (Finset.univ : Finset (κ → Fin (k + 1)))]
+      _ = 𝔼 y : κ → Fin (k + 1),
+          𝔼 l : Combinatorics.Line (Fin k) (Fin m),
+          (Set.indicator (suffixLines V A y)
+            (1 : Combinatorics.Line (Fin k) (Fin m) → ℝ) l : ℝ) := by
+        refine Finset.expect_congr rfl fun y _ => ?_
+        refine Finset.expect_congr rfl fun l _ => ?_
+        dsimp [suffixLines]
+        by_cases h : ∀ a : Fin k, concat (V (Fin.castSucc ∘ l a)) y ∈ A
+        · simp [h]
+        · simp [h]
+      _ = 𝔼 y : κ → Fin (k + 1), ((suffixLines V A y).dens : ℝ) := by
+        simp
+  have h_θ_le_expect : θ ≤ 𝔼 l : Combinatorics.Line (Fin k) (Fin m),
+      ((Finset.univ.filter fun y ↦
+        ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) :=
+    Finset.le_expect (Finset.univ_nonempty (α := Combinatorics.Line (Fin k) (Fin m)))
+      fun l _ => hV l
+  exact h_θ_le_expect.trans h_expect_eq.le
 
 /-- A `[0,1]`-valued function with average at least `θ` exceeds `θ/2` on a set of
 density at least `θ/2`. -/
@@ -451,6 +491,7 @@ lemma Parameters.θ_le_one {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₁ : δ ≤ 
 complete parameter lines. -/
 lemma exists_suffix_many_lines {k m : ℕ} (hk : 2 ≤ k)
     [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    [Nonempty (Combinatorics.Line (Fin k) (Fin m))]
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     {ι κ : Type*} [Fintype (Fin m → Fin (k + 1))]
     [Fintype (κ → Fin (k + 1))]
@@ -536,6 +577,7 @@ def manyLinesBound (k m : ℕ) (δ : ℝ) : ℕ :=
 proportion of all parameter-cube lines. -/
 lemma exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
     (m : ℕ) [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    [Nonempty (Combinatorics.Line (Fin k) (Fin m))]
     (hm : 1 ≤ m) (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (n : ℕ) (hn : manyLinesBound k m δ ≤ n)
     (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
@@ -632,6 +674,7 @@ lemma density_complement_bounds {X : Type*} [Fintype X] [Nonempty X]
 /-- A large intersection of insensitive families with a density gain on its complement. -/
 lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m n : ℕ) (hm : 1 ≤ m)
+    [Nonempty (Combinatorics.Line (Fin k) (Fin m))]
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (hm_large : insensitiveIntersectionDimension k δ ≤ m)
     (hn : manyLinesBound k m δ ≤ n)
@@ -716,6 +759,7 @@ lemma firstFailureFamily_facts {k : ℕ} {ι : Type*}
 /-- Correlation with a positive-density intersection of insensitive families. -/
 lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m n : ℕ) (hm : 1 ≤ m)
+    [Nonempty (Combinatorics.Line (Fin k) (Fin m))]
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (hm_large : insensitiveIntersectionDimension k δ ≤ m)
     (hn : manyLinesBound k m δ ≤ n)
