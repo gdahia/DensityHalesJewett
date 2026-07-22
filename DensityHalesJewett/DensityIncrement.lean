@@ -314,7 +314,8 @@ lemma average_suffixPullback_lower {α η ι κ : Type*} [Nonempty α] [Fintype 
         simp
       _ = 𝔼 y : κ → α, 𝔼 x : η → α, (Set.indicator (fiber A (V x)) (1 : (κ → α) → ℝ) y : ℝ) := by
         rw [Finset.expect_comm (Finset.univ : Finset (η → α)) (Finset.univ : Finset (κ → α))]
-      _ = 𝔼 y : κ → α, 𝔼 x : η → α, (Set.indicator (suffixPullback V A y) (1 : (η → α) → ℝ) x : ℝ) := by
+      _ = 𝔼 y : κ → α, 𝔼 x : η → α,
+          (Set.indicator (suffixPullback V A y) (1 : (η → α) → ℝ) x : ℝ) := by
         refine Finset.expect_congr rfl fun y _ => ?_
         refine Finset.expect_congr rfl fun x _ => ?_
         by_cases h : concat (V x) y ∈ A
