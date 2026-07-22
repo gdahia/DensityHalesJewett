@@ -252,12 +252,66 @@ end DensityHalesJewett
 namespace Combinatorics.Line
 
 /-- A threshold for the density Hales--Jewett theorem over an alphabet of size `k`. -/
-opaque densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ
+noncomputable def densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ :=
+  if 2 ≤ k then DensityHalesJewett.Subspace.densityOneBound k δ else 1
+
+/-- The density theorem for alphabets with at most one letter. -/
+lemma exists_of_density_card_le_one (α : Type*) [Fintype α]
+    (hα : Fintype.card α ≤ 1) (δ : ℝ) (hδ : 0 < δ)
+    (n : ℕ) (hn : 1 ≤ n) (A : Finset (Fin n → α))
+    (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
+    ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
+  classical
+  letI : Subsingleton α := Fintype.card_le_one_iff_subsingleton.mp hα
+  letI : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
+  refine ⟨Line.diagonal α (Fin n), ?_⟩
+  intro x
+  have hcard : Fintype.card α = 1 :=
+    Fintype.card_eq_one_of_forall_eq fun y ↦ Subsingleton.elim y x
+  rw [hcard] at hAδ
+  norm_num at hAδ
+  obtain ⟨w, hw⟩ : A.Nonempty := Finset.card_pos.mp <| by
+    exact_mod_cast hδ.trans_le hAδ
+  simpa only [Subsingleton.elim (Line.diagonal α (Fin n) x) w] using hw
+
+/-- Transport the finite-alphabet density theorem across the canonical alphabet equivalence. -/
+lemma exists_of_density_card_ge_two (α : Type*) [Fintype α]
+    (hα : 2 ≤ Fintype.card α) (δ : ℝ) (hδ : 0 < δ)
+    (n : ℕ) (hn : DensityHalesJewett.Subspace.densityOneBound (Fintype.card α) δ ≤ n)
+    (A : Finset (Fin n → α)) (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
+    ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
+  classical
+  let e := Fintype.equivFin α
+  let wordEquiv : (Fin n → α) ≃ (Fin n → Fin (Fintype.card α)) :=
+    (Equiv.refl (Fin n)).arrowCongr e
+  let B := A.map wordEquiv.toEmbedding
+  have hB : δ * (Fintype.card α : ℝ) ^ n ≤ #B := by
+    simpa only [B, Finset.card_map] using hAδ
+  obtain ⟨l, hl⟩ := DensityHalesJewett.Subspace.densityOneBound_spec
+    (DensityHalesJewett.density_hales_jewett_fin (Fintype.card α) hα)
+    δ hδ n hn B hB
+  refine ⟨l.map e.symm, ?_⟩
+  intro x
+  specialize hl (e x)
+  rw [Finset.mem_map_equiv] at hl
+  change (e.symm ∘ l (e x)) ∈ A at hl
+  rw [← e.symm_apply_apply x, Combinatorics.Line.map_apply]
+  exact hl
+
+lemma densityTheoremBound_spec (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
+    (n : ℕ) (hn : densityTheoremBound (Fintype.card α) δ ≤ n)
+    (A : Finset (Fin n → α)) (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
+    ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
+  by_cases hα : 2 ≤ Fintype.card α
+  · refine exists_of_density_card_ge_two α hα δ hδ n ?_ A hAδ
+    simpa only [densityTheoremBound, if_pos hα] using hn
+  · refine exists_of_density_card_le_one α (by grind) δ hδ n ?_ A hAδ
+    simpa only [densityTheoremBound, if_neg hα] using hn
 
 theorem exists_of_density (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityTheoremBound (Fintype.card α) δ ≤ n)
     (A : Finset (Fin n → α)) (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
     ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
-  sorry
+  exact densityTheoremBound_spec α δ hδ n hn A hAδ
 
 end Combinatorics.Line
