@@ -110,18 +110,10 @@ lemma binarySupport_injective {ι : Type*} [Fintype ι] :
     Function.Injective (binarySupport : (ι → Fin 2) → Finset ι) := by
   intro x y hxy
   funext i
+  apply Fin.ext
   have hi : x i = 1 ↔ y i = 1 := by
     simpa only [binarySupport, mem_filter, mem_univ, true_and] using Finset.ext_iff.mp hxy i
-  apply Fin.ext
-  by_cases hx : x i = 1
-  · rw [hx, hi.mp hx]
-  have hx₀ : x i = 0 := by
-    apply Fin.ext
-    omega
-  have hy₀ : y i = 0 := by
-    apply Fin.ext
-    omega
-  rw [hx₀, hy₀]
+  grind
 
 /-- A squared elementary upper bound for the normalized central binomial coefficient. -/
 lemma centralBinom_ratio_sq_mul_le (m : ℕ) :
@@ -139,13 +131,10 @@ lemma centralBinom_ratio_sq_mul_le (m : ℕ) :
         field_simp
         push_cast at hrec ⊢
         linear_combination 2 * hrec
-      rw [hratio]
-      rw [mul_pow, mul_assoc]
+      rw [hratio, mul_pow, mul_assoc]
       refine le_trans (mul_le_mul_of_nonneg_left ?_ (sq_nonneg _)) ih
-      have hm : (0 : ℝ) < 2 * (m + 1) := by positivity
-      rw [div_pow]
-      rw [div_mul_eq_mul_div]
-      refine (div_le_iff₀ (sq_pos_of_pos hm)).mpr ?_
+      rw [div_pow, div_mul_eq_mul_div]
+      refine (div_le_iff₀ (sq_pos_of_pos (by positivity))).mpr ?_
       push_cast
       ring_nf
       nlinarith
@@ -165,19 +154,19 @@ lemma middleBinomial_ratio_le_central (n : ℕ) :
       (Nat.centralBinom (n / 2) : ℝ) / 4 ^ (n / 2) := by
   obtain ⟨m, hm | hm⟩ := Nat.even_or_odd' n
   · subst n
-    have hdiv : 2 * m / 2 = m := by omega
+    have hdiv : 2 * m / 2 = m := by grind
     rw [hdiv, Nat.centralBinom]
     rw [show (2 : ℝ) ^ (2 * m) = 4 ^ m by
       rw [show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul, mul_comm]]
   · subst n
-    have hdiv : (2 * m + 1) / 2 = m := by omega
+    have hdiv : (2 * m + 1) / 2 = m := by grind
     rw [hdiv, Nat.centralBinom]
     cases m with
     | zero => norm_num
     | succ m =>
       have hchoose : (2 * (m + 1) + 1).choose (m + 1) ≤
           2 * Nat.centralBinom (m + 1) := by
-        rw [Nat.choose_succ_left (2 * (m + 1)) (m + 1) (by omega)]
+        rw [Nat.choose_succ_left (2 * (m + 1)) (m + 1) (by grind)]
         simpa only [Nat.add_sub_cancel, two_mul] using
           add_le_add (Nat.choose_le_centralBinom m (m + 1))
             (Nat.choose_le_centralBinom (m + 1) (m + 1))
@@ -206,7 +195,7 @@ lemma exists_middleBinomial_lt (δ : ℝ) (hδ : 0 < δ) :
   obtain ⟨M, hM⟩ := Filter.eventually_atTop.mp (ht.eventually_lt_const hδ)
   refine ⟨2 * M, ?_⟩
   intro n hn
-  have hMn : M ≤ n / 2 := (Nat.le_div_iff_mul_le (by norm_num)).mpr (by omega)
+  have hMn : M ≤ n / 2 := (Nat.le_div_iff_mul_le (by norm_num)).mpr (by grind)
   refine (div_lt_iff₀ (by positivity : (0 : ℝ) < 2 ^ n)).mp ?_
   refine (middleBinomial_ratio_le_central n).trans_lt <|
     (centralBinom_ratio_le_inv_sqrt (n / 2)).trans_lt ?_
