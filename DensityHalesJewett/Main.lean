@@ -255,7 +255,31 @@ lemma exists_density_increment_schedule (k R : ℕ) (δ : ℝ) :
       (∀ j, j ≤ R → 1 ≤ d j) ∧
       ∀ j, j < R →
         incrementBound k (d (j + 1)) (δ + (j : ℝ) * (Parameters.γ k δ / 2)) ≤ d j := by
-  sorry
+  let γ := Parameters.γ k δ
+  let d_aux : ℕ → ℕ :=
+    Nat.rec 1 (fun t d_t => max 1 (incrementBound k d_t (δ + ((R - (t + 1) : ℕ) : ℝ) * (γ / 2))))
+  let d : ℕ → ℕ := fun j => d_aux (R - j)
+  have h_aux_succ (t : ℕ) : d_aux (t + 1) =
+      max 1 (incrementBound k (d_aux t) (δ + ((R - (t + 1) : ℕ) : ℝ) * (γ / 2))) := rfl
+  have h_aux_one (t : ℕ) : 1 ≤ d_aux t := by
+    induction t with
+    | zero => simp [d_aux]
+    | succ t ih => rw [h_aux_succ t]; exact le_max_left _ _
+  have h_d_R : d R = 1 := by
+    dsimp [d, d_aux]
+    simp
+  have h_d_one (j : ℕ) (hj : j ≤ R) : 1 ≤ d j := by
+    dsimp [d]
+    exact h_aux_one (R - j)
+  have h_d_step (j : ℕ) (hj : j < R) :
+      incrementBound k (d (j + 1)) (δ + (j : ℝ) * (γ / 2)) ≤ d j := by
+    have h_sub : R - j = (R - (j + 1)) + 1 := by omega
+    have h_index : (R - ((R - (j + 1) : ℕ) + 1) : ℕ) = j := by omega
+    dsimp [d]
+    rw [h_sub, h_aux_succ (R - (j + 1))]
+    rw [h_index]
+    exact le_max_right _ _
+  exact ⟨d, h_d_R, h_d_one, h_d_step⟩
 
 /-- **Hard helper:** iterate the density-increment dichotomy along a backward dimension schedule.
 

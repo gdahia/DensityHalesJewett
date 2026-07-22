@@ -567,7 +567,44 @@ lemma Subspace.fixSuffixReindex_statistics {k m : ℕ} {ι κ ζ : Type*}
       ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
         ∀ a, Subspace.fixSuffixReindex e V y (Fin.castSucc ∘ l a) ∈ A).dens : ℝ) =
         ((suffixLines V A' y).dens : ℝ) := by
-  sorry
+  intro A'
+  have h_fixSuffix_eval (x : Fin m → Fin (k + 1)) :
+      (Subspace.fixSuffix V y : (Fin m → Fin (k + 1)) → (ι ⊕ κ → Fin (k + 1))) x
+        = DensityHalesJewett.concat (V x) y := by
+    ext j
+    cases j with
+    | inl i =>
+      simp [Subspace.fixSuffix, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply,
+        concat_apply_inl]
+    | inr k =>
+      simp [Subspace.fixSuffix, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply,
+        concat_apply_inr]
+  have h_eval (x : Fin m → Fin (k + 1)) :
+      Subspace.fixSuffixReindex e V y x = DensityHalesJewett.concat (V x) y ∘ e.symm := by
+    calc
+      Subspace.fixSuffixReindex e V y x
+          = (Subspace.fixSuffix V y) x ∘ e.symm := by
+        ext i
+        simp [Subspace.fixSuffixReindex, Combinatorics.Subspace.reindex_apply]
+      _ = DensityHalesJewett.concat (V x) y ∘ e.symm := by rw [h_fixSuffix_eval x]
+  have h_mem_map (x : Fin m → Fin (k + 1)) :
+      Subspace.fixSuffixReindex e V y x ∈ A ↔ DensityHalesJewett.concat (V x) y ∈ A' := by
+    rw [h_eval x]
+    dsimp [A']
+    simp [Finset.mem_map_equiv, Equiv.arrowCongr]
+  constructor
+  · dsimp [Subspace.relativeDensity, suffixPullback]
+    congr
+    ext x
+    simp [h_mem_map x]
+  · dsimp [suffixLines]
+    congr
+    ext l
+    refine ⟨fun h a => ?_, fun h a => ?_⟩
+    · rw [← h_mem_map (Fin.castSucc ∘ l a)]
+      exact h a
+    · rw [h_mem_map (Fin.castSucc ∘ l a)]
+      exact h a
 
 /-- A bound for the many-lines lemma. -/
 def manyLinesBound (k m : ℕ) (δ : ℝ) : ℕ :=
@@ -726,7 +763,14 @@ lemma firstFailureFamily_isInsensitive {k : ℕ} {ι : Type*}
     (C : Fin k → Finset (ι → Fin (k + 1)))
     (hC : ∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) (i : Fin k) :
     ∀ j, IsInsensitive j.castSucc (Fin.last k) (firstFailureFamily C i j) := by
-  sorry
+  intro j
+  dsimp [firstFailureFamily]
+  by_cases hij : j < i
+  · simp [hij, hC j]
+  · by_cases hej : j = i
+    · rw [hej]
+      simpa using (hC i).compl
+    · simp [hij, hej, IsInsensitive]
 
 /-- **Medium helper:** intersecting the first-failure family recovers its selected piece. -/
 lemma firstFailureFamily_intersection {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
