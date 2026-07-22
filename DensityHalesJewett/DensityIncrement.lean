@@ -21,6 +21,7 @@ proposition.
 
 open Finset
 open Combinatorics
+open scoped BigOperators
 
 namespace DensityHalesJewett
 
@@ -214,8 +215,173 @@ lemma exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
           ((Finset.univ.filter fun y ↦ ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
   sorry
 
+/-- The pullback of a word family to a subspace after fixing the suffix coordinates. -/
+def suffixPullback {α η ι κ : Type*} [Fintype (η → α)]
+    [DecidableEq (ι ⊕ κ → α)] (V : Combinatorics.Subspace η α ι)
+    (A : Finset (ι ⊕ κ → α)) (y : κ → α) : Finset (η → α) :=
+  Finset.univ.filter fun x ↦ concat (V x) y ∈ A
+
+/-- The parameter lines whose first-`k` points belong to a word family at a fixed suffix. -/
+def suffixLines {k m : ℕ} {ι κ : Type*}
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι)
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) (y : κ → Fin (k + 1)) :
+    Finset (Combinatorics.Line (Fin k) (Fin m)) :=
+  Finset.univ.filter fun l ↦ ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A
+
+/-- Fix suffix coordinates of a subspace. -/
+def Subspace.fixSuffix {α η ι κ : Type*} (V : Combinatorics.Subspace η α ι)
+    (y : κ → α) : Combinatorics.Subspace η α (ι ⊕ κ) where
+  idxFun := Sum.elim V.idxFun (Sum.inl ∘ y)
+  proper e := by
+    obtain ⟨i, hi⟩ := V.proper e
+    exact ⟨Sum.inl i, hi⟩
+
+/-- Fix suffix coordinates and transport the ambient coordinates along an equivalence. -/
+def Subspace.fixSuffixReindex {α η ι κ ζ : Type*} (e : ι ⊕ κ ≃ ζ)
+    (V : Combinatorics.Subspace η α ι) (y : κ → α) :
+    Combinatorics.Subspace η α ζ :=
+  (Subspace.fixSuffix V y).reindex (Equiv.refl _) (Equiv.refl _) e
+
+/-- Pointwise fiber lower bounds imply the corresponding average lower bound for fixed-suffix
+pullbacks.  This is a finite double-counting argument. -/
+lemma average_suffixPullback_lower {α η ι κ : Type*} [Fintype (η → α)]
+    [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
+    (V : Combinatorics.Subspace η α ι) (A : Finset (ι ⊕ κ → α)) (r : ℝ)
+    (hV : ∀ x, r ≤ ((fiber A (V x)).dens : ℝ)) :
+    r ≤ 𝔼 y : κ → α, ((suffixPullback V A y).dens : ℝ) := by
+  sorry
+
+/-- If a bounded function has average at least `δ - η²/2` but never reaches
+`δ + η²/2`, then it is at least `δ - 2η` on all but an `η`-fraction of its domain. -/
+lemma density_near_average {X : Type*} [Fintype X] [Nonempty X]
+    (f : X → ℝ) (δ η : ℝ) (hη₀ : 0 < η) (hη₁ : η ≤ 1)
+    (hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
+    (havg : δ - η ^ 2 / 2 ≤ 𝔼 x : X, f x)
+    (hupper : ∀ x, f x < δ + η ^ 2 / 2) :
+    1 - η ≤ ((Finset.univ.filter fun x ↦ δ - 2 * η ≤ f x).dens : ℝ) := by
+  sorry
+
+/-- Dense common suffix fibers for every line give the same lower bound for the average
+fixed-suffix line density.  This is the second finite double-counting step. -/
+lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
+    [Fintype (κ → Fin (k + 1))]
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι)
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) (θ : ℝ)
+    (hV : ∀ l : Combinatorics.Line (Fin k) (Fin m),
+      θ ≤ ((Finset.univ.filter fun y ↦
+        ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)) :
+    θ ≤ 𝔼 y : κ → Fin (k + 1), ((suffixLines V A y).dens : ℝ) := by
+  sorry
+
+/-- A `[0,1]`-valued function with average at least `θ` exceeds `θ/2` on a set of
+density at least `θ/2`. -/
+lemma density_half_threshold {X : Type*} [Fintype X] [Nonempty X]
+    (f : X → ℝ) (θ : ℝ) (hθ₀ : 0 < θ) (hθ₁ : θ ≤ 1)
+    (hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
+    (havg : θ ≤ 𝔼 x : X, f x) :
+    θ / 2 ≤ ((Finset.univ.filter fun x ↦ θ / 2 ≤ f x).dens : ℝ) := by
+  sorry
+
+/-- Two subsets of densities at least `1-η` and `θ/2` intersect when `η < θ/2`. -/
+lemma exists_mem_inter_of_large_density {X : Type*} [Fintype X]
+    (S T : Finset X) (η θ : ℝ)
+    (hS : 1 - η ≤ (S.dens : ℝ)) (hT : θ / 2 ≤ (T.dens : ℝ))
+    (hηθ : η < θ / 2) : ∃ x, x ∈ S ∧ x ∈ T := by
+  sorry
+
+/-- The correlated-fiber threshold is at most one in the admissible parameter range. -/
+lemma Parameters.θ_le_one {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₁ : δ ≤ 1) :
+    Parameters.θ k δ ≤ 1 := by
+  sorry
+
+/-- Correlated fibers yield either a dense fixed suffix or a fixed suffix supporting many
+complete parameter lines. -/
+lemma exists_suffix_many_lines {k m : ℕ} (hk : 2 ≤ k)
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype (Fin m → Fin (k + 1))]
+    [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι)
+    (hfiber : ∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ))
+    (hlines : ∀ l : Combinatorics.Line (Fin k) (Fin m),
+      Parameters.θ k δ ≤
+        ((Finset.univ.filter fun y ↦
+          ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)) :
+    (∃ y, δ + Parameters.η k δ ^ 2 / 2 ≤
+      ((suffixPullback V A y).dens : ℝ)) ∨
+    ∃ y, δ - 2 * Parameters.η k δ ≤ ((suffixPullback V A y).dens : ℝ) ∧
+      Parameters.θ k δ / 2 ≤ ((suffixLines V A y).dens : ℝ) := by
+  classical
+  let f := fun y : κ → Fin (k + 1) ↦ ((suffixPullback V A y).dens : ℝ)
+  let g := fun y : κ → Fin (k + 1) ↦ ((suffixLines V A y).dens : ℝ)
+  by_cases hinc : ∃ y, δ + Parameters.η k δ ^ 2 / 2 ≤ f y
+  · exact Or.inl hinc
+  refine Or.inr ?_
+  have hη₀ : 0 < Parameters.η k δ := Parameters.η_pos hk hδ₀
+  have hη₁ : Parameters.η k δ ≤ 1 :=
+    (Parameters.η_le_δ_div_six k δ).trans (by linarith)
+  have havgf : δ - Parameters.η k δ ^ 2 / 2 ≤ 𝔼 y, f y := by
+    exact average_suffixPullback_lower V A _ hfiber
+  have hupper : ∀ y, f y < δ + Parameters.η k δ ^ 2 / 2 := by
+    intro y
+    exact lt_of_not_ge fun hy ↦ hinc ⟨y, hy⟩
+  have hmostly : 1 - Parameters.η k δ ≤
+      ((Finset.univ.filter fun y ↦ δ - 2 * Parameters.η k δ ≤ f y).dens : ℝ) := by
+    refine density_near_average f δ (Parameters.η k δ) hη₀ hη₁ ?_ ?_ havgf hupper
+    · intro y
+      dsimp only [f]
+      positivity
+    · intro y
+      dsimp only [f]
+      exact_mod_cast Finset.dens_le_one (s := suffixPullback V A y)
+  have havgg : Parameters.θ k δ ≤ 𝔼 y, g y := by
+    exact average_suffixLines_lower V A (Parameters.θ k δ) hlines
+  have hmany : Parameters.θ k δ / 2 ≤
+      ((Finset.univ.filter fun y ↦ Parameters.θ k δ / 2 ≤ g y).dens : ℝ) := by
+    refine density_half_threshold g (Parameters.θ k δ) (Parameters.θ_pos hk hδ₀)
+      (Parameters.θ_le_one hk hδ₁) ?_ ?_ havgg
+    · intro y
+      dsimp only [g]
+      positivity
+    · intro y
+      dsimp only [g]
+      exact_mod_cast Finset.dens_le_one (s := suffixLines V A y)
+  obtain ⟨y, hy₁, hy₂⟩ := exists_mem_inter_of_large_density
+    (Finset.univ.filter fun y ↦ δ - 2 * Parameters.η k δ ≤ f y)
+    (Finset.univ.filter fun y ↦ Parameters.θ k δ / 2 ≤ g y)
+    (Parameters.η k δ) (Parameters.θ k δ) hmostly hmany
+    (Parameters.η_lt_θ_div_two hk hδ₀)
+  refine ⟨y, ?_, ?_⟩
+  · simpa only [Finset.mem_filter, Finset.mem_univ, true_and, f] using hy₁
+  · simpa only [Finset.mem_filter, Finset.mem_univ, true_and, g] using hy₂
+
+/-- Fixing a suffix and reindexing preserves the relative-density and complete-line statistics.
+The proof is coordinate bookkeeping using `Subspace.reindex_apply` and `Finset.mem_map_equiv`. -/
+lemma Subspace.fixSuffixReindex_statistics {k m : ℕ} {ι κ ζ : Type*}
+    [Fintype (Fin m → Fin (k + 1))]
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    [DecidableEq (ζ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (e : ι ⊕ κ ≃ ζ) (A : Finset (ζ → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι)
+    (y : κ → Fin (k + 1)) :
+    let A' := A.map ((e.arrowCongr (Equiv.refl _)).symm.toEmbedding)
+    (Subspace.relativeDensity (Subspace.fixSuffixReindex e V y) A : ℝ) =
+        ((suffixPullback V A' y).dens : ℝ) ∧
+      ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
+        ∀ a, Subspace.fixSuffixReindex e V y (Fin.castSucc ∘ l a) ∈ A).dens : ℝ) =
+        ((suffixLines V A' y).dens : ℝ) := by
+  sorry
+
 /-- A bound for the many-lines lemma. -/
-opaque manyLinesBound (k m : ℕ) (δ : ℝ) : ℕ
+def manyLinesBound (k m : ℕ) (δ : ℝ) : ℕ :=
+  correlatedFibersBound k m δ
 
 /-- Either density has already increased on an `m`-subspace, or a dense slice contains a positive
 proportion of all parameter-cube lines. -/
@@ -231,10 +397,88 @@ lemma exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k
       Parameters.θ k δ / 2 ≤
         ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
           ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ) := by
-  sorry
+  classical
+  let p := correlatedFibersBound k m δ
+  let q := n - p
+  have hpn : p ≤ n := by
+    simpa only [manyLinesBound, p] using hn
+  have hpq : p + q = n := Nat.add_sub_of_le hpn
+  let e : Fin p ⊕ Fin q ≃ Fin n := finSumFinEquiv.trans (finCongr hpq)
+  let A' := A.map ((e.arrowCongr (Equiv.refl _)).symm.toEmbedding)
+  have hA' : δ ≤ (A'.dens : ℝ) := by
+    simpa only [A', Finset.dens_map_equiv] using hA
+  obtain ⟨W, hWfiber, hWlines⟩ :=
+    exists_subspace_correlated_fibers hk hDHJ m hm δ hδ₀ hδ₁
+      (ι := Fin p) (κ := Fin q) (by
+        simp only [Fintype.card_fin]
+        exact le_rfl) A' hA'
+  obtain ⟨y, hy⟩ | ⟨y, hy, hylines⟩ :=
+    exists_suffix_many_lines hk δ hδ₀ hδ₁ A' W hWfiber hWlines
+  · refine Or.inl ⟨Subspace.fixSuffixReindex e W y, ?_⟩
+    rw [(Subspace.fixSuffixReindex_statistics e A W y).1]
+    simpa only [A'] using hy
+  · refine Or.inr ⟨Subspace.fixSuffixReindex e W y, ?_, ?_⟩
+    · rw [(Subspace.fixSuffixReindex_statistics e A W y).1]
+      simpa only [A'] using hy
+    · rw [(Subspace.fixSuffixReindex_statistics e A W y).2]
+      simpa only [A'] using hylines
 
 /-- A parameter-cube dimension sufficient for the insensitive-intersection construction. -/
 opaque insensitiveIntersectionDimension (k : ℕ) (δ : ℝ) : ℕ
+
+/-- Many complete restricted-alphabet lines yield a large insensitive intersection whose part
+inside a line-free family is small.  This packages the endpoint construction, its injective
+line count, the identification of the intersection, and the geometric-decay estimate. -/
+lemma exists_endpoint_insensitive_intersection {k m n : ℕ} (hk : 2 ≤ k)
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    (δ : ℝ) (hδ₀ : 0 < δ)
+    (hm_large : insensitiveIntersectionDimension k δ ≤ m)
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (hfree : IsLineFree A)
+    (hlines : Parameters.θ k δ / 2 ≤
+      ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
+        ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ)) :
+    ∃ C : Fin k → Finset (Fin m → Fin (k + 1)),
+      (∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) ∧
+      Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ) ∧
+      ((pullback V A ∩ IsInsensitive.intersection C).dens : ℝ) ≤
+        Parameters.η k δ := by
+  sorry
+
+/-- The numerical parameters turn the absolute density left outside a large intersection into
+the required relative density gain. -/
+lemma Parameters.large_intersection_complement_gain {k : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (hδ₀ : 0 < δ) :
+    (δ + 6 * η k δ) * (1 - θ k δ / 4) ≤ δ - 3 * η k δ := by
+  have hη : η k δ ≤ δ * θ k δ / 48 :=
+    min_le_left (δ * θ k δ / 48) (min (θ k δ / 4) (δ / 6))
+  have hθ := θ_pos hk hδ₀
+  nlinarith [mul_nonneg hδ₀.le hθ.le, η_pos hk hδ₀,
+    mul_nonneg (η_pos hk hδ₀).le hθ.le]
+
+/-- Removing an intersection of density at least `θ / 4`, while losing at most `η` of a family
+of density `δ - 2η`, gives the two complement estimates used below. -/
+lemma density_complement_bounds {X : Type*} [Fintype X] [Nonempty X]
+    [DecidableEq X] (A C : Finset X) (δ η θ : ℝ)
+    (hδ₀ : 0 ≤ δ) (hη₀ : 0 ≤ η) (hA : δ - 2 * η ≤ (A.dens : ℝ))
+    (hC : θ / 4 ≤ (C.dens : ℝ))
+    (hAC : ((A ∩ C).dens : ℝ) ≤ η)
+    (hgain : (δ + 6 * η) * (1 - θ / 4) ≤ δ - 3 * η) :
+    (δ + 6 * η) * ((Cᶜ).dens : ℝ) ≤ ((A ∩ Cᶜ).dens : ℝ) ∧
+      δ - 3 * η ≤ ((A ∩ Cᶜ).dens : ℝ) := by
+  have hsplitA : ((A ∩ C).dens : ℝ) + ((A ∩ Cᶜ).dens : ℝ) = (A.dens : ℝ) := by
+    norm_cast
+    simpa only [sdiff_eq_inter_compl] using Finset.dens_inter_add_dens_sdiff A C
+  have houtside : δ - 3 * η ≤ ((A ∩ Cᶜ).dens : ℝ) := by
+    linarith
+  have hsplitC : ((Cᶜ).dens : ℝ) + (C.dens : ℝ) = 1 := by
+    norm_cast
+    simpa only [← compl_eq_univ_sdiff, Finset.dens_univ] using
+      Finset.dens_sdiff_add_dens_eq_dens C.subset_univ
+  refine ⟨(mul_le_mul_of_nonneg_left ?_ ?_).trans (hgain.trans houtside), houtside⟩
+  · linarith
+  · nlinarith
 
 /-- A large intersection of insensitive families with a density gain on its complement. -/
 lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
@@ -255,7 +499,22 @@ lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
           ((pullback V A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) ∧
         δ - 3 * Parameters.η k δ ≤
           ((pullback V A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) := by
-  sorry
+  classical
+  letI : Fintype (Combinatorics.Line (Fin k) (Fin m)) :=
+    Fintype.ofInjective (fun l ↦ l.idxFun) fun _ _ h ↦ Combinatorics.Line.ext h
+  obtain ⟨V, hV⟩ | ⟨V, hV, hlines⟩ :=
+    exists_subspace_many_lines hk hDHJ m hm δ hδ₀ hδ₁ n hn A hA
+  · exact False.elim <| (not_lt_of_ge hV) (hsmall V)
+  obtain ⟨C, hC, hCdense, hAC⟩ :=
+    exists_endpoint_insensitive_intersection hk δ hδ₀ hm_large A V hfree hlines
+  refine ⟨V, C, hC, hCdense, ?_⟩
+  apply density_complement_bounds
+  · exact hδ₀.le
+  · exact (Parameters.η_pos hk hδ₀).le
+  · simpa only [Subspace.relativeDensity, pullback] using hV
+  · exact hCdense
+  · exact hAC
+  · exact Parameters.large_intersection_complement_gain hk hδ₀
 
 /-- Correlation with a positive-density intersection of insensitive families. -/
 lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
