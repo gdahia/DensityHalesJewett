@@ -301,22 +301,85 @@ def Subspace.fixSuffixReindex {α η ι κ ζ : Type*} (e : ι ⊕ κ ≃ ζ)
 
 /-- Pointwise fiber lower bounds imply the corresponding average lower bound for fixed-suffix
 pullbacks.  This is a finite double-counting argument. -/
-lemma average_suffixPullback_lower {α η ι κ : Type*} [Fintype (η → α)]
+lemma average_suffixPullback_lower {α η ι κ : Type*} [Nonempty α] [Fintype (η → α)]
     [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
     (V : Combinatorics.Subspace η α ι) (A : Finset (ι ⊕ κ → α)) (r : ℝ)
     (hV : ∀ x, r ≤ ((fiber A (V x)).dens : ℝ)) :
     r ≤ 𝔼 y : κ → α, ((suffixPullback V A y).dens : ℝ) := by
-  sorry
+  have h_expect_eq : 𝔼 x : η → α, ((fiber A (V x)).dens : ℝ) =
+      𝔼 y : κ → α, ((suffixPullback V A y).dens : ℝ) := by
+    calc
+      𝔼 x : η → α, ((fiber A (V x)).dens : ℝ)
+          = 𝔼 x : η → α, 𝔼 y : κ → α, (Set.indicator (fiber A (V x)) (1 : (κ → α) → ℝ) y : ℝ) := by
+        simp
+      _ = 𝔼 y : κ → α, 𝔼 x : η → α, (Set.indicator (fiber A (V x)) (1 : (κ → α) → ℝ) y : ℝ) := by
+        rw [Finset.expect_comm (Finset.univ : Finset (η → α)) (Finset.univ : Finset (κ → α))]
+      _ = 𝔼 y : κ → α, 𝔼 x : η → α, (Set.indicator (suffixPullback V A y) (1 : (η → α) → ℝ) x : ℝ) := by
+        refine Finset.expect_congr rfl fun y _ => ?_
+        refine Finset.expect_congr rfl fun x _ => ?_
+        by_cases h : concat (V x) y ∈ A
+        · have hy : y ∈ fiber A (V x) := by simpa [fiber] using h
+          have hx : x ∈ suffixPullback V A y := by
+            dsimp [suffixPullback]
+            simp [h]
+          simp [hy, hx]
+        · have hy : y ∉ fiber A (V x) := by simpa [fiber] using h
+          have hx : x ∉ suffixPullback V A y := by
+            dsimp [suffixPullback]
+            simp [h]
+          simp [hy, hx]
+      _ = 𝔼 y : κ → α, ((suffixPullback V A y).dens : ℝ) := by
+        simp
+  have h_r_le_expect : r ≤ 𝔼 x : η → α, ((fiber A (V x)).dens : ℝ) :=
+    Finset.le_expect (Finset.univ_nonempty (α := η → α)) fun x _ => hV x
+  exact h_r_le_expect.trans h_expect_eq.le
 
 /-- If a bounded function has average at least `δ - η²/2` but never reaches
 `δ + η²/2`, then it is at least `δ - 2η` on all but an `η`-fraction of its domain. -/
 lemma density_near_average {X : Type*} [Fintype X] [Nonempty X]
-    (f : X → ℝ) (δ η : ℝ) (hη₀ : 0 < η) (hη₁ : η ≤ 1)
-    (hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
+    (f : X → ℝ) (δ η : ℝ) (hη₀ : 0 < η) (_hη₁ : η ≤ 1)
+    (_hf₀ : ∀ x, 0 ≤ f x) (_hf₁ : ∀ x, f x ≤ 1)
     (havg : δ - η ^ 2 / 2 ≤ 𝔼 x : X, f x)
     (hupper : ∀ x, f x < δ + η ^ 2 / 2) :
     1 - η ≤ ((Finset.univ.filter fun x ↦ δ - 2 * η ≤ f x).dens : ℝ) := by
-  sorry
+  set H := Finset.univ.filter fun x ↦ δ - 2 * η ≤ f x
+  by_cases hH : 1 - η ≤ (H.dens : ℝ)
+  · exact hH
+  · exfalso
+    have h_dens_H_lt : (H.dens : ℝ) < 1 - η := by linarith
+    have h_pos : 0 < η ^ 2 / 2 + 2 * η := by nlinarith
+    have hfg : ∀ x : X, f x ≤ (δ - 2 * η) + (η ^ 2 / 2 + 2 * η)
+        * (Set.indicator H (1 : X → ℝ) x : ℝ) := by
+      intro x
+      by_cases hxH : x ∈ H
+      · have h_indicator : (Set.indicator H (1 : X → ℝ) x : ℝ) = 1 := by simp [hxH]
+        simp [h_indicator]
+        linarith [hupper x]
+      · have hx_lt : f x < δ - 2 * η := by
+          have : ¬(δ - 2 * η ≤ f x) := by simpa [H] using hxH
+          linarith
+        have h_indicator : (Set.indicator H (1 : X → ℝ) x : ℝ) = 0 := by simp [hxH]
+        simp [h_indicator]
+        linarith
+    have h_expect_f_le_expect_g : 𝔼 x : X, f x ≤ 𝔼 x : X, ((δ - 2 * η : ℝ) + (η ^ 2 / 2 + 2 * η) *
+        (Set.indicator H (1 : X → ℝ) x : ℝ)) :=
+      Finset.expect_le_expect (fun x _ => hfg x)
+    have h_expect_g : 𝔼 x : X, ((δ - 2 * η : ℝ) + (η ^ 2 / 2 + 2 * η) *
+        (Set.indicator H (1 : X → ℝ) x : ℝ)) =
+      (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) := by
+      calc
+        𝔼 x : X, ((δ - 2 * η : ℝ) + (η ^ 2 / 2 + 2 * η) * (Set.indicator H (1 : X → ℝ) x : ℝ)) =
+          𝔼 x : X, (δ - 2 * η : ℝ) + 𝔼 x : X, ((η ^ 2 / 2 + 2 * η)
+            * (Set.indicator H (1 : X → ℝ) x : ℝ)) := by
+          rw [Finset.expect_add_distrib]
+        _ = (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * 𝔼 x : X, (Set.indicator H (1 : X → ℝ) x : ℝ) := by
+          rw [Finset.expect_const univ_nonempty, ← Finset.mul_expect]
+        _ = (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) := by simp
+    rw [h_expect_g] at h_expect_f_le_expect_g
+    have h_upper_bound : (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) <
+      (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * (1 - η) := by
+      nlinarith
+    nlinarith
 
 /-- Dense common suffix fibers for every line give the same lower bound for the average
 fixed-suffix line density.  This is the second finite double-counting step. -/
@@ -339,19 +402,49 @@ lemma density_half_threshold {X : Type*} [Fintype X] [Nonempty X]
     (hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
     (havg : θ ≤ 𝔼 x : X, f x) :
     θ / 2 ≤ ((Finset.univ.filter fun x ↦ θ / 2 ≤ f x).dens : ℝ) := by
-  sorry
+  have hθ2_nonneg : 0 ≤ θ / 2 := by positivity
+  have h_ge_threshold : (θ - θ / 2) / (1 - θ / 2) ≤
+      ((Finset.univ.filter fun x ↦ θ / 2 ≤ f x).dens : ℝ) :=
+    density_ge_threshold f θ (θ / 2) hf₀ hf₁ hθ2_nonneg (by linarith) havg
+  have h_simplify : (θ - θ / 2) / (1 - θ / 2) = (θ / 2) / (1 - θ / 2) := by
+    have hnum : θ - θ / 2 = θ / 2 := by ring
+    rw [hnum]
+  rw [h_simplify] at h_ge_threshold
+  have h_half_le_div : θ / 2 ≤ (θ / 2) / (1 - θ / 2) := by
+    have hpos : 0 < 1 - θ / 2 := by linarith
+    rw [le_div_iff₀ hpos]
+    nlinarith [sq_nonneg (θ / 2)]
+  linarith
 
 /-- Two subsets of densities at least `1-η` and `θ/2` intersect when `η < θ/2`. -/
 lemma exists_mem_inter_of_large_density {X : Type*} [Fintype X]
     (S T : Finset X) (η θ : ℝ)
     (hS : 1 - η ≤ (S.dens : ℝ)) (hT : θ / 2 ≤ (T.dens : ℝ))
     (hηθ : η < θ / 2) : ∃ x, x ∈ S ∧ x ∈ T := by
-  sorry
+  classical
+  by_contra h
+  have h_inter_empty : S ∩ T = ∅ :=
+    Finset.eq_empty_iff_forall_notMem.mpr fun x hx => h ⟨x, Finset.mem_inter.1 hx⟩
+  have h_union_dens : ((S ∪ T).dens : ℝ) = (S.dens : ℝ) + (T.dens : ℝ) := by
+    have h_disjoint : Disjoint S T :=
+      Finset.disjoint_iff_inter_eq_empty.mpr h_inter_empty
+    exact_mod_cast Finset.dens_union_of_disjoint h_disjoint
+  have h_dens_le_one : ((S ∪ T).dens : ℝ) ≤ 1 := by
+    exact_mod_cast Finset.dens_le_one (s := S ∪ T)
+  linarith
 
 /-- The correlated-fiber threshold is at most one in the admissible parameter range. -/
 lemma Parameters.θ_le_one {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₁ : δ ≤ 1) :
     Parameters.θ k δ ≤ 1 := by
-  sorry
+  unfold θ
+  have hden_pos : 0 < ((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ :=
+    θ_denominator_pos hk δ
+  have hm₀_pos : 0 < m₀ k δ := m₀_pos k δ
+  have h_one_le_diff : 1 ≤ ((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ := by
+    have h1 : ((k + 1 : ℕ) : ℝ) ^ 1 - (k : ℝ) ^ 1 = (1 : ℝ) := by norm_num
+    simpa [h1] using power_difference_mono k (Nat.succ_le_of_lt hm₀_pos)
+  refine (div_le_one hden_pos).mpr ?_
+  linarith
 
 /-- Correlated fibers yield either a dense fixed suffix or a fixed suffix supporting many
 complete parameter lines. -/
