@@ -355,7 +355,40 @@ lemma extend_restricted_subspace {k m M : ℕ} {ι κ ζ : Type*}
     (hS : ∀ x, (DensityHalesJewett.concat (W (Fin.castSucc ∘ S x)) y) ∘ e.symm ∈ A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ζ,
       restrictAlphabet V Fin.castSuccEmb ⊆ A := by
-  sorry
+  let lift_S : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin M) :=
+    { idxFun := fun i ↦ (S.idxFun i).map (Fin.castSuccEmb : Fin k → Fin (k + 1)) id
+      proper := fun e ↦ by
+        obtain ⟨i, hi⟩ := S.proper e
+        refine ⟨i, ?_⟩
+        simp [hi] }
+  have h_lift_eval (x : Fin m → Fin k) : lift_S (Fin.castSuccEmb ∘ x) = Fin.castSucc ∘ S x := by
+    ext i
+    simp [lift_S, Combinatorics.Subspace.coe_apply]
+    cases S.idxFun i <;> simp
+  let concat_suffix : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ζ :=
+    { idxFun := fun c ↦
+        match e.symm c with
+        | Sum.inl i => W.idxFun i
+        | Sum.inr j => Sum.inl (y j)
+      proper := fun e' ↦ by
+        obtain ⟨i, hi⟩ := W.proper e'
+        refine ⟨e (Sum.inl i), ?_⟩
+        simp [hi] }
+  have h_concat_suffix_eval (z : Fin M → Fin (k + 1)) :
+      concat_suffix z = (DensityHalesJewett.concat (W z) y) ∘ e.symm := by
+    ext c
+    simp only [Subspace.coe_apply, DensityHalesJewett.concat, Function.comp_apply, concat_suffix]
+    cases e.symm c with
+    | inl i => simp [Combinatorics.Subspace.coe_apply]
+    | inr j => simp
+  let V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ζ :=
+    compose concat_suffix lift_S
+  refine ⟨V, ?_⟩
+  intro w hw
+  rw [restrictAlphabet, Finset.mem_image] at hw
+  rcases hw with ⟨x, _, rfl⟩
+  rw [compose_apply, h_lift_eval x, h_concat_suffix_eval (Fin.castSucc ∘ S x)]
+  exact hS x
 
 /-- For the empty restricted alphabet, the restricted range is empty as soon as the parameter
 dimension is positive. -/
