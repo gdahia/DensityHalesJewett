@@ -330,8 +330,118 @@ lemma exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
       ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
   sorry
 
+/-- Restricting all parameter words to the first `k` letters and averaging over the suffix leaves
+a dense parameter family above one suffix. -/
+lemma exists_dense_restricted_parameters {k M : ℕ} (hk : 0 < k) (hM : 1 ≤ M)
+    (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype ι] [Fintype (ι ⊕ κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (hι : uniformFibersBound (k + 1) M (δ / 2) ≤ Fintype.card ι)
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
+    ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
+      ∃ y : κ → Fin (k + 1),
+        δ / 2 ≤
+          ((Finset.univ.filter fun x : Fin M → Fin k ↦
+            DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
+  sorry
+
+/-- Extend a restricted parameter subspace to the full alphabet, attach a fixed suffix, and
+transport the resulting subspace along an equivalence of ambient coordinates. -/
+lemma extend_restricted_subspace {k m M : ℕ} {ι κ ζ : Type*}
+    [DecidableEq (ζ → Fin (k + 1))] (e : ι ⊕ κ ≃ ζ)
+    (A : Finset (ζ → Fin (k + 1)))
+    (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι) (y : κ → Fin (k + 1))
+    (S : Combinatorics.Subspace (Fin m) (Fin k) (Fin M))
+    (hS : ∀ x, (DensityHalesJewett.concat (W (Fin.castSucc ∘ S x)) y) ∘ e.symm ∈ A) :
+    ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ζ,
+      restrictAlphabet V Fin.castSuccEmb ⊆ A := by
+  sorry
+
+/-- For the empty restricted alphabet, the restricted range is empty as soon as the parameter
+dimension is positive. -/
+lemma exists_empty_restrictAlphabet_subset {m n : ℕ} (hm : 1 ≤ m) (hmn : m ≤ n)
+    (A : Finset (Fin n → Fin 1)) :
+    ∃ V : Combinatorics.Subspace (Fin m) (Fin 1) (Fin n),
+      restrictAlphabet V Fin.castSuccEmb ⊆ A := by
+  let V : Combinatorics.Subspace (Fin m) (Fin 1) (Fin n) :=
+    { idxFun := fun i ↦ if hi : i.val < m then Sum.inr ⟨i.val, hi⟩ else Sum.inl 0
+      proper := fun e ↦ by
+        refine ⟨Fin.castLE hmn e, ?_⟩
+        simp only [Fin.castLE, e.isLt, ↓reduceDIte] }
+  refine ⟨V, ?_⟩
+  intro w hw
+  rw [restrictAlphabet] at hw
+  simp only [Finset.mem_image, Finset.mem_univ, true_and] at hw
+  obtain ⟨x, _⟩ := hw
+  exact Fin.elim0 (x ⟨0, Nat.zero_lt_of_lt hm⟩)
+
+/-- The restricted-alphabet conclusion holds in every sufficiently large dimension. -/
+lemma exists_eventually_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k)
+    (m : ℕ) (hm : 1 ≤ m) (δ : ℝ) (hδ : 0 < δ) :
+    ∃ N, ∀ n, N ≤ n → ∀ A : Finset (Fin n → Fin (k + 1)),
+      δ * (k + 1 : ℝ) ^ n ≤ #A →
+        ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
+          restrictAlphabet V Fin.castSuccEmb ⊆ A := by
+  classical
+  by_cases hk₀ : k = 0
+  · subst k
+    refine ⟨m, ?_⟩
+    intro n hmn A _
+    exact exists_empty_restrictAlphabet_subset hm hmn A
+  have hk : 0 < k := Nat.pos_of_ne_zero hk₀
+  let M := max 1 (densityBound k m (δ / 2))
+  let p := max m (uniformFibersBound (k + 1) M (δ / 2))
+  refine ⟨p, ?_⟩
+  intro n hpn A hA
+  let q := n - p
+  have hpq : p + q = n := Nat.add_sub_of_le hpn
+  let e : Fin p ⊕ Fin q ≃ Fin n := finSumFinEquiv.trans (finCongr hpq)
+  let wordEquiv : (Fin p ⊕ Fin q → Fin (k + 1)) ≃ (Fin n → Fin (k + 1)) :=
+    e.arrowCongr (Equiv.refl _)
+  let A' := A.map wordEquiv.symm.toEmbedding
+  have hA' : δ ≤ (A'.dens : ℝ) := by
+    dsimp only [A']
+    rw [Finset.dens_map_equiv]
+    refine density_le_of_card_le (Nat.zero_lt_succ k) δ A ?_
+    convert hA using 1
+    norm_num
+  have hM : 1 ≤ M := le_max_left _ _
+  have hδ₁ : δ ≤ 1 := hA'.trans (by exact_mod_cast Finset.dens_le_one (s := A'))
+  have hp : uniformFibersBound (k + 1) M (δ / 2) ≤ Fintype.card (Fin p) := by
+    simpa only [Fintype.card_fin, p] using
+      (le_max_right m (uniformFibersBound (k + 1) M (δ / 2)))
+  obtain ⟨W, y, hy⟩ :=
+    exists_dense_restricted_parameters hk hM δ hδ hδ₁ hp A' hA'
+  let B := Finset.univ.filter fun x : Fin M → Fin k ↦
+    DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A'
+  have hB : δ / 2 ≤ (B.dens : ℝ) := by
+    simpa only [B] using hy
+  obtain ⟨S, hS⟩ :=
+    exists_of_density hDHJ m hm (δ / 2) (by linarith) M (le_max_right _ _) B
+      (card_le_of_density_le hk (δ / 2) B hB)
+  refine extend_restricted_subspace e A W y S ?_
+  intro x
+  have hx : DensityHalesJewett.concat (W (Fin.castSucc ∘ S x)) y ∈ A' := by
+    simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using hS x
+  rw [Finset.mem_map_equiv] at hx
+  exact hx
+
 /-- A bound for the restricted-alphabet subspace lemma. -/
-opaque restrictAlphabetBound (k m : ℕ) (δ : ℝ) : ℕ
+noncomputable def restrictAlphabetBound (k m : ℕ) (δ : ℝ) : ℕ := by
+  classical
+  exact if h : 1 ≤ m ∧ 0 < δ ∧ HasDensityHJ k then
+    Nat.find (exists_eventually_restrictAlphabet_subset h.2.2 m h.1 δ h.2.1)
+  else 0
+
+lemma restrictAlphabetBound_spec {k : ℕ} (hDHJ : HasDensityHJ k)
+    (m : ℕ) (hm : 1 ≤ m) (δ : ℝ) (hδ : 0 < δ)
+    (n : ℕ) (hn : restrictAlphabetBound k m δ ≤ n)
+    (A : Finset (Fin n → Fin (k + 1))) (hA : δ * (k + 1 : ℝ) ^ n ≤ #A) :
+    ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
+      restrictAlphabet V Fin.castSuccEmb ⊆ A := by
+  classical
+  rw [restrictAlphabetBound, dif_pos ⟨hm, hδ, hDHJ⟩] at hn
+  exact Nat.find_spec (exists_eventually_restrictAlphabet_subset hDHJ m hm δ hδ) n hn A hA
 
 /-- A dense family over `Fin (k+1)` contains the `Fin k` restriction of a subspace. -/
 lemma exists_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k)
@@ -341,7 +451,7 @@ lemma exists_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k)
     (hA : δ * (k + 1 : ℝ) ^ n ≤ #A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       restrictAlphabet V Fin.castSuccEmb ⊆ A := by
-  sorry
+  exact restrictAlphabetBound_spec hDHJ m hm δ hδ n hn A hA
 
 end Subspace
 end DensityHalesJewett
