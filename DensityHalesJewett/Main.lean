@@ -232,9 +232,53 @@ lemma dhj_two : HasDensityHJ 2 := by
     simpa only [B, Fintype.card_fin] using hB.sperner
   exact (not_lt_of_ge (hA.trans <| by exact_mod_cast hcard)) (hN n hn)
 
+/-- **Easy helper:** a positive uniform increment eventually raises the density floor above one. -/
+lemma exists_density_increment_steps {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) :
+    ∃ R : ℕ, 1 < δ + (R : ℝ) * (Parameters.γ k δ / 2) := by
+  sorry
+
+/-- **Medium helper:** choose the dimensions for a finite density-increment iteration backwards.
+
+The last parameter cube has dimension one.  At stage `j`, the preceding dimension is large enough
+to apply `density_increment` with density floor `δ + j * (γ k δ / 2)` and target dimension
+`d (j + 1)`. -/
+lemma exists_density_increment_schedule (k R : ℕ) (δ : ℝ) :
+    ∃ d : ℕ → ℕ,
+      d R = 1 ∧
+      (∀ j, j ≤ R → 1 ≤ d j) ∧
+      ∀ j, j < R →
+        incrementBound k (d (j + 1)) (δ + (j : ℝ) * (Parameters.γ k δ / 2)) ≤ d j := by
+  sorry
+
+/-- **Hard helper:** iterate the density-increment dichotomy along a backward dimension schedule.
+
+Pull back the family after each increment and compose the resulting nested subspaces.  A line in
+any parameter cube gives a line in the original family.  Otherwise monotonicity of `Parameters.γ`
+raises the density by at least `Parameters.γ k δ / 2` at every stage, and the final relative
+density is at most one. -/
+lemma line_or_iterated_density_le_one {k R n : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
+    {δ : ℝ} (hδ : 0 < δ) (d : ℕ → ℕ)
+    (hd : ∀ j, j ≤ R → 1 ≤ d j)
+    (hstep : ∀ j, j < R →
+      incrementBound k (d (j + 1)) (δ + (j : ℝ) * (Parameters.γ k δ / 2)) ≤ d j)
+    (hn : d 0 ≤ n) (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
+    (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
+      δ + (R : ℝ) * (Parameters.γ k δ / 2) ≤ 1 := by
+  sorry
+
 /-- Density Hales--Jewett for every finite alphabet of cardinality at least two. -/
 lemma density_hales_jewett_fin (k : ℕ) (hk : 2 ≤ k) : HasDensityHJ k := by
-  sorry
+  induction k, hk using Nat.le_induction with
+  | base => exact dhj_two
+  | succ k hk hDHJ =>
+      intro δ hδ
+      obtain ⟨R, hR⟩ := exists_density_increment_steps hk hδ
+      obtain ⟨d, _, hd, hstep⟩ := exists_density_increment_schedule k R δ
+      refine ⟨d 0, ?_⟩
+      intro n hn A hA
+      refine (line_or_iterated_density_le_one hk hDHJ hδ d hd hstep hn A ?_).resolve_right ?_
+      · exact Subspace.density_le_of_card_le (Nat.zero_lt_succ k) δ A hA
+      · exact not_le_of_gt hR
 
 end DensityHalesJewett
 
