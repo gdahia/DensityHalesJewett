@@ -463,7 +463,11 @@ lemma exists_canonized_finiteUnions_blocks (α C : Type*) [Fintype α] [Nontrivi
 /-- The variable support of a combinatorial line is nonempty. -/
 lemma variableSet_nonempty {α : Type*} {m : ℕ} (l : Combinatorics.Line α (Fin m)) :
     (variableSet l).Nonempty := by
-  sorry
+  dsimp only [variableSet]
+  apply filter_nonempty_iff.mpr
+  obtain ⟨a, ha⟩ := l.proper
+  exact ⟨a, ⟨by simp, ha⟩⟩
+
 
 /-- Ordered nonempty blocks determine a subspace whose parameter directions occur exactly on
 their corresponding blocks. -/
