@@ -785,7 +785,14 @@ lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X
 lemma firstFailurePiece_disjoint_of_lt {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) {i j : Fin k} (hij : i < j) :
     Disjoint (firstFailurePiece C i : Set X) (firstFailurePiece C j : Set X) := by
-  sorry
+  dsimp only [Disjoint]
+  intro x hxi hxj
+  simp only [firstFailurePiece, coe_inter, coe_compl, coe_filter, mem_univ, true_and,
+    Set.subset_inter_iff] at *
+  simp only [Set.bot_eq_empty, Set.subset_empty_iff]
+  apply Set.eq_empty_of_forall_notMem
+  intro y hy
+  exact (hxi.1 hy) (hxj.2 hy i hij)
 
 /-- Distinct first-failure pieces are pairwise disjoint. -/
 lemma firstFailurePiece_pairwiseDisjoint {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
