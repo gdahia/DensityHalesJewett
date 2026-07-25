@@ -68,8 +68,42 @@ noncomputable def intersection {r : ℕ} {X : Type*} [Fintype X]
   classical
   exact Finset.univ.inf D
 
+/-- An ambient dimension is sufficient for tiling every dense one-pair insensitive family. -/
+def TilingSufficient (k m : ℕ) (β : ℝ) (n : ℕ) : Prop :=
+  ∀ i : Fin k, ∀ D : Finset (Fin n → Fin (k + 1)),
+    IsInsensitive i.castSucc (Fin.last k) D →
+    2 * β ≤ (D.dens : ℝ) →
+    ∃ 𝒱 : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)),
+      𝒱.Finite ∧
+      (∀ V ∈ 𝒱, Subspace.IsContained V D) ∧
+      (𝒱.PairwiseDisjoint fun V ↦ (Subspace.range V : Set (Fin n → Fin (k + 1)))) ∧
+      ((uncovered D 𝒱).dens : ℝ) < 2 * β
+
+/-- Finite-stage block packing gives one exact sufficient dimension for one-family tiling. -/
+lemma exists_tilingSufficient_dimension (k m : ℕ) (hm : 1 ≤ m)
+    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    ∃ N, TilingSufficient k m β N := by
+  sorry
+
+/-- One-family tiling sufficiency is upward closed after padding with unused final coordinates. -/
+lemma exists_eventually_tilingSufficient (k m : ℕ) (hm : 1 ≤ m)
+    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    ∃ N, ∀ n ≥ N, TilingSufficient k m β n := by
+  sorry
+
 /-- A sufficient ambient dimension for tiling one insensitive family. -/
-opaque tilingBound (k m : ℕ) (β : ℝ) : ℕ
+noncomputable def tilingBound (k m : ℕ) (β : ℝ) : ℕ := by
+  classical
+  exact if h : 1 ≤ m ∧ 0 < β ∧ β ≤ 1 then
+    Nat.find (exists_eventually_tilingSufficient k m h.1 h.2.1 h.2.2)
+  else 0
+
+/-- The selected one-family tiling bound satisfies the tiling predicate in every larger
+dimension. -/
+lemma tilingBound_spec (k m n : ℕ) (hm : 1 ≤ m)
+    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
+    (hn : tilingBound k m β ≤ n) : TilingSufficient k m β n := by
+  sorry
 
 /-- A dense insensitive family can be tiled, up to small error, by disjoint subspaces. -/
 lemma exists_disjoint_subspaces {k : ℕ} (i : Fin k)
@@ -82,10 +116,85 @@ lemma exists_disjoint_subspaces {k : ℕ} (i : Fin k)
       (∀ V ∈ 𝒱, Subspace.IsContained V D) ∧
       (𝒱.PairwiseDisjoint fun V ↦ (Subspace.range V : Set (Fin n → Fin (k + 1)))) ∧
       ((uncovered D 𝒱).dens : ℝ) < 2 * β := by
+  exact tilingBound_spec k m n hm hβ₀ hβ₁ hn i D hD hDβ
+
+/-- The preimage of a word family in a subspace parameter cube. -/
+noncomputable def parameterPreimage {η α ι : Type*} [Fintype (η → α)]
+    [DecidableEq (ι → α)] (V : Combinatorics.Subspace η α ι)
+    (D : Finset (ι → α)) : Finset (η → α) := by
+  classical
+  exact Finset.univ.filter fun x ↦ V x ∈ D
+
+/-- Pulling an insensitive family back through a subspace preserves its sensitivity pair. -/
+lemma parameterPreimage_isInsensitive {α η ι : Type*}
+    [Fintype (η → α)] [DecidableEq (ι → α)]
+    {a b : α} (V : Combinatorics.Subspace η α ι) (D : Finset (ι → α))
+    (hD : IsInsensitive a b D) :
+    IsInsensitive a b (parameterPreimage V D) := by
+  sorry
+
+/-- Composing a finite disjoint family of inner tiles with one outer tile preserves finiteness,
+containment, and pairwise-disjointness. -/
+lemma composed_inner_tiles_facts {k d M n : ℕ}
+    (D : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n))
+    (𝒲 : Set (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin M)))
+    (h𝒲 : 𝒲.Finite)
+    (hcontained : ∀ W ∈ 𝒲, Subspace.IsContained W (parameterPreimage V D))
+    (hpairwise : 𝒲.PairwiseDisjoint fun W ↦
+      (Subspace.range W : Set (Fin M → Fin (k + 1)))) :
+    let 𝒰 := Subspace.compose V '' 𝒲
+    𝒰.Finite ∧
+      (∀ U ∈ 𝒰, Subspace.IsContained U D) ∧
+      (𝒰.PairwiseDisjoint fun U ↦
+        (Subspace.range U : Set (Fin n → Fin (k + 1)))) := by
+  sorry
+
+/-- An ambient dimension is sufficient for tiling every dense intersection of `r` insensitive
+families. -/
+def IntersectionTilingSufficient (k r m : ℕ) (β : ℝ) (n : ℕ) : Prop :=
+  ∀ (_ : 1 ≤ r), ∀ hrk : r ≤ k,
+    ∀ D : Fin r → Finset (Fin n → Fin (k + 1)),
+    (∀ i, IsInsensitive (Fin.castLE hrk i).castSucc (Fin.last k) (D i)) →
+    2 * r * β ≤ ((intersection D).dens : ℝ) →
+    ∃ 𝒱 : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)),
+      𝒱.Finite ∧
+      (∀ V ∈ 𝒱, Subspace.IsContained V (intersection D)) ∧
+      (𝒱.PairwiseDisjoint fun V ↦ (Subspace.range V : Set (Fin n → Fin (k + 1)))) ∧
+      ((uncovered (intersection D) 𝒱).dens : ℝ) < 2 * r * β
+
+/-- Induction on the number of insensitive families gives one exact sufficient intersection-tiling
+dimension. -/
+lemma exists_intersectionTilingSufficient_dimension (k r m : ℕ)
+    (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
+    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    ∃ N, IntersectionTilingSufficient k r m β N := by
+  sorry
+
+/-- Intersection-tiling sufficiency is upward closed after padding with unused final
+coordinates. -/
+lemma exists_eventually_intersectionTilingSufficient (k r m : ℕ)
+    (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
+    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    ∃ N, ∀ n ≥ N, IntersectionTilingSufficient k r m β n := by
   sorry
 
 /-- A sufficient ambient dimension for tiling an intersection of insensitive families. -/
-opaque intersectionTilingBound (k r m : ℕ) (β : ℝ) : ℕ
+noncomputable def intersectionTilingBound (k r m : ℕ) (β : ℝ) : ℕ := by
+  classical
+  exact if h : 1 ≤ r ∧ r ≤ k ∧ 1 ≤ m ∧ 0 < β ∧ β ≤ 1 then
+    Nat.find (exists_eventually_intersectionTilingSufficient
+      k r m h.1 h.2.1 h.2.2.1 h.2.2.2.1 h.2.2.2.2)
+  else 0
+
+/-- The selected intersection-tiling bound satisfies the tiling predicate in every larger
+dimension. -/
+lemma intersectionTilingBound_spec (k r m n : ℕ)
+    (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
+    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
+    (hn : intersectionTilingBound k r m β ≤ n) :
+    IntersectionTilingSufficient k r m β n := by
+  sorry
 
 /-- An intersection of insensitive families can be tiled by disjoint subspaces. -/
 lemma exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ)
@@ -100,7 +209,8 @@ lemma exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ)
       (∀ V ∈ 𝒱, Subspace.IsContained V (intersection D)) ∧
       (𝒱.PairwiseDisjoint fun V ↦ (Subspace.range V : Set (Fin n → Fin (k + 1)))) ∧
       ((uncovered (intersection D) 𝒱).dens : ℝ) < 2 * r * β := by
-  sorry
+  exact intersectionTilingBound_spec k r m n hr₀ hrk hm hβ₀ hβ₁ hn
+    hr₀ hrk D hD hDβ
 
 end IsInsensitive
 end DensityHalesJewett

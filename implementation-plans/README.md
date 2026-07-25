@@ -28,10 +28,10 @@ upward safe even when the color type is empty.
 
 ## Inventory
 
-- `easy/`: 2 plans
-- `medium/`: 3 plans
-- `hard/`: 9 plans
-- `very-hard/`: 4 plans
+- `easy/`: 5 plans
+- `medium/`: 42 plans
+- `hard/`: 0 plans
+- `very-hard/`: 0 plans
 
 Within a difficulty level, the plans should still be attempted in source dependency order:
 `Word`, `Subspace`, `GrahamRothschild`, `UniformFibers`, `Insensitive`, `DensityIncrement`, `Main`,

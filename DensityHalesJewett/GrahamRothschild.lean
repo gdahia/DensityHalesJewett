@@ -95,6 +95,36 @@ lemma focus (A C U : Type*) [Fintype A] [Nonempty A] [Fintype C] [Fintype U]
   simpa only [eA, eC, eU, Equiv.apply_symm_apply, Equiv.symm_apply_apply,
     Function.comp_apply] using congrFun (hc (eA a)) (eU u)
 
+/-- In the finite cardinal color model, iterated focusing produces ordered blocks whose union
+color is determined by the first selected block. -/
+private lemma exists_minColor_blocks_fin (colors s : ℕ) :
+    ∃ L, ∀ χ : Finset (Fin L) → Fin colors,
+      ∃ B : Fin s → Finset (Fin L),
+        (∀ i, (B i).Nonempty) ∧
+        (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
+        ∃ κ : Fin s → Fin colors, ∀ I : Finset (Fin s), (hI : I.Nonempty) →
+          χ (I.biUnion B) = κ (I.min' hI) := by
+  sorry
+
+/-- The finite-cardinal min-color block theorem transports along an equivalence of color
+types. -/
+private lemma exists_minColor_blocks_of_fin (C : Type*) [Fintype C] (s : ℕ)
+    (hfin :
+      ∃ L, ∀ χ : Finset (Fin L) → Fin (Fintype.card C),
+        ∃ B : Fin s → Finset (Fin L),
+          (∀ i, (B i).Nonempty) ∧
+          (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
+          ∃ κ : Fin s → Fin (Fintype.card C),
+            ∀ I : Finset (Fin s), (hI : I.Nonempty) →
+              χ (I.biUnion B) = κ (I.min' hI)) :
+    ∃ L, ∀ χ : Finset (Fin L) → C,
+      ∃ B : Fin s → Finset (Fin L),
+        (∀ i, (B i).Nonempty) ∧
+        (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
+        ∃ κ : Fin s → C, ∀ I : Finset (Fin s), (hI : I.Nonempty) →
+          χ (I.biUnion B) = κ (I.min' hI) := by
+  sorry
+
 /-- Iterated colored Hales--Jewett focusing produces an ordered block sequence whose union color
 is determined by the first selected block.
 
@@ -110,7 +140,9 @@ private lemma exists_minColor_blocks (C : Type*) [Finite C] (s : ℕ) :
         (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
         ∃ κ : Fin s → C, ∀ I : Finset (Fin s), (hI : I.Nonempty) →
           χ (I.biUnion B) = κ (I.min' hI) := by
-  sorry
+  letI := Fintype.ofFinite C
+  exact exists_minColor_blocks_of_fin C s <|
+    exists_minColor_blocks_fin (Fintype.card C) s
 
 /-- The finite-unions theorem in ordered block-sequence form.
 
@@ -232,8 +264,64 @@ namespace GrahamRothschild
 def variableSet {α ι : Type*} [Fintype ι] (l : Combinatorics.Line α ι) : Finset ι :=
   Finset.univ.filter fun i ↦ l.idxFun i = none
 
+/-- A subspace is locally canonizing when changing the fixed letter at one parameter coordinate
+does not change the color, provided the variable support is unchanged. -/
+def IsLocallyCanonizing {α C : Type*} [Fintype α] [Nontrivial α] [DecidableEq α] {L n : ℕ}
+    (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (χ : Combinatorics.Line α (Fin n) → C) : Prop :=
+  ∀ p q : Combinatorics.Line α (Fin L), variableSet p = variableSet q →
+    (∃ i, ∀ j, j ≠ i → p.idxFun j = q.idxFun j) →
+      χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q)
+
+/-- Reverse finite focusing constructs a locally canonizing block subspace in one sufficiently
+large exact dimension. -/
+lemma exists_locally_canonizing_dimension (alphabet colors blocks : ℕ)
+    [Nontrivial (Fin alphabet)] (halphabet : 2 ≤ alphabet) :
+    ∃ N, ∀ χ : Combinatorics.Line (Fin alphabet) (Fin N) → Fin colors,
+      ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin N),
+        IsLocallyCanonizing V χ := by
+  sorry
+
+/-- A locally canonizing block subspace remains available after padding with unused final
+coordinates. -/
+lemma exists_locally_canonizing_in_high_dimension (alphabet colors blocks : ℕ)
+    [Nontrivial (Fin alphabet)] (halphabet : 2 ≤ alphabet) :
+    ∃ N, ∀ n ≥ N, ∀ χ : Combinatorics.Line (Fin alphabet) (Fin n) → Fin colors,
+      ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin n),
+        IsLocallyCanonizing V χ := by
+  sorry
+
 /-- A block-canonization dimension. -/
-opaque canonizationBound (alphabet colors blocks : ℕ) : ℕ
+noncomputable def canonizationBound (alphabet colors blocks : ℕ) : ℕ := by
+  classical
+  exact if halphabet : 2 ≤ alphabet then
+    letI : Nontrivial (Fin alphabet) :=
+      Fintype.one_lt_card_iff_nontrivial.mp (by
+        simp only [Fintype.card_fin]
+        omega)
+    Nat.find (exists_locally_canonizing_in_high_dimension alphabet colors blocks halphabet)
+  else 0
+
+/-- The cardinal-model canonization threshold transports to arbitrary finite alphabets and color
+types. -/
+lemma canonizationBound_spec (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
+    [DecidableEq α] (L n : ℕ)
+    (hn : canonizationBound (Fintype.card α) (Fintype.card C) L ≤ n)
+    (χ : Combinatorics.Line α (Fin n) → C) :
+    ∃ V : Combinatorics.Subspace (Fin L) α (Fin n),
+      IsLocallyCanonizing V χ := by
+  sorry
+
+/-- Local one-coordinate color invariance extends to arbitrary fixed-letter changes with the same
+variable support. -/
+lemma color_eq_of_locally_canonizing (α C : Type*) [Fintype α] [Nontrivial α]
+    [DecidableEq α] {L n : ℕ}
+    (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (χ : Combinatorics.Line α (Fin n) → C)
+    (hlocal : IsLocallyCanonizing V χ)
+    (p q : Combinatorics.Line α (Fin L)) (hpq : variableSet p = variableSet q) :
+    χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q) := by
+  sorry
 
 /-- Block canonization: inside a suitable subspace, the color of a line depends only on its
 variable directions and not on its fixed letters. -/
@@ -244,6 +332,38 @@ lemma canonize (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
     ∃ V : Combinatorics.Subspace (Fin L) α (Fin n),
       ∀ p q : Combinatorics.Line α (Fin L), variableSet p = variableSet q →
         χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q) := by
+  obtain ⟨V, hV⟩ := canonizationBound_spec α C L n hn χ
+  refine ⟨V, ?_⟩
+  intro p q hpq
+  exact color_eq_of_locally_canonizing α C V χ hV p q hpq
+
+/-- Finite unions applied to a canonized line coloring.
+
+The coloring induced on nonempty variable supports is monochromatic on every nonempty union of
+an ordered block sequence.  Constructing the induced support coloring requires handling the empty
+support without assuming `C` is inhabited. -/
+lemma color_nonempty_of_finiteUnions_bound (α C : Type*) [Nontrivial α]
+    [Fintype C] (m L n : ℕ) (hm : 1 ≤ m)
+    (hL : FiniteUnions.bound (Fintype.card C) m ≤ L)
+    (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (χ : Combinatorics.Line α (Fin n) → C) : Nonempty C := by
+  sorry
+
+/-- Once the color type is inhabited, canonization turns the line coloring into a coloring of
+nonempty variable supports, to which the finite-unions theorem applies. -/
+lemma exists_canonized_finiteUnions_blocks_of_nonempty (α C : Type*) [Fintype α]
+    [Nontrivial α] [Fintype C] [Nonempty C] [DecidableEq α] (m L n : ℕ)
+    (hL : FiniteUnions.bound (Fintype.card C) m ≤ L)
+    (V : Combinatorics.Subspace (Fin L) α (Fin n))
+    (χ : Combinatorics.Line α (Fin n) → C)
+    (hχ : ∀ p q : Combinatorics.Line α (Fin L), variableSet p = variableSet q →
+      χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q)) :
+    ∃ B : Fin m → Finset (Fin L),
+      (∀ i, (B i).Nonempty) ∧
+      (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
+      ∃ c, ∀ I : Finset (Fin m), I.Nonempty →
+        ∀ p : Combinatorics.Line α (Fin L), variableSet p = I.biUnion B →
+          χ (Subspace.mapLine V p) = c := by
   sorry
 
 /-- Finite unions applied to a canonized line coloring.
@@ -264,7 +384,9 @@ lemma exists_canonized_finiteUnions_blocks (α C : Type*) [Fintype α] [Nontrivi
       ∃ c, ∀ I : Finset (Fin m), I.Nonempty →
         ∀ p : Combinatorics.Line α (Fin L), variableSet p = I.biUnion B →
           χ (Subspace.mapLine V p) = c := by
-  sorry
+  letI : Nonempty C :=
+    color_nonempty_of_finiteUnions_bound α C m L n hm hL V χ
+  exact exists_canonized_finiteUnions_blocks_of_nonempty α C m L n hL V χ hχ
 
 /-- The variable support of a combinatorial line is nonempty. -/
 lemma variableSet_nonempty {α : Type*} {m : ℕ} (l : Combinatorics.Line α (Fin m)) :

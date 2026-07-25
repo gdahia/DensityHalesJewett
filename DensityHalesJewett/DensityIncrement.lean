@@ -198,6 +198,64 @@ def pullback {η α ι : Type*} [Fintype (η → α)] [DecidableEq (ι → α)]
 /-- A bound for the correlated-fibers lemma. -/
 opaque correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ
 
+/-- The correlated-fibers bound leaves room first for uniformizing fibers and then for canonizing
+the resulting two-coloring of parameter lines. -/
+lemma correlatedFibersBound_spec {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
+    (m : ℕ) (hm : 1 ≤ m) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι : Type*} [Fintype ι]
+    (hι : correlatedFibersBound k m δ ≤ Fintype.card ι) :
+    ∃ M L : ℕ,
+      m ≤ M ∧ Parameters.m₀ k δ ≤ M ∧
+      GrahamRothschild.bound (k + 1) 2 M ≤ L ∧
+      Subspace.uniformFibersBound (k + 1) L (Parameters.η k δ ^ 2 / 2) ≤
+        Fintype.card ι := by
+  sorry
+
+/-- Uniformization followed by line canonization produces a large subspace on which every
+restricted-alphabet line is uniformly good or uniformly sparse. -/
+lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
+    [Fintype (ι ⊕ κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (hGR : GrahamRothschild.bound (k + 1) 2 M ≤ L)
+    (huniform :
+      Subspace.uniformFibersBound (k + 1) L (Parameters.η k δ ^ 2 / 2) ≤
+        Fintype.card ι)
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
+    ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
+      (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ)) ∧
+      ((∀ l : Combinatorics.Line (Fin k) (Fin M),
+          Parameters.θ k δ ≤
+            ((Finset.univ.filter fun y ↦
+              ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)) ∨
+        (∀ l : Combinatorics.Line (Fin k) (Fin M),
+          ((Finset.univ.filter fun y ↦
+            ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
+              Parameters.θ k δ)) := by
+  sorry
+
+/-- Restricting the parameter directions of a good correlated-fibers subspace preserves its
+uniform fiber and common-line-fiber estimates. -/
+lemma restrict_correlated_fibers_subspace {k m M : ℕ} (hm : 1 ≤ m) (hmM : m ≤ M)
+    {δ : ℝ} {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι)
+    (hfibers : ∀ x,
+      δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ))
+    (hlines : ∀ l : Combinatorics.Line (Fin k) (Fin M),
+      Parameters.θ k δ ≤
+        ((Finset.univ.filter fun y ↦
+          ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ)) :
+    ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι,
+      (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
+      ∀ l : Combinatorics.Line (Fin k) (Fin m),
+        Parameters.θ k δ ≤
+          ((Finset.univ.filter fun y ↦
+            ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
+  sorry
+
 /-- Uniformize the fibers and canonize their line-density coloring.
 
 The working parameter dimension is chosen large enough both for the requested `m`-dimensional
@@ -227,6 +285,50 @@ lemma exists_correlated_fibers_or_sparse_certificate {k : ℕ} (hk : 2 ≤ k)
             ((Finset.univ.filter fun y ↦
               ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
                 Parameters.θ k δ := by
+  obtain ⟨M, L, hmM, hm₀M, hGR, huniform⟩ :=
+    correlatedFibersBound_spec hk hDHJ m hm hδ₀ hδ₁ hι
+  obtain ⟨W, hfibers, hgood | hsparse⟩ :=
+    exists_uniform_fibers_and_homogeneous_lines hk hδ₀ hδ₁ hGR huniform A hA
+  · exact Or.inl <|
+      restrict_correlated_fibers_subspace hm hmM A W hfibers hgood
+  · exact Or.inr ⟨M, hm₀M, W, hfibers, hsparse⟩
+
+/-- Uniformly dense fibers force a positive-density set of suffixes whose restricted parameter
+slice has density at least `δ / 4`. -/
+lemma dense_suffixes_of_uniform_fibers {k M : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι)
+    (hfibers : ∀ x,
+      δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ)) :
+    δ / 4 ≤
+      ((Finset.univ.filter fun y : κ → Fin (k + 1) ↦
+        δ / 4 ≤
+          ((Finset.univ.filter fun x : Fin M → Fin k ↦
+            concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)).dens : ℝ) := by
+  sorry
+
+/-- Density Hales--Jewett in every dense suffix slice, followed by finite pigeonhole, produces
+one parameter line shared by at least a `θ`-density set of suffixes. -/
+lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
+    (hDHJ : HasDensityHJ k) {δ : ℝ} (hδ₀ : 0 < δ)
+    (hM : Parameters.m₀ k δ ≤ M)
+    {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι)
+    (hdense :
+      δ / 4 ≤
+        ((Finset.univ.filter fun y : κ → Fin (k + 1) ↦
+          δ / 4 ≤
+            ((Finset.univ.filter fun x : Fin M → Fin k ↦
+              concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)).dens : ℝ)) :
+    ∃ l : Combinatorics.Line (Fin k) (Fin M),
+      Parameters.θ k δ ≤
+        ((Finset.univ.filter fun y ↦
+          ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
   sorry
 
 /-- The uniformly sparse certificate is impossible.
@@ -247,7 +349,11 @@ lemma not_exists_sparse_correlated_fibers_certificate {k : ℕ} (hk : 2 ≤ k)
           ((Finset.univ.filter fun y ↦
             ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
               Parameters.θ k δ := by
-  sorry
+  rintro ⟨M, hM, W, hfibers, hsparse⟩
+  obtain ⟨l, hl⟩ :=
+    exists_popular_line_of_dense_suffixes hk hDHJ hδ₀ hM A W <|
+      dense_suffixes_of_uniform_fibers hk hδ₀ hδ₁ A W hfibers
+  exact (not_lt_of_ge hl) (hsparse l)
 
 /-- Every parameter-cube line in a suitable subspace has a dense common fiber. -/
 lemma exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
@@ -652,6 +758,63 @@ lemma exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k
 /-- A parameter-cube dimension sufficient for the insensitive-intersection construction. -/
 opaque insensitiveIntersectionDimension (k : ℕ) (δ : ℝ) : ℕ
 
+/-- Replace every occurrence of the final alphabet letter by a fixed restricted-alphabet
+letter. -/
+def replaceLastLetter {k m : ℕ} (i : Fin k) (x : Fin m → Fin (k + 1)) :
+    Fin m → Fin (k + 1) :=
+  fun c ↦ if x c = Fin.last k then i.castSucc else x c
+
+/-- The endpoint family associated with one restricted-alphabet letter. -/
+def endpointFamily {k m n : ℕ}
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (i : Fin k) : Finset (Fin m → Fin (k + 1)) :=
+  Finset.univ.filter fun x ↦ V (replaceLastLetter i x) ∈ A
+
+/-- Parameter words which avoid the final alphabet letter. -/
+def restrictedParameterWords (k m : ℕ) : Finset (Fin m → Fin (k + 1)) :=
+  Finset.univ.filter fun x ↦ ∀ c, x c ≠ Fin.last k
+
+/-- Each endpoint family is insensitive to interchanging its selected letter with the final
+letter. -/
+lemma endpointFamily_isInsensitive {k m n : ℕ}
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)) (i : Fin k) :
+    IsInsensitive i.castSucc (Fin.last k) (endpointFamily A V i) := by
+  sorry
+
+/-- Complete restricted-alphabet parameter lines inject into the intersection of the endpoint
+families, giving the required density lower bound. -/
+lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))]
+    {δ : ℝ}
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (hlines : Parameters.θ k δ / 2 ≤
+      ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
+        ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ)) :
+    Parameters.θ k δ / 4 ≤
+      ((IsInsensitive.intersection (endpointFamily A V)).dens : ℝ) := by
+  sorry
+
+/-- In a line-free ambient family, a word lying both in its pullback and in every endpoint family
+cannot use the final alphabet letter. -/
+lemma pullback_inter_endpointFamily_subset_restricted {k m n : ℕ}
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (hfree : IsLineFree A) :
+    pullback V A ∩ IsInsensitive.intersection (endpointFamily A V) ⊆
+      restrictedParameterWords k m := by
+  sorry
+
+/-- In a sufficiently large parameter cube, words avoiding the final letter have density at most
+`η`. -/
+lemma restrictedParameterWords_density_le_eta {k m : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (hδ₀ : 0 < δ)
+    (hm_large : insensitiveIntersectionDimension k δ ≤ m) :
+    ((restrictedParameterWords k m).dens : ℝ) ≤ Parameters.η k δ := by
+  sorry
+
 /-- Many complete restricted-alphabet lines yield a large insensitive intersection whose part
 inside a line-free family is small.  This packages the endpoint construction, its injective
 line count, the identification of the intersection, and the geometric-decay estimate. -/
@@ -670,7 +833,12 @@ lemma exists_endpoint_insensitive_intersection {k m n : ℕ} (hk : 2 ≤ k)
       Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ) ∧
       ((pullback V A ∩ IsInsensitive.intersection C).dens : ℝ) ≤
         Parameters.η k δ := by
-  sorry
+  refine ⟨endpointFamily A V, endpointFamily_isInsensitive A V, ?_, ?_⟩
+  · exact endpointFamily_intersection_dense hk A V hlines
+  · refine le_trans ?_ <|
+      restrictedParameterWords_density_le_eta hk hδ₀ hm_large
+    exact_mod_cast Finset.dens_mono <|
+      pullback_inter_endpointFamily_subset_restricted A V hfree
 
 /-- The numerical parameters turn the absolute density left outside a large intersection into
 the required relative density gain. -/
@@ -803,6 +971,39 @@ lemma firstFailurePiece_pairwiseDisjoint {k : ℕ} {X : Type*} [Fintype X] [Deci
   · exact firstFailurePiece_disjoint_of_lt C hij
   · exact (firstFailurePiece_disjoint_of_lt C hji).symm
 
+/-- The first-failure partition converts the densities of its pieces, and of their intersections
+with `A`, into sums. -/
+lemma firstFailurePiece_density_sums {k : ℕ}
+    {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
+    (A : Finset X) (C : Fin k → Finset X) :
+    (∑ i, ((firstFailurePiece C i).dens : ℝ)) =
+        (((IsInsensitive.intersection C)ᶜ).dens : ℝ) ∧
+      (∑ i, ((A ∩ firstFailurePiece C i).dens : ℝ)) =
+        ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) := by
+  sorry
+
+/-- The quantitative hypotheses and the first-failure density sums force one piece to be both
+large and relatively dense in `A`. -/
+lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
+    (A : Finset X) (C : Fin k → Finset X)
+    (hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
+    (hweighted : (δ + 6 * Parameters.η k δ) *
+        ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
+      ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ))
+    (hlarge : δ - 3 * Parameters.η k δ ≤
+      ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ))
+    (hsumPieces : (∑ i, ((firstFailurePiece C i).dens : ℝ)) =
+      (((IsInsensitive.intersection C)ᶜ).dens : ℝ))
+    (hsumIntersections : (∑ i, ((A ∩ firstFailurePiece C i).dens : ℝ)) =
+      ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ)) :
+    ∃ i : Fin k,
+      Parameters.γ k δ ≤ ((firstFailurePiece C i).dens : ℝ) ∧
+      (δ + Parameters.γ k δ) * ((firstFailurePiece C i).dens : ℝ) ≤
+        ((A ∩ firstFailurePiece C i).dens : ℝ) := by
+  sorry
+
 /-- The first-failure partition and its quantitative weighted averaging.
 
 The complement of `intersection C` is partitioned by `firstFailurePiece C i`.  The two global
@@ -822,7 +1023,10 @@ lemma exists_dense_firstFailurePiece {k : ℕ} (hk : 2 ≤ k)
       Parameters.γ k δ ≤ ((firstFailurePiece C i).dens : ℝ) ∧
       (δ + Parameters.γ k δ) * ((firstFailurePiece C i).dens : ℝ) ≤
         ((A ∩ firstFailurePiece C i).dens : ℝ) := by
-  sorry
+  obtain ⟨hsumPieces, hsumIntersections⟩ :=
+    firstFailurePiece_density_sums A C
+  exact exists_dense_firstFailurePiece_of_density_sums hk hδ₀ hδ₁ A C hC hweighted
+    hlarge hsumPieces hsumIntersections
 
 /-- The Boolean reconstruction of a first-failure piece as an insensitive intersection.
 
@@ -897,8 +1101,25 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
     · rw [hintersection]
       exact hicorrelation
 
+/-- An ambient dimension supports all working dimensions needed by the density-increment
+dichotomy. -/
+def IncrementBoundSufficient (k d : ℕ) (δ : ℝ) (n : ℕ) : Prop :=
+  ∀ (_ : 2 ≤ k), HasDensityHJ k → 1 ≤ d → 0 < δ → δ ≤ 1 →
+    ∃ m, 1 ≤ m ∧
+      insensitiveIntersectionDimension k δ ≤ m ∧
+      manyLinesBound k m δ ≤ n ∧
+      IsInsensitive.intersectionTilingBound k k d
+        (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m
+
+/-- Sufficient ambient dimensions for the density-increment dichotomy occur eventually. -/
+lemma exists_eventually_incrementBoundSufficient (k d : ℕ) (δ : ℝ) :
+    ∃ N, ∀ n ≥ N, IncrementBoundSufficient k d δ n := by
+  sorry
+
 /-- A sufficient ambient dimension for the density-increment dichotomy. -/
-opaque incrementBound (k d : ℕ) (δ : ℝ) : ℕ
+noncomputable def incrementBound (k d : ℕ) (δ : ℝ) : ℕ := by
+  classical
+  exact Nat.find (exists_eventually_incrementBoundSufficient k d δ)
 
 /-- Select one working dimension supporting both structured correlation and the final tiling
 argument.
@@ -914,6 +1135,79 @@ lemma incrementBound_spec {k d : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) (hd
       manyLinesBound k m δ ≤ n ∧
       IsInsensitive.intersectionTilingBound k k d
         (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m := by
+  classical
+  unfold incrementBound at hn
+  exact Nat.find_spec (exists_eventually_incrementBoundSufficient k d δ) n hn
+    hk hDHJ hd hδ₀ hδ₁
+
+/-- The insensitive-intersection tiling theorem supplies a nonempty finite family of disjoint
+`d`-subspaces with small uncovered part. -/
+lemma exists_finite_structured_tiling {k d m : ℕ}
+    (hk : 2 ≤ k) (hd : 1 ≤ d) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hm_tiling : IsInsensitive.intersectionTilingBound k k d
+      (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m)
+    (D : Fin k → Finset (Fin m → Fin (k + 1)))
+    (hD : ∀ i, IsInsensitive i.castSucc (Fin.last k) (D i))
+    (hDdense : Parameters.γ k δ ≤ ((IsInsensitive.intersection D).dens : ℝ)) :
+    ∃ 𝒱 : Finset (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin m)),
+      𝒱.Nonempty ∧
+      (∀ W ∈ 𝒱, Subspace.IsContained W (IsInsensitive.intersection D)) ∧
+      ((𝒱 : Set (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin m))).PairwiseDisjoint fun W ↦
+        (Subspace.range W : Set (Fin m → Fin (k + 1)))) ∧
+      ((IsInsensitive.uncovered (η := Fin d)
+        (IsInsensitive.intersection D) (𝒱 : Set _)).dens : ℝ) <
+        Parameters.γ k δ ^ 2 / 2 := by
+  sorry
+
+/-- The structured correlation and the small uncovered part give an aggregate density gain over
+the disjoint tile family. -/
+lemma structured_tiling_density_sum {k d m n : ℕ}
+    (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (D : Fin k → Finset (Fin m → Fin (k + 1)))
+    (hDdense : Parameters.γ k δ ≤ ((IsInsensitive.intersection D).dens : ℝ))
+    (hcorrelation : (δ + Parameters.γ k δ) *
+        ((IsInsensitive.intersection D).dens : ℝ) ≤
+      ((pullback V A ∩ IsInsensitive.intersection D).dens : ℝ))
+    (𝒱 : Finset (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin m)))
+    (hcontained : ∀ W ∈ 𝒱, Subspace.IsContained W (IsInsensitive.intersection D))
+    (hpairwise :
+      ((𝒱 : Set (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin m))).PairwiseDisjoint fun W ↦
+      (Subspace.range W : Set (Fin m → Fin (k + 1)))))
+    (huncovered :
+      ((IsInsensitive.uncovered (η := Fin d)
+        (IsInsensitive.intersection D) (𝒱 : Set _)).dens : ℝ) <
+        Parameters.γ k δ ^ 2 / 2) :
+    (δ + Parameters.γ k δ / 2) *
+        ∑ W ∈ 𝒱, ((Subspace.range W).dens : ℝ) ≤
+      ∑ W ∈ 𝒱, ((pullback V A ∩ Subspace.range W).dens : ℝ) := by
+  sorry
+
+/-- Finite weighted averaging selects a tile whose pullback density realizes the aggregate
+gain. -/
+lemma exists_dense_tile_of_density_sum {k d m n : ℕ} (hk : 2 ≤ k)
+    {δ : ℝ} (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (𝒱 : Finset (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin m)))
+    (h𝒱 : 𝒱.Nonempty)
+    (hsum : (δ + Parameters.γ k δ / 2) *
+        ∑ W ∈ 𝒱, ((Subspace.range W).dens : ℝ) ≤
+      ∑ W ∈ 𝒱, ((pullback V A ∩ Subspace.range W).dens : ℝ)) :
+    ∃ W ∈ 𝒱,
+      δ + Parameters.γ k δ / 2 ≤
+        (Subspace.relativeDensity W (pullback V A) : ℝ) := by
+  sorry
+
+/-- Relative density in a composite subspace is relative density in the inner subspace of the
+outer pullback. -/
+lemma Subspace.relativeDensity_compose {α η ζ ι : Type*}
+    [Fintype (η → α)] [Fintype (ζ → α)] [DecidableEq (η → α)]
+    [DecidableEq (ι → α)]
+    (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace ζ α η)
+    (A : Finset (ι → α)) :
+    (relativeDensity (compose V W) A : ℝ) =
+      (relativeDensity W (pullback V A) : ℝ) := by
   sorry
 
 /-- Tile a structured insensitive intersection and extract a dense tile.
@@ -937,7 +1231,15 @@ lemma exists_density_increment_subspace_of_structured_correlation {k d m n : ℕ
       ((pullback V A ∩ IsInsensitive.intersection D).dens : ℝ)) :
     ∃ W : Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin n),
       δ + Parameters.γ k δ / 2 ≤ (Subspace.relativeDensity W A : ℝ) := by
-  sorry
+  obtain ⟨𝒱, h𝒱, hcontained, hpairwise, huncovered⟩ :=
+    exists_finite_structured_tiling hk hd hδ₀ hδ₁ hm_tiling D hD hDdense
+  obtain ⟨W, _, hW⟩ :=
+    exists_dense_tile_of_density_sum hk A V 𝒱 h𝒱 <|
+      structured_tiling_density_sum hk hδ₀ hδ₁ A V D hDdense hcorrelation 𝒱
+        hcontained hpairwise huncovered
+  refine ⟨Subspace.compose V W, ?_⟩
+  rw [Subspace.relativeDensity_compose]
+  exact hW
 
 /-- A dense word family either contains a line or has increased density on a prescribed-dimensional
 subspace. -/

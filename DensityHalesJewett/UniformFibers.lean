@@ -315,9 +315,52 @@ lemma exists_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
     ∃ V : Combinatorics.Subspace (Fin m) (Fin k) (Fin n), IsContained V A := by
   exact densityBound_spec hDHJ m hm δ hδ n hn A hA
 
+/-- A finite prefix dimension is sufficient for uniform fibers over the finite cardinal models. -/
+def UniformFibersFinSufficient (alphabet dimension : ℕ) (ε : ℝ) (n : ℕ) : Prop :=
+  ∀ q : ℕ, ∀ A : Finset (Fin n ⊕ Fin q → Fin alphabet), ε < (A.dens : ℝ) →
+    ∃ V : Combinatorics.Subspace (Fin dimension) (Fin alphabet) (Fin n),
+      ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ)
+
+/-- A finite fuel density-increment iteration produces one exact sufficient prefix dimension. -/
+lemma exists_uniformFibersFinSufficient (alphabet dimension : ℕ)
+    (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
+    ∃ N, UniformFibersFinSufficient alphabet dimension ε N := by
+  sorry
+
+/-- Sufficiency for uniform fibers is upward closed after padding with unused final coordinates. -/
+lemma exists_eventually_uniformFibersFinSufficient (alphabet dimension : ℕ)
+    (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
+    ∃ N, ∀ n ≥ N, UniformFibersFinSufficient alphabet dimension ε n := by
+  sorry
+
 /-- A sufficient prefix size for finding a subspace above all of whose points the fibers remain
 dense. -/
-opaque uniformFibersBound (alphabet dimension : ℕ) (ε : ℝ) : ℕ
+noncomputable def uniformFibersBound (alphabet dimension : ℕ) (ε : ℝ) : ℕ := by
+  classical
+  exact if h : 1 ≤ dimension ∧ 0 < ε ∧ ε < 1 then
+    Nat.find (exists_eventually_uniformFibersFinSufficient alphabet dimension h.1 h.2.1 h.2.2)
+  else 0
+
+/-- The selected uniform-fibers bound satisfies the finite cardinal-model statement in every
+larger prefix dimension. -/
+lemma uniformFibersBound_fin_spec (alphabet dimension n : ℕ)
+    (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
+    (hn : uniformFibersBound alphabet dimension ε ≤ n) :
+    UniformFibersFinSufficient alphabet dimension ε n := by
+  sorry
+
+/-- Uniform fibers over finite cardinal models transport to arbitrary finite alphabets, prefix
+coordinates, and suffix coordinates. -/
+lemma exists_fibers_dense_of_fin_sufficient
+    {α ι κ : Type*} [Fintype α] [Fintype ι]
+    [Fintype (κ → α)] [Fintype (ι ⊕ κ → α)]
+    [DecidableEq (ι ⊕ κ → α)]
+    (m : ℕ) (ε : ℝ)
+    (hfin : UniformFibersFinSufficient (Fintype.card α) m ε (Fintype.card ι))
+    (A : Finset (ι ⊕ κ → α)) (hA : ε < (A.dens : ℝ)) :
+    ∃ V : Combinatorics.Subspace (Fin m) α ι,
+      ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
+  sorry
 
 /-- Uniform fibers on a subspace. -/
 lemma exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
@@ -328,6 +371,43 @@ lemma exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
     (A : Finset (ι ⊕ κ → α)) (hA : ε < (A.dens : ℝ)) :
     ∃ V : Combinatorics.Subspace (Fin m) α ι,
       ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
+  exact exists_fibers_dense_of_fin_sufficient m ε
+    (uniformFibersBound_fin_spec (Fintype.card α) m (Fintype.card ι) hm hε₀ hε₁ hι)
+    A hA
+
+/-- Finiteness of the full word space supplies finiteness of its suffix word space. -/
+@[instance_reducible]
+noncomputable def suffixFunctionFintype (α ι κ : Type*)
+    [Fintype (ι ⊕ κ → α)] : Fintype (κ → α) := by
+  sorry
+
+/-- Uniform fibers remain dense after restricting every parameter letter to the first `k`
+letters. -/
+lemma exists_restricted_parameters_with_dense_fibers {k M : ℕ} (hk : 0 < k)
+    (hM : 1 ≤ M) (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
+    [Fintype (ι ⊕ κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (hι : uniformFibersBound (k + 1) M (δ / 2) ≤ Fintype.card ι)
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
+    ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
+      ∀ x : Fin M → Fin k,
+        δ / 2 ≤ ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ) := by
+  sorry
+
+/-- Averaging a pointwise-dense family of suffix fibers produces one suffix above which the
+restricted parameter family is dense. -/
+lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (δ : ℝ)
+    {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι)
+    (hW : ∀ x : Fin M → Fin k,
+      δ / 2 ≤ ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ)) :
+    ∃ y : κ → Fin (k + 1),
+      δ / 2 ≤
+        ((Finset.univ.filter fun x : Fin M → Fin k ↦
+          DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
   sorry
 
 /-- Restricting all parameter words to the first `k` letters and averaging over the suffix leaves
@@ -343,7 +423,12 @@ lemma exists_dense_restricted_parameters {k M : ℕ} (hk : 0 < k) (hM : 1 ≤ M)
         δ / 2 ≤
           ((Finset.univ.filter fun x : Fin M → Fin k ↦
             DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
-  sorry
+  letI : Fintype (κ → Fin (k + 1)) :=
+    suffixFunctionFintype (Fin (k + 1)) ι κ
+  obtain ⟨W, hW⟩ :=
+    exists_restricted_parameters_with_dense_fibers hk hM δ hδ₀ hδ₁ hι A hA
+  obtain ⟨y, hy⟩ := exists_dense_suffix_of_restricted_fibers δ A W hW
+  exact ⟨W, y, hy⟩
 
 /-- Extend a restricted parameter subspace to the full alphabet, attach a fixed suffix, and
 transport the resulting subspace along an equivalence of ambient coordinates. -/

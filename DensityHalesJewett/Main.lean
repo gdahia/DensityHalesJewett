@@ -281,6 +281,49 @@ lemma exists_density_increment_schedule (k R : ℕ) (δ : ℝ) :
     exact le_max_right _ _
   exact ⟨d, h_d_R, h_d_one, h_d_step⟩
 
+/-- A coordinate fiber of any prescribed smaller positive dimension has relative density at least
+the ambient density. -/
+lemma exists_density_preserving_subspace_of_le {k m n : ℕ} (hm : 1 ≤ m) (hmn : m ≤ n)
+    (A : Finset (Fin n → Fin (k + 1))) :
+    ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
+      (A.dens : ℝ) ≤ (Subspace.relativeDensity V A : ℝ) := by
+  sorry
+
+/-- One scheduled density-increment stage either produces an ambient line or advances the nested
+subspace while preserving the quantitative density invariant. -/
+lemma density_increment_chain_step {k R n j : ℕ} (hk : 2 ≤ k)
+    (hDHJ : HasDensityHJ k) {δ : ℝ} (hδ : 0 < δ)
+    (d : ℕ → ℕ) (hd : ∀ t, t ≤ R → 1 ≤ d t)
+    (hstep : ∀ t, t < R →
+      incrementBound k (d (t + 1))
+        (δ + (t : ℝ) * (Parameters.γ k δ / 2)) ≤ d t)
+    (hj : j < R) (A : Finset (Fin n → Fin (k + 1)))
+    (V : Combinatorics.Subspace (Fin (d j)) (Fin (k + 1)) (Fin n))
+    (hV : δ + (j : ℝ) * (Parameters.γ k δ / 2) ≤
+      (Subspace.relativeDensity V A : ℝ)) :
+    (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
+      ∃ W : Combinatorics.Subspace (Fin (d (j + 1))) (Fin (k + 1)) (Fin n),
+        δ + ((j + 1 : ℕ) : ℝ) * (Parameters.γ k δ / 2) ≤
+          (Subspace.relativeDensity W A : ℝ) := by
+  sorry
+
+/-- Iterating the one-step lemma along the schedule either finds a line or reaches the last
+scheduled subspace with the accumulated density lower bound. -/
+lemma line_or_density_increment_chain {k R n : ℕ} (hk : 2 ≤ k)
+    (hDHJ : HasDensityHJ k) {δ : ℝ} (hδ : 0 < δ)
+    (d : ℕ → ℕ) (hd : ∀ j, j ≤ R → 1 ≤ d j)
+    (hstep : ∀ j, j < R →
+      incrementBound k (d (j + 1))
+        (δ + (j : ℝ) * (Parameters.γ k δ / 2)) ≤ d j)
+    (A : Finset (Fin n → Fin (k + 1)))
+    (V₀ : Combinatorics.Subspace (Fin (d 0)) (Fin (k + 1)) (Fin n))
+    (hV₀ : δ ≤ (Subspace.relativeDensity V₀ A : ℝ)) :
+    (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
+      ∃ V : Combinatorics.Subspace (Fin (d R)) (Fin (k + 1)) (Fin n),
+        δ + (R : ℝ) * (Parameters.γ k δ / 2) ≤
+          (Subspace.relativeDensity V A : ℝ) := by
+  sorry
+
 /-- Iterate the density-increment dichotomy along a backward dimension schedule.
 
 Pull back the family after each increment and compose the resulting nested subspaces.  A line in
@@ -295,7 +338,13 @@ lemma line_or_iterated_density_le_one {k R n : ℕ} (hk : 2 ≤ k) (hDHJ : HasDe
     (hn : d 0 ≤ n) (A : Finset (Fin n → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
     (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
       δ + (R : ℝ) * (Parameters.γ k δ / 2) ≤ 1 := by
-  sorry
+  obtain ⟨V₀, hV₀⟩ :=
+    exists_density_preserving_subspace_of_le (hd 0 (Nat.zero_le R)) hn A
+  obtain hline | ⟨V, hV⟩ :=
+    line_or_density_increment_chain hk hDHJ hδ d hd hstep A V₀ (hA.trans hV₀)
+  · exact Or.inl hline
+  · refine Or.inr <| hV.trans ?_
+    exact_mod_cast Finset.dens_le_one (s := pullback V A)
 
 /-- Density Hales--Jewett for every finite alphabet of cardinality at least two. -/
 lemma density_hales_jewett_fin (k : ℕ) (hk : 2 ≤ k) : HasDensityHJ k := by
