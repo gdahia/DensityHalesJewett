@@ -25,8 +25,8 @@ namespace Subspace
 
 variable {η α ι : Type*}
 
-/-- Evaluation by a fixed combinatorial subspace is injective when the alphabet is nontrivial. -/
-lemma injective [Nontrivial α] (V : Combinatorics.Subspace η α ι) :
+/-- Evaluation by a fixed combinatorial subspace is injective. -/
+lemma injective (V : Combinatorics.Subspace η α ι) :
     Function.Injective V := by
   intro x y hxy
   funext e
