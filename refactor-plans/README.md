@@ -19,8 +19,8 @@ finding worth a separate plan.
 ## Inventory
 
 - `easy/`: 6 plans
-- `medium/`: 4 plans
-- `hard/`: 1 plan
+- `medium/`: 3 plans
+- `hard/`: 2 plans
 
 Within a difficulty level, use source dependency order: `Word`, `Subspace`,
 `GrahamRothschild`, `UniformFibers`, `Insensitive`, `DensityIncrement`, `Main`, then `Szemeredi`.
@@ -31,12 +31,9 @@ Within a difficulty level, use source dependency order: `Word`, `Subspace`,
   `FiniteUnions.exists_mono_in_high_dimension` with `Fin.castLEEmb`.
 - Use `Combinatorics.Line.ext` for injectivity of `Line.idxFun`, and reuse
   `Subspace.lineFintype` instead of rebuilding the same instance in `DensityIncrement`.
-- Replace the local `BlockWord := List ℕ` monoid and its `toList` API with mathlib's
-  `FreeMonoid ℕ`, `FreeMonoid.toList_one`, and `FreeMonoid.toList_mul`.
 
 ## Verification policy
 
 For every executed plan, build the affected module with `lake build`, inspect the complete output,
 and resolve all warnings and associated `info:` messages attributed to that module. Do not raise
 the heartbeat limit.
-
