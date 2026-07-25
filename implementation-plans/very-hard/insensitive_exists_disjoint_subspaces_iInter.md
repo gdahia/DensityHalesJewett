@@ -1,6 +1,6 @@
 # `DensityHalesJewett.IsInsensitive.exists_disjoint_subspaces_iInter`
 
-Source: `DensityHalesJewett/Insensitive.lean`. Blueprint: “Tiling an intersection.”
+Source: `DensityHalesJewett/Insensitive.lean`.
 
 ## Bound construction
 

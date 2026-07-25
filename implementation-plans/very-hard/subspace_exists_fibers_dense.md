@@ -1,6 +1,6 @@
 # `DensityHalesJewett.Subspace.exists_fibers_dense`
 
-Source: `DensityHalesJewett/UniformFibers.lean`. Blueprint: “Uniform fibers on a subspace.”
+Source: `DensityHalesJewett/UniformFibers.lean`.
 
 ## Bound construction
 
@@ -11,9 +11,9 @@ Prove an eventual theorem by a finite fuel iteration, then select `uniformFibers
 
 ## Plan
 
-Set `s := card α ^ m` and choose a positive increment `ρ`; handle `s ≤ 1` separately because the
-blueprint expression `ε/(s-1)` degenerates. Iterate through disjoint blocks of `m` coordinates with
-fuel greater than `1/ρ`.
+Set `s := card α ^ m` and choose a positive increment `ρ`; handle `s ≤ 1` separately because
+`ε/(s-1)` degenerates. Iterate through disjoint blocks of `m` coordinates with fuel greater than
+`1/ρ`.
 
 At a stage, consider all fibers above the free block. If every density is at least the current
 ambient fiber density minus `ε`, return that block as `V`. Otherwise fiber averaging implies that

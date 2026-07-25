@@ -1,6 +1,6 @@
 # `DensityHalesJewett.GrahamRothschild.canonize`
 
-Source: `DensityHalesJewett/GrahamRothschild.lean`. Blueprint: “Block canonization.”
+Source: `DensityHalesJewett/GrahamRothschild.lean`.
 
 ## Bound construction
 

@@ -1,6 +1,6 @@
 # `DensityHalesJewett.IsInsensitive.exists_disjoint_subspaces`
 
-Source: `DensityHalesJewett/Insensitive.lean`. Blueprint: “Tiling one insensitive set.”
+Source: `DensityHalesJewett/Insensitive.lean`.
 
 ## Bound construction
 
