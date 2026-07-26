@@ -20,6 +20,7 @@ lemma.  All subspaces below are mathlib's `Combinatorics.Subspace`.
 
 open Finset
 open Combinatorics
+open scoped BigOperators
 
 namespace DensityHalesJewett
 
@@ -66,6 +67,71 @@ lemma card_line_le (k m : ℕ) [Fintype (Combinatorics.Line (Fin k) (Fin m))] :
     cases h
     rfl
   · simp
+
+/-- A line is equivalently an `Option`-valued index word with at least one variable
+coordinate. -/
+private noncomputable def lineIndexEquiv (α ι : Type*) :
+    Combinatorics.Line α ι ≃
+      {f : ι → Option α // ¬ ∀ i, f i ≠ none} := by
+  classical
+  refine {
+    toFun := fun l ↦ ⟨l.idxFun, fun h ↦ ?_⟩
+    invFun := fun f ↦ {
+      idxFun := f
+      proper := by
+        have hf := f.property
+        push Not at hf
+        exact hf
+    }
+    left_inv := ?_
+    right_inv := ?_
+  }
+  · obtain ⟨i, hi⟩ := l.proper
+    exact h i hi
+  · intro l
+    cases l
+    rfl
+  · intro f
+    apply Subtype.ext
+    rfl
+
+/-- An index word with no variable coordinate is equivalently an ordinary alphabet word. -/
+private noncomputable def fixedIndexWordEquiv (α ι : Type*) [Nonempty α] :
+    {f : ι → Option α // ∀ i, f i ≠ none} ≃ (ι → α) := by
+  classical
+  let a : α := Classical.choice inferInstance
+  refine {
+    toFun := fun f i ↦ (f.1 i).getD a
+    invFun := fun x ↦ ⟨some ∘ x, by
+      intro i
+      change some (x i) ≠ none
+      exact Option.some_ne_none (x i)⟩
+    left_inv := ?_
+    right_inv := ?_
+  }
+  · intro f
+    apply Subtype.ext
+    funext i
+    cases hi : f.1 i with
+    | none => exact (f.2 i hi).elim
+    | some b =>
+        simp only [Function.comp_apply]
+        rw [hi]
+        rfl
+  · intro x
+    funext i
+    simp only [Function.comp_apply, Option.getD_some]
+
+/-- The exact number of combinatorial line structures in a nonempty finite-alphabet word cube. -/
+lemma card_line (k m : ℕ) (hk : 0 < k)
+    [Fintype (Combinatorics.Line (Fin k) (Fin m))] :
+    Fintype.card (Combinatorics.Line (Fin k) (Fin m)) = (k + 1) ^ m - k ^ m := by
+  letI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  rw [Fintype.card_congr (lineIndexEquiv (Fin k) (Fin m)),
+    Fintype.card_subtype_compl (fun f : Fin m → Option (Fin k) ↦ ∀ i, f i ≠ none),
+    Fintype.card_pi_const, Fintype.card_option, Fintype.card_fin,
+    Fintype.card_congr (fixedIndexWordEquiv (Fin k) (Fin m)),
+    Fintype.card_pi_const, Fintype.card_fin]
 
 /-- The finite enumeration of line structures induced by their index words. -/
 @[instance_reducible]
@@ -321,17 +387,151 @@ def UniformFibersFinSufficient (alphabet dimension : ℕ) (ε : ℝ) (n : ℕ) :
     ∃ V : Combinatorics.Subspace (Fin dimension) (Fin alphabet) (Fin n),
       ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ)
 
+/-- Pad a finite-coordinate subspace by fixed final coordinates. -/
+private def padPrefixSubspace {α η : Type*} {p r n : ℕ}
+    (e : Fin p ⊕ Fin r ≃ Fin n) (z : Fin r → α)
+    (V : Combinatorics.Subspace η α (Fin p)) :
+    Combinatorics.Subspace η α (Fin n) where
+  idxFun i :=
+    match e.symm i with
+    | Sum.inl j => V.idxFun j
+    | Sum.inr j => Sum.inl (z j)
+  proper a := by
+    obtain ⟨i, hi⟩ := V.proper a
+    refine ⟨e (Sum.inl i), ?_⟩
+    simp only [Equiv.symm_apply_apply, hi]
+
+@[simp]
+private lemma padPrefixSubspace_apply {α η : Type*} {p r n : ℕ}
+    (e : Fin p ⊕ Fin r ≃ Fin n) (z : Fin r → α)
+    (V : Combinatorics.Subspace η α (Fin p)) (x : η → α) :
+    padPrefixSubspace e z V x =
+      DensityHalesJewett.concat (V x) z ∘ e.symm := by
+  funext i
+  cases hi : e.symm i with
+  | inl j =>
+      simp [padPrefixSubspace, Combinatorics.Subspace.coe_apply, hi,
+        DensityHalesJewett.concat, Function.comp_apply]
+  | inr j =>
+      simp [padPrefixSubspace, Combinatorics.Subspace.coe_apply, hi,
+        DensityHalesJewett.concat, Function.comp_apply]
+
+/-- The finite block-density-increment iteration underlying uniform fibers. -/
+private lemma exists_uniformFibersFinSufficient_block_iteration
+    (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
+    {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
+    ∃ N, UniformFibersFinSufficient alphabet dimension ε N := by
+  sorry
+
 /-- A finite fuel density-increment iteration produces one exact sufficient prefix dimension. -/
 lemma exists_uniformFibersFinSufficient (alphabet dimension : ℕ)
     (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
     ∃ N, UniformFibersFinSufficient alphabet dimension ε N := by
-  sorry
+  exact exists_uniformFibersFinSufficient_block_iteration
+    alphabet dimension hdimension hε₀ hε₁
 
 /-- Sufficiency for uniform fibers is upward closed after padding with unused final coordinates. -/
 lemma exists_eventually_uniformFibersFinSufficient (alphabet dimension : ℕ)
     (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
     ∃ N, ∀ n ≥ N, UniformFibersFinSufficient alphabet dimension ε n := by
-  sorry
+  classical
+  obtain ⟨N₀, hN₀⟩ :=
+    exists_uniformFibersFinSufficient alphabet dimension hdimension hε₀ hε₁
+  let N := max N₀ dimension
+  refine ⟨N, ?_⟩
+  intro n hn q A hA
+  have hN₀n : N₀ ≤ n := (le_max_left N₀ dimension).trans hn
+  by_cases halphabet : alphabet = 0
+  · subst alphabet
+    have hdimn : dimension ≤ n := (le_max_right N₀ dimension).trans hn
+    have hn₀ : 0 < n := by omega
+    have hA₀ : (A.dens : ℝ) = 0 := by
+      have hAempty : A = ∅ := by
+        apply Finset.eq_empty_iff_forall_notMem.mpr
+        intro w _
+        exact Fin.elim0 (w (Sum.inl ⟨0, hn₀⟩))
+      rw [hAempty, Finset.dens_empty]
+      norm_num
+    rw [hA₀] at hA
+    linarith
+  have halphabet₀ : 0 < alphabet := Nat.pos_of_ne_zero halphabet
+  let r := n - N₀
+  have hNr : N₀ + r = n := Nat.add_sub_of_le hN₀n
+  let e : Fin N₀ ⊕ Fin r ≃ Fin n := finSumFinEquiv.trans (finCongr hNr)
+  let coord : Fin r ⊕ (Fin N₀ ⊕ Fin q) ≃ Fin n ⊕ Fin q := {
+    toFun := fun s ↦
+      match s with
+      | Sum.inl j => Sum.inl (e (Sum.inr j))
+      | Sum.inr (Sum.inl i) => Sum.inl (e (Sum.inl i))
+      | Sum.inr (Sum.inr j) => Sum.inr j
+    invFun := fun s ↦
+      match s with
+      | Sum.inl i =>
+          match e.symm i with
+          | Sum.inl j => Sum.inr (Sum.inl j)
+          | Sum.inr j => Sum.inl j
+      | Sum.inr j => Sum.inr (Sum.inr j)
+    left_inv := by
+      intro s
+      rcases s with j | ⟨i | j⟩
+      · simp only [Equiv.symm_apply_apply]
+      · simp only [Equiv.symm_apply_apply]
+      · rfl
+    right_inv := by
+      intro s
+      rcases s with i | j
+      · cases hi : e.symm i with
+        | inl a =>
+            have hei := congrArg e hi
+            simp only [Equiv.apply_symm_apply] at hei
+            subst i
+            simp only [Equiv.symm_apply_apply]
+        | inr a =>
+            have hei := congrArg e hi
+            simp only [Equiv.apply_symm_apply] at hei
+            subst i
+            simp only [Equiv.symm_apply_apply]
+      · rfl
+  }
+  let wordEquiv := coord.arrowCongr (Equiv.refl (Fin alphabet))
+  let A' := A.map wordEquiv.symm.toEmbedding
+  have hA' : (A'.dens : ℝ) = (A.dens : ℝ) := by
+    simp only [A', Finset.dens_map_equiv]
+  have havg :
+      (A.dens : ℝ) ≤
+        𝔼 z : Fin r → Fin alphabet, ((fiber A' z).dens : ℝ) := by
+    rw [average_density_fiber, hA']
+  letI : Nonempty (Fin alphabet) := ⟨⟨0, halphabet₀⟩⟩
+  letI : Nonempty (Fin r → Fin alphabet) := Pi.instNonempty
+  obtain ⟨z, _, hz⟩ :=
+    Finset.exists_le_of_le_expect Finset.univ_nonempty havg
+  let B := fiber A' z
+  obtain ⟨V₀, hV₀⟩ := hN₀ q B (hA.trans_le hz)
+  let V := padPrefixSubspace e z V₀
+  refine ⟨V, ?_⟩
+  intro x
+  have hword (y : Fin q → Fin alphabet) :
+      wordEquiv (DensityHalesJewett.concat z
+        (DensityHalesJewett.concat (V₀ x) y)) =
+          DensityHalesJewett.concat (V x) y := by
+    funext i
+    rcases i with i | j
+    · cases hi : e.symm i with
+      | inl a =>
+          simp [wordEquiv, coord, V, Equiv.arrowCongr,
+            DensityHalesJewett.concat, hi]
+      | inr a =>
+          simp [wordEquiv, coord, V, Equiv.arrowCongr,
+            DensityHalesJewett.concat, hi]
+    · simp [wordEquiv, coord, Equiv.arrowCongr,
+        DensityHalesJewett.concat]
+  have hfiber : fiber B (V₀ x) = fiber A (V x) := by
+    ext y
+    simp only [B, mem_fiber, A', Finset.mem_map_equiv]
+    simp only [Equiv.symm_symm]
+    rw [hword]
+  rw [← hfiber]
+  exact (sub_le_sub_right hz ε).trans (hV₀ x)
 
 /-- A sufficient prefix size for finding a subspace above all of whose points the fibers remain
 dense. -/
@@ -353,6 +553,124 @@ lemma uniformFibersBound_fin_spec (alphabet dimension n : ℕ)
   exact Nat.find_spec
     (exists_eventually_uniformFibersFinSufficient alphabet dimension hdimension hε₀ hε₁) n hn
 
+/-- Transport of uniform fibers is immediate for a subsingleton alphabet. -/
+private lemma exists_fibers_dense_of_fin_sufficient_subsingleton
+    {α ι κ : Type*} [Fintype α] [Fintype ι] [Subsingleton α]
+    [Fintype (κ → α)] [Fintype (ι ⊕ κ → α)]
+    [DecidableEq (ι ⊕ κ → α)]
+    (m : ℕ) (ε : ℝ)
+    (hfin : UniformFibersFinSufficient (Fintype.card α) m ε (Fintype.card ι))
+    (A : Finset (ι ⊕ κ → α)) (hA : ε < (A.dens : ℝ)) :
+    ∃ V : Combinatorics.Subspace (Fin m) α ι,
+      ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
+  classical
+  by_cases hα : Nonempty α
+  · letI : Nonempty α := hα
+    have hε₁ : ε < 1 := hA.trans_le (by exact_mod_cast Finset.dens_le_one (s := A))
+    obtain ⟨V₀, hV₀⟩ := hfin 0 Finset.univ (by simpa using hε₁)
+    have hε₀ : 0 ≤ ε := by
+      let x : Fin m → Fin (Fintype.card α) := fun _ ↦
+        ⟨0, Fintype.card_pos_iff.mpr hα⟩
+      have hx := hV₀ x
+      have hfiber : fiber
+          (Finset.univ : Finset (Fin (Fintype.card ι) ⊕ Fin 0 → Fin (Fintype.card α)))
+          (V₀ x) = Finset.univ := by
+        ext y
+        simp [fiber]
+      rw [hfiber] at hx
+      simp only [Finset.dens_univ, sub_le_iff_le_add] at hx
+      linarith
+    have hApos : 0 < (A.dens : ℚ≥0) := by
+      exact_mod_cast hε₀.trans_lt hA
+    obtain ⟨w, hw⟩ := Finset.dens_pos.mp hApos
+    have hAuniv : A = Finset.univ := by
+      ext z
+      simp only [Finset.mem_univ, iff_true]
+      exact (Subsingleton.elim z w) ▸ hw
+    let eα := Fintype.equivFin α
+    let eι := Fintype.equivFin ι
+    let V := V₀.reindex (Equiv.refl _) eα.symm eι.symm
+    refine ⟨V, ?_⟩
+    intro x
+    rw [hAuniv]
+    have hfiber : fiber (Finset.univ : Finset (ι ⊕ κ → α)) (V x) = Finset.univ := by
+      ext y
+      simp [fiber]
+    rw [hfiber]
+    simp only [Finset.dens_univ, sub_le_iff_le_add]
+    linarith
+  · letI : IsEmpty α := not_nonempty_iff.mp hα
+    by_cases hκ : Nonempty (κ → α)
+    · letI : IsEmpty κ := ⟨fun i ↦ isEmptyElim (Classical.choice hκ i)⟩
+      letI : Fintype κ := Fintype.ofIsEmpty
+      let eα := Fintype.equivFin α
+      let eι := Fintype.equivFin ι
+      let eκ := Fintype.equivFin κ
+      let eCoord := Equiv.sumCongr eι eκ
+      let eWord := eCoord.arrowCongr eα
+      let A' := A.map eWord.toEmbedding
+      have hA' : ε < (A'.dens : ℝ) := by
+        simpa only [A', Finset.dens_map_equiv] using hA
+      obtain ⟨V₀, hV₀⟩ := hfin (Fintype.card κ) A' hA'
+      let V := V₀.reindex (Equiv.refl _) eα.symm eι.symm
+      refine ⟨V, ?_⟩
+      intro x
+      let eSuffix := eκ.arrowCongr eα
+      have hword (y : Fin (Fintype.card κ) → Fin (Fintype.card α)) :
+          eWord.symm (DensityHalesJewett.concat (V₀ (eα ∘ x)) y) =
+            DensityHalesJewett.concat (V x) (eSuffix.symm y) := by
+        funext z
+        cases z with
+        | inl i =>
+            simp [eWord, eCoord, eSuffix, V, Equiv.arrowCongr,
+              DensityHalesJewett.concat]
+        | inr i =>
+            simp [eWord, eCoord, eSuffix, V, Equiv.arrowCongr,
+              DensityHalesJewett.concat]
+      have hfiber :
+          fiber A' (V₀ (eα ∘ x)) =
+            (fiber A (V x)).map eSuffix.toEmbedding := by
+        ext y
+        simp only [Finset.mem_map_equiv, mem_fiber, A']
+        rw [hword]
+      have hdens :
+          ((fiber A' (V₀ (eα ∘ x))).dens : ℝ) =
+            ((fiber A (V x)).dens : ℝ) := by
+        rw [hfiber, Finset.dens_map_equiv]
+      rw [← hdens]
+      simpa only [A', Finset.dens_map_equiv] using hV₀ (eα ∘ x)
+    · letI : IsEmpty (κ → α) := not_nonempty_iff.mp hκ
+      letI : IsEmpty (ι ⊕ κ → α) := ⟨fun f ↦ isEmptyElim (fun i ↦ f (Sum.inr i))⟩
+      have hAempty : A = ∅ := Subsingleton.elim _ _
+      have hε : ε < 0 := by
+        rw [hAempty] at hA
+        norm_num at hA ⊢
+        exact hA
+      obtain ⟨V₀, hV₀⟩ := hfin 0
+        (∅ : Finset (Fin (Fintype.card ι) ⊕ Fin 0 → Fin (Fintype.card α)))
+        (by norm_num; exact hε)
+      have hparam : IsEmpty (Fin m → Fin (Fintype.card α)) := by
+        apply not_nonempty_iff.mp
+        intro h
+        have hx := hV₀ (Classical.choice h)
+        have hfiber : fiber
+            (∅ : Finset (Fin (Fintype.card ι) ⊕ Fin 0 → Fin (Fintype.card α)))
+            (V₀ (Classical.choice h)) = ∅ := by
+          ext y
+          simp [fiber]
+        rw [hfiber] at hx
+        have : 0 - ε ≤ 0 := by
+          norm_num at hx ⊢
+          exact hx
+        linarith
+      letI := hparam
+      let eα := Fintype.equivFin α
+      let eι := Fintype.equivFin ι
+      let V := V₀.reindex (Equiv.refl _) eα.symm eι.symm
+      refine ⟨V, ?_⟩
+      intro x
+      exact isEmptyElim (eα ∘ x)
+
 /-- Uniform fibers over finite cardinal models transport to arbitrary finite alphabets, prefix
 coordinates, and suffix coordinates. -/
 lemma exists_fibers_dense_of_fin_sufficient
@@ -364,7 +682,61 @@ lemma exists_fibers_dense_of_fin_sufficient
     (A : Finset (ι ⊕ κ → α)) (hA : ε < (A.dens : ℝ)) :
     ∃ V : Combinatorics.Subspace (Fin m) α ι,
       ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
-  sorry
+  classical
+  cases subsingleton_or_nontrivial α with
+  | inl hα =>
+      letI : Subsingleton α := hα
+      exact exists_fibers_dense_of_fin_sufficient_subsingleton m ε hfin A hA
+  | inr hα =>
+      letI : Nontrivial α := hα
+      let a : α := Classical.choice inferInstance
+      let b : α := Classical.choose (exists_ne a)
+      have hab : b ≠ a := Classical.choose_spec (exists_ne a)
+      let encodeCoordinate : κ → (κ → α) := fun i j ↦ if j = i then b else a
+      have hencode : Function.Injective encodeCoordinate := by
+        intro i j hij
+        by_contra h
+        have := congrFun hij i
+        simp only [encodeCoordinate, if_pos, if_neg h] at this
+        exact hab this
+      letI : Finite κ := Finite.of_injective encodeCoordinate hencode
+      letI := Fintype.ofFinite κ
+      let eα := Fintype.equivFin α
+      let eι := Fintype.equivFin ι
+      let eκ := Fintype.equivFin κ
+      let eCoord := Equiv.sumCongr eι eκ
+      let eWord := eCoord.arrowCongr eα
+      let A' := A.map eWord.toEmbedding
+      have hA' : ε < (A'.dens : ℝ) := by
+        simpa only [A', Finset.dens_map_equiv] using hA
+      obtain ⟨V₀, hV₀⟩ := hfin (Fintype.card κ) A' hA'
+      let V := V₀.reindex (Equiv.refl _) eα.symm eι.symm
+      refine ⟨V, ?_⟩
+      intro x
+      let eSuffix := eκ.arrowCongr eα
+      have hword (y : Fin (Fintype.card κ) → Fin (Fintype.card α)) :
+          eWord.symm (DensityHalesJewett.concat (V₀ (eα ∘ x)) y) =
+            DensityHalesJewett.concat (V x) (eSuffix.symm y) := by
+        funext z
+        cases z with
+        | inl i =>
+            simp [eWord, eCoord, eSuffix, V, Equiv.arrowCongr,
+              DensityHalesJewett.concat]
+        | inr i =>
+            simp [eWord, eCoord, eSuffix, V, Equiv.arrowCongr,
+              DensityHalesJewett.concat]
+      have hfiber :
+          fiber A' (V₀ (eα ∘ x)) =
+            (fiber A (V x)).map eSuffix.toEmbedding := by
+        ext y
+        simp only [Finset.mem_map_equiv, mem_fiber, A']
+        rw [hword]
+      have hdens :
+          ((fiber A' (V₀ (eα ∘ x))).dens : ℝ) =
+            ((fiber A (V x)).dens : ℝ) := by
+        rw [hfiber, Finset.dens_map_equiv]
+      rw [← hdens]
+      simpa only [A', Finset.dens_map_equiv] using hV₀ (eα ∘ x)
 
 /-- Uniform fibers on a subspace. -/
 lemma exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
@@ -383,7 +755,29 @@ lemma exists_fibers_dense {α ι κ : Type*} [Fintype α] [Fintype ι]
 @[instance_reducible]
 noncomputable def suffixFunctionFintype (α ι κ : Type*)
     [Fintype (ι ⊕ κ → α)] : Fintype (κ → α) := by
-  sorry
+  classical
+  by_cases hι : Nonempty ι
+  · letI := hι
+    by_cases hα : Nonempty α
+    · letI : Inhabited α := ⟨Classical.choice hα⟩
+      exact Fintype.ofInjective (fun y ↦ DensityHalesJewett.concat (fun _ ↦ default) y)
+        fun y z h ↦ by
+          funext c
+          change DensityHalesJewett.concat (fun _ : ι ↦ default) y =
+            DensityHalesJewett.concat (fun _ ↦ default) z at h
+          exact congrFun h (Sum.inr c)
+    · letI : IsEmpty α := not_nonempty_iff.mp hα
+      by_cases hκ : Nonempty (κ → α)
+      · letI : Inhabited (κ → α) := ⟨Classical.choice hκ⟩
+        exact Fintype.ofSubsingleton default
+      · letI : IsEmpty (κ → α) := not_nonempty_iff.mp hκ
+        exact Fintype.ofIsEmpty
+  · letI : IsEmpty ι := not_nonempty_iff.mp hι
+    exact Fintype.ofInjective (fun y z ↦ Sum.elim (fun a : ι ↦ isEmptyElim a) y z) fun y z h ↦ by
+      funext c
+      change (fun w ↦ Sum.elim (fun a : ι ↦ isEmptyElim a) y w) =
+        (fun w ↦ Sum.elim (fun a : ι ↦ isEmptyElim a) z w) at h
+      exact congrFun h (Sum.inr c)
 
 /-- Uniform fibers remain dense after restricting every parameter letter to the first `k`
 letters. -/
@@ -417,7 +811,22 @@ lemma average_restrictedParameterSlice {k M : ℕ}
         DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) =
       Finset.expect Finset.univ (fun x : Fin M → Fin k ↦
         ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ)) := by
-  sorry
+  simp_rw [← Finset.expect_indicator_one]
+  rw [Finset.expect_comm]
+  refine Finset.expect_congr rfl fun x _ ↦ ?_
+  refine Finset.expect_congr rfl fun y _ ↦ ?_
+  by_cases h : DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A
+  · have hx : x ∈ Finset.univ.filter fun z : Fin M → Fin k ↦
+        DensityHalesJewett.concat (W (Fin.castSucc ∘ z)) y ∈ A :=
+      Finset.mem_filter.mpr ⟨Finset.mem_univ _, h⟩
+    have hy : y ∈ fiber A (W (Fin.castSucc ∘ x)) := mem_fiber.mpr h
+    rw [Set.indicator_of_mem hx, Set.indicator_of_mem hy]
+    simp only [Pi.one_apply]
+  · have hx : x ∉ Finset.univ.filter fun z : Fin M → Fin k ↦
+        DensityHalesJewett.concat (W (Fin.castSucc ∘ z)) y ∈ A :=
+      fun hx ↦ h (Finset.mem_filter.mp hx).2
+    have hy : y ∉ fiber A (W (Fin.castSucc ∘ x)) := fun hy ↦ h (mem_fiber.mp hy)
+    rw [Set.indicator_of_notMem hx, Set.indicator_of_notMem hy]
 
 /-- Averaging a pointwise-dense family of suffix fibers produces one suffix above which the
 restricted parameter family is dense. -/

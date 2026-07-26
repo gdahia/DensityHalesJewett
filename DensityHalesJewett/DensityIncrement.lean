@@ -242,7 +242,90 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
           ((Finset.univ.filter fun y ↦
             ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
               Parameters.θ k δ)) := by
-  sorry
+  letI : Nontrivial (Fin (k + 1)) :=
+    Fintype.one_lt_card_iff_nontrivial.mp (by
+      simp only [Fintype.card_fin]
+      omega)
+  let ε := Parameters.η k δ ^ 2 / 2
+  have hε₀ : 0 < ε := by
+    dsimp only [ε]
+    positivity [Parameters.η_pos hk hδ₀]
+  have hεδ : ε < δ := by
+    dsimp only [ε]
+    have hdiff : 0 ≤ δ / 6 - Parameters.η k δ := by
+      linarith [Parameters.η_le_δ_div_six k δ]
+    have hsum : 0 ≤ δ / 6 + Parameters.η k δ := by
+      linarith [Parameters.η_pos hk hδ₀]
+    nlinarith [mul_nonneg hdiff hsum]
+  have hε₁ : ε < 1 := hεδ.trans_le hδ₁
+  by_cases hM : 1 ≤ M
+  · have hL : 1 ≤ L := by
+      by_contra hL
+      have hL₀ : L = 0 := by omega
+      subst L
+      obtain ⟨R, _⟩ :=
+        GrahamRothschild.lines_twoColor (Fin (k + 1)) M 0 hM
+          (by simpa only [Fintype.card_fin] using hGR) ∅
+      obtain ⟨i, _⟩ := R.proper ⟨0, hM⟩
+      exact Fin.elim0 i
+    obtain ⟨U, hU⟩ :=
+      Subspace.exists_fibers_dense (α := Fin (k + 1)) (ι := ι) (κ := κ)
+        L hL ε hε₀ hε₁ (by simpa only [Fintype.card_fin, ε] using huniform)
+        A (hεδ.trans_le hA)
+    letI : Fintype (Combinatorics.Line (Fin (k + 1)) (Fin L)) :=
+      Subspace.lineFintype (k + 1) L
+    let goodLines :=
+      Finset.univ.filter fun q : Combinatorics.Line (Fin (k + 1)) (Fin L) ↦
+        Parameters.θ k δ ≤
+          ((Finset.univ.filter fun y ↦
+            ∀ a : Fin k, concat (U (q a.castSucc)) y ∈ A).dens : ℝ)
+    obtain ⟨R, hgood | hbad⟩ :=
+      GrahamRothschild.lines_twoColor (Fin (k + 1)) M L hM
+        (by simpa only [Fintype.card_fin] using hGR) goodLines
+    · refine ⟨Subspace.compose U R, ?_, Or.inl ?_⟩
+      · intro x
+        rw [Subspace.compose_apply]
+        have hx := hU (R x)
+        dsimp only [ε] at hx
+        linarith
+      · intro l
+        have hl := hgood (l.map Fin.castSucc)
+        simpa only [goodLines, Finset.mem_filter, Finset.mem_univ, true_and,
+          Subspace.mapLine_apply, Combinatorics.Line.map_apply,
+          Subspace.compose_apply] using hl
+    · refine ⟨Subspace.compose U R, ?_, Or.inr ?_⟩
+      · intro x
+        rw [Subspace.compose_apply]
+        have hx := hU (R x)
+        dsimp only [ε] at hx
+        linarith
+      · intro l
+        have hl := hbad (l.map Fin.castSucc)
+        simp only [goodLines, Finset.mem_filter, Finset.mem_univ, true_and,
+          Subspace.mapLine_apply, Combinatorics.Line.map_apply] at hl
+        simpa only [Subspace.compose_apply] using lt_of_not_ge hl
+  · have hM₀ : M = 0 := by omega
+    subst M
+    letI : Fintype (ι → Fin (k + 1)) := Fintype.ofFinite _
+    have havg :
+        δ ≤ 𝔼 x : ι → Fin (k + 1), ((fiber A x).dens : ℝ) := by
+      simpa only [average_density_fiber] using hA
+    obtain ⟨x, _, hx⟩ :=
+      Finset.exists_le_of_le_expect Finset.univ_nonempty havg
+    let W : Combinatorics.Subspace (Fin 0) (Fin (k + 1)) ι := {
+      idxFun := fun i ↦ Sum.inl (x i)
+      proper := fun e ↦ Fin.elim0 e
+    }
+    refine ⟨W, ?_, Or.inl ?_⟩
+    · intro z
+      have hW : W z = x := by
+        funext i
+        simp only [W, Combinatorics.Subspace.coe_apply, Sum.elim_inl, id_eq]
+      rw [hW]
+      dsimp only [ε] at hε₀
+      linarith
+    · intro l
+      exact Fin.elim0 l.proper.choose
 
 /-- Restricting the parameter directions of a good correlated-fibers subspace preserves its
 uniform fiber and common-line-fiber estimates. -/
@@ -356,23 +439,91 @@ lemma dense_suffixes_of_uniform_fibers {k M : ℕ} (hk : 2 ≤ k)
 /-- Density Hales--Jewett in every dense suffix slice, followed by finite pigeonhole, produces
 one parameter line shared by at least a `θ`-density set of suffixes. -/
 lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
-    (hDHJ : HasDensityHJ k) {δ : ℝ} (hδ₀ : 0 < δ)
+    (hDHJ : HasDensityHJ k) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (hM : Parameters.m₀ k δ ≤ M)
     {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
     (A : Finset (ι ⊕ κ → Fin (k + 1)))
     (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι)
-    (hdense :
-      δ / 4 ≤
-        ((Finset.univ.filter fun y : κ → Fin (k + 1) ↦
-          δ / 4 ≤
-            ((Finset.univ.filter fun x : Fin M → Fin k ↦
-              concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)).dens : ℝ)) :
+    (hfibers : ∀ x,
+      δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ)) :
     ∃ l : Combinatorics.Line (Fin k) (Fin M),
       Parameters.θ k δ ≤
         ((Finset.univ.filter fun y ↦
           ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
-  sorry
+  classical
+  let q := Parameters.m₀ k δ
+  have hq₀ : 0 < q := Parameters.m₀_pos k δ
+  let R := Subspace.repeatInitial (Fin (k + 1)) (Nat.one_le_iff_ne_zero.mpr hq₀.ne') hM
+  let W₀ := Subspace.compose W R
+  have hW₀ : ∀ x,
+      δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W₀ x)).dens : ℝ) := by
+    intro x
+    simpa only [W₀, Subspace.compose_apply] using hfibers (R x)
+  have hdense := dense_suffixes_of_uniform_fibers hk hδ₀ hδ₁ A W₀ hW₀
+  letI := Subspace.lineFintype k q
+  let B := Finset.univ.filter fun y : κ → Fin (k + 1) ↦
+    δ / 4 ≤
+      ((Finset.univ.filter fun x : Fin q → Fin k ↦
+        concat (W₀ (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)
+  have hB : δ / 4 ≤ (B.dens : ℝ) := by
+    simpa only [B] using hdense
+  have hBne : B.Nonempty := by
+    apply Finset.dens_pos.mp
+    exact_mod_cast lt_of_lt_of_le (by linarith : 0 < δ / 4) hB
+  have hbound : Subspace.densityOneBound k (δ / 4) ≤ q := by
+    dsimp only [q]
+    rw [Subspace.densityOneBound, dif_pos ⟨by linarith, hDHJ⟩,
+      Parameters.m₀, dif_pos ⟨hδ₀, hDHJ⟩]
+    omega
+  have existsLine (y : κ → Fin (k + 1)) (hy : y ∈ B) :
+      ∃ l : Combinatorics.Line (Fin k) (Fin q),
+        ∀ a, concat (W₀ (Fin.castSucc ∘ l a)) y ∈ A := by
+    let S := Finset.univ.filter fun x : Fin q → Fin k ↦
+      concat (W₀ (Fin.castSucc ∘ x)) y ∈ A
+    obtain ⟨l, hl⟩ :=
+      Subspace.densityOneBound_spec hDHJ (δ / 4) (by linarith) q hbound S <|
+        Subspace.card_le_of_density_le (by omega) (δ / 4) S
+          (by simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and, S] using hy)
+    exact ⟨l, fun a ↦ by
+      simpa only [S, Finset.mem_filter, Finset.mem_univ, true_and] using hl a⟩
+  let y₀ := hBne.choose
+  have hy₀ : y₀ ∈ B := hBne.choose_spec
+  obtain ⟨l₀, _⟩ := existsLine y₀ hy₀
+  letI : Nonempty (Combinatorics.Line (Fin k) (Fin q)) := ⟨l₀⟩
+  let lineAt : {y // y ∈ B} → Combinatorics.Line (Fin k) (Fin q) := fun y ↦
+    Classical.choose <| existsLine y y.2
+  let f : (κ → Fin (k + 1)) → Combinatorics.Line (Fin k) (Fin q) := fun y ↦
+    if hy : y ∈ B then lineAt ⟨y, hy⟩ else l₀
+  obtain ⟨l, hl⟩ := Subspace.exists_fiber_density B f
+  have hcommon :
+      (B.filter fun y ↦ f y = l) ⊆
+        Finset.univ.filter fun y ↦
+          ∀ a, concat (W₀ (Fin.castSucc ∘ l a)) y ∈ A := by
+    intro y hy
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hy ⊢
+    have hline : lineAt ⟨y, hy.1⟩ = l := by
+      simpa only [f, dif_pos hy.1] using hy.2
+    intro a
+    rw [← hline]
+    exact Classical.choose_spec (existsLine y hy.1) a
+  have hcard :
+      (Fintype.card (Combinatorics.Line (Fin k) (Fin q)) : ℝ) =
+        ((k + 1 : ℕ) : ℝ) ^ q - (k : ℝ) ^ q := by
+    rw [Subspace.card_line k q (by omega), Nat.cast_sub]
+    · simp only [Nat.cast_pow, Nat.cast_add, Nat.cast_one]
+    · exact Nat.pow_le_pow_left (Nat.le_succ k) q
+  have hθ :
+      Parameters.θ k δ ≤
+        (B.dens : ℝ) / Fintype.card (Combinatorics.Line (Fin k) (Fin q)) := by
+    unfold Parameters.θ
+    rw [← hcard]
+    exact div_le_div_of_nonneg_right hB (by positivity)
+  let Rk := Subspace.repeatInitial (Fin k) (Nat.one_le_iff_ne_zero.mpr hq₀.ne') hM
+  refine ⟨Subspace.composeLine Rk l, hθ.trans (hl.trans ?_)⟩
+  exact_mod_cast Finset.dens_le_dens <| by
+    simpa only [W₀, R, Rk, Subspace.compose_apply, Subspace.composeLine_apply,
+      Subspace.repeatInitial_map] using hcommon
 
 /-- The uniformly sparse certificate is impossible.
 
@@ -394,8 +545,7 @@ lemma not_exists_sparse_correlated_fibers_certificate {k : ℕ} (hk : 2 ≤ k)
               Parameters.θ k δ := by
   rintro ⟨M, hM, W, hfibers, hsparse⟩
   obtain ⟨l, hl⟩ :=
-    exists_popular_line_of_dense_suffixes hk hDHJ hδ₀ hM A W <|
-      dense_suffixes_of_uniform_fibers hk hδ₀ hδ₁ A W hfibers
+    exists_popular_line_of_dense_suffixes hk hDHJ hδ₀ hδ₁ hM A W hfibers
   exact (not_lt_of_ge hl) (hsparse l)
 
 /-- Every parameter-cube line in a suitable subspace has a dense common fiber. -/
@@ -874,21 +1024,156 @@ lemma endpointFamily_isInsensitive {k m n : ℕ}
     (A : Finset (Fin n → Fin (k + 1)))
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)) (i : Fin k) :
     IsInsensitive i.castSucc (Fin.last k) (endpointFamily A V i) := by
-  sorry
+  intro x y hxy
+  have hreplace : replaceLastLetter i x = replaceLastLetter i y := by
+    funext c
+    by_cases hx : x c = i.castSucc ∨ x c = Fin.last k
+    · by_cases hy : y c = i.castSucc ∨ y c = Fin.last k
+      · rcases hx with hxi | hxlast
+        · rcases hy with hyi | hylast
+          · simp [replaceLastLetter, hxi, hyi]
+          · simp [replaceLastLetter, hxi, hylast]
+        · rcases hy with hyi | hylast
+          · simp [replaceLastLetter, hxlast, hyi]
+          · simp [replaceLastLetter, hxlast, hylast]
+      · have hyi : y c ≠ i.castSucc := fun h ↦ hy (Or.inl h)
+        have hylast : y c ≠ Fin.last k := fun h ↦ hy (Or.inr h)
+        have hxyc : x c = y c := (hxy (y c) hyi hylast c).mpr rfl
+        rcases hx with hxi | hxlast
+        · exact (hyi (hxyc.symm.trans hxi)).elim
+        · exact (hylast (hxyc.symm.trans hxlast)).elim
+    · have hxi : x c ≠ i.castSucc := fun h ↦ hx (Or.inl h)
+      have hxlast : x c ≠ Fin.last k := fun h ↦ hx (Or.inr h)
+      by_cases hy : y c = i.castSucc ∨ y c = Fin.last k
+      · have hxyc : y c = x c := (hxy (x c) hxi hxlast c).mp rfl
+        rcases hy with hyi | hylast
+        · exact (hxi (hxyc.symm.trans hyi)).elim
+        · exact (hxlast (hxyc.symm.trans hylast)).elim
+      · have hyi : y c ≠ i.castSucc := fun h ↦ hy (Or.inl h)
+        have hylast : y c ≠ Fin.last k := fun h ↦ hy (Or.inr h)
+        have hxyc : y c = x c := (hxy (x c) hxi hxlast c).mp rfl
+        simpa only [replaceLastLetter, if_neg hxlast, if_neg hylast] using hxyc.symm
+  simp only [endpointFamily, Finset.mem_filter, Finset.mem_univ, true_and]
+  rw [hreplace]
 
 /-- Complete restricted-alphabet parameter lines inject into the intersection of the endpoint
 families, giving the required density lower bound. -/
 lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
     [Fintype (Combinatorics.Line (Fin k) (Fin m))]
-    {δ : ℝ}
+    {δ : ℝ} (hδ₀ : 0 < δ)
     (A : Finset (Fin n → Fin (k + 1)))
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
+    (hrestricted : ((restrictedParameterWords k m).dens : ℝ) ≤ 1 / 2)
     (hlines : Parameters.θ k δ / 2 ≤
       ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
         ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ)) :
     Parameters.θ k δ / 4 ≤
       ((IsInsensitive.intersection (endpointFamily A V)).dens : ℝ) := by
-  sorry
+  classical
+  let good := Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
+    ∀ a, V (Fin.castSucc ∘ l a) ∈ A
+  let endpoint := fun l : Combinatorics.Line (Fin k) (Fin m) ↦
+    fun c ↦
+      match l.idxFun c with
+      | none => Fin.last k
+      | some a => a.castSucc
+  have hinjective : Function.Injective endpoint := by
+    intro l l' hll
+    cases l with
+    | mk f hf =>
+      cases l' with
+      | mk g hg =>
+        congr
+        funext c
+        cases hfc : f c with
+        | none =>
+            cases hgc : g c with
+            | none => rfl
+            | some a =>
+                have hc := congrFun hll c
+                simp only [endpoint, hfc, hgc] at hc
+                exact (Fin.castSucc_ne_last a hc.symm).elim
+        | some a =>
+            cases hgc : g c with
+            | none =>
+                have hc := congrFun hll c
+                simp only [endpoint, hfc, hgc] at hc
+                exact (Fin.castSucc_ne_last a hc).elim
+            | some b =>
+                have hc := congrFun hll c
+                simp only [endpoint, hfc, hgc] at hc
+                exact congrArg some (Fin.castSucc_injective k hc)
+  let endpointEmbedding :
+      Combinatorics.Line (Fin k) (Fin m) ↪ (Fin m → Fin (k + 1)) :=
+    ⟨endpoint, hinjective⟩
+  have hsubset :
+      good.map endpointEmbedding ⊆ IsInsensitive.intersection (endpointFamily A V) := by
+    intro x hx
+    obtain ⟨l, hl, rfl⟩ := Finset.mem_map.mp hx
+    apply IsInsensitive.mem_intersection.mpr
+    intro i
+    simp only [endpointFamily, Finset.mem_filter, Finset.mem_univ, true_and]
+    have hgood :
+        ∀ a, V (Fin.castSucc ∘ l a) ∈ A := by
+      simpa only [good, Finset.mem_filter, Finset.mem_univ, true_and] using hl
+    have heval :
+        replaceLastLetter i (endpoint l) = Fin.castSucc ∘ l i := by
+      funext c
+      cases hc : l.idxFun c with
+      | none =>
+          simp [endpoint, replaceLastLetter, Combinatorics.Line.coe_apply, hc]
+      | some a =>
+          simp [endpoint, replaceLastLetter, Combinatorics.Line.coe_apply, hc,
+            Fin.castSucc_ne_last]
+    change V (replaceLastLetter i (endpoint l)) ∈ A
+    rw [heval]
+    exact hgood i
+  have hmono :
+      ((good.map endpointEmbedding).dens : ℝ) ≤
+        ((IsInsensitive.intersection (endpointFamily A V)).dens : ℝ) := by
+    exact_mod_cast Finset.dens_le_dens hsubset
+  refine (le_trans ?_ hmono)
+  have hgood :
+      Parameters.θ k δ / 2 ≤ (good.dens : ℝ) := by
+    simpa only [good] using hlines
+  have hlinepos :
+      0 < (Fintype.card (Combinatorics.Line (Fin k) (Fin m)) : ℝ) := by
+    have hgoodpos : 0 < (good.dens : ℝ) :=
+      (div_pos (Parameters.θ_pos hk hδ₀) (by norm_num)).trans_le hgood
+    have hgne : good.Nonempty := by
+      apply Finset.dens_pos.mp
+      exact_mod_cast hgoodpos
+    letI : Nonempty (Combinatorics.Line (Fin k) (Fin m)) := ⟨hgne.choose⟩
+    exact_mod_cast Fintype.card_pos
+  rw [Finset.nnratCast_dens, Finset.card_map]
+  rw [Finset.nnratCast_dens] at hgood hrestricted
+  have hlinecard :
+      (Fintype.card (Combinatorics.Line (Fin k) (Fin m)) : ℝ) =
+        ((k + 1 : ℕ) : ℝ) ^ m - (k : ℝ) ^ m := by
+    rw [Subspace.card_line k m (by omega), Nat.cast_sub]
+    · simp only [Nat.cast_pow, Nat.cast_add, Nat.cast_one]
+    · exact Nat.pow_le_pow_left (Nat.le_succ k) m
+  have hwordcard :
+      (Fintype.card (Fin m → Fin (k + 1)) : ℝ) =
+        ((k + 1 : ℕ) : ℝ) ^ m := by
+    simp only [Fintype.card_pi_const, Fintype.card_fin, Nat.cast_pow]
+  have hrestrictedcard :
+      (restrictedParameterWords k m).card = k ^ m := by
+    rw [restrictedParameterWords_eq_map, Finset.card_map, Finset.card_univ,
+      Fintype.card_pi_const, Fintype.card_fin]
+  rw [hlinecard] at hgood hlinepos
+  rw [hwordcard] at ⊢
+  rw [hrestrictedcard, Nat.cast_pow, hwordcard] at hrestricted
+  have hwordpos : 0 < ((k + 1 : ℕ) : ℝ) ^ m := by positivity
+  have hhalf :
+      ((k + 1 : ℕ) : ℝ) ^ m / 2 ≤
+        ((k + 1 : ℕ) : ℝ) ^ m - (k : ℝ) ^ m := by
+    apply (div_le_iff₀ hwordpos).mp at hrestricted
+    nlinarith
+  have hθ := Parameters.θ_pos hk hδ₀
+  rw [le_div_iff₀ hlinepos] at hgood
+  rw [le_div_iff₀ hwordpos]
+  nlinarith
 
 /-- In a line-free ambient family, a word lying both in its pullback and in every endpoint family
 cannot use the final alphabet letter. -/
@@ -940,7 +1225,7 @@ inside a line-free family is small.  This packages the endpoint construction, it
 line count, the identification of the intersection, and the geometric-decay estimate. -/
 lemma exists_endpoint_insensitive_intersection {k m n : ℕ} (hk : 2 ≤ k)
     [Fintype (Combinatorics.Line (Fin k) (Fin m))]
-    (δ : ℝ) (hδ₀ : 0 < δ)
+    (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (hm_large : insensitiveIntersectionDimension k δ ≤ m)
     (A : Finset (Fin n → Fin (k + 1)))
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
@@ -954,7 +1239,9 @@ lemma exists_endpoint_insensitive_intersection {k m n : ℕ} (hk : 2 ≤ k)
       ((pullback V A ∩ IsInsensitive.intersection C).dens : ℝ) ≤
         Parameters.η k δ := by
   refine ⟨endpointFamily A V, endpointFamily_isInsensitive A V, ?_, ?_⟩
-  · exact endpointFamily_intersection_dense hk A V hlines
+  · refine endpointFamily_intersection_dense hk hδ₀ A V ?_ hlines
+    refine (restrictedParameterWords_density_le_eta hk hδ₀ hm_large).trans ?_
+    exact (Parameters.η_le_δ_div_six k δ).trans (by linarith)
   · refine le_trans ?_ <|
       restrictedParameterWords_density_le_eta hk hδ₀ hm_large
     exact_mod_cast Finset.dens_mono <|
@@ -1021,7 +1308,7 @@ lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
     exists_subspace_many_lines hk hDHJ m hm δ hδ₀ hδ₁ n hn A hA
   · exact False.elim <| (not_lt_of_ge hV) (hsmall V)
   obtain ⟨C, hC, hCdense, hAC⟩ :=
-    exists_endpoint_insensitive_intersection hk δ hδ₀ hm_large A V hfree hlines
+    exists_endpoint_insensitive_intersection hk δ hδ₀ hδ₁ hm_large A V hfree hlines
   refine ⟨V, C, hC, hCdense, ?_⟩
   apply density_complement_bounds
   · exact hδ₀.le
@@ -1061,13 +1348,58 @@ lemma firstFailureFamily_isInsensitive {k : ℕ} {ι : Type*}
 lemma firstFailureFamily_intersection {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) (i : Fin k) :
     IsInsensitive.intersection (firstFailureFamily C i) = firstFailurePiece C i := by
-  sorry
+  ext x
+  simp only [IsInsensitive.mem_intersection, firstFailureFamily, firstFailurePiece,
+    Finset.mem_inter, Finset.mem_compl, Finset.mem_filter, Finset.mem_univ, true_and]
+  constructor
+  · intro hx
+    refine ⟨?_, fun j hij ↦ ?_⟩
+    · have hxi := hx i
+      simp only [lt_self_iff_false, ↓reduceIte, Finset.mem_compl] at hxi
+      exact hxi
+    · simpa only [if_pos hij] using hx j
+  · rintro ⟨hnot, hbefore⟩ j
+    by_cases hij : j < i
+    · simpa only [if_pos hij] using hbefore j hij
+    · by_cases hji : j = i
+      · subst j
+        simpa only [lt_self_iff_false, ↓reduceIte, Finset.mem_compl] using hnot
+      · simp only [if_neg hij, if_neg hji, Finset.mem_univ]
 
 /-- The first-failure pieces cover the complement of the original intersection. -/
 lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
     (C : Fin k → Finset X) :
     Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ := by
-  sorry
+  classical
+  ext x
+  constructor
+  · intro hx
+    rw [Finset.mem_biUnion] at hx
+    obtain ⟨i, _, hi⟩ := hx
+    rw [firstFailurePiece, Finset.mem_inter, Finset.mem_compl] at hi
+    rw [Finset.mem_compl]
+    intro hinter
+    exact hi.1 (IsInsensitive.mem_intersection.mp hinter i)
+  · rw [Finset.mem_compl]
+    intro hx
+    have hfailed : ∃ i, x ∉ C i := by
+      by_contra h
+      push Not at h
+      exact hx <| IsInsensitive.mem_intersection.mpr h
+    let I := Finset.univ.filter fun i : Fin k ↦ x ∉ C i
+    have hI : I.Nonempty := by
+      obtain ⟨i, hi⟩ := hfailed
+      exact ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hi⟩⟩
+    let i := I.min' hI
+    rw [Finset.mem_biUnion]
+    refine ⟨i, Finset.mem_univ _, ?_⟩
+    rw [firstFailurePiece, Finset.mem_inter, Finset.mem_compl]
+    refine ⟨(Finset.mem_filter.mp (I.min'_mem hI)).2, ?_⟩
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    intro j hij
+    by_contra hj
+    have hjI : j ∈ I := Finset.mem_filter.mpr ⟨Finset.mem_univ _, hj⟩
+    exact (not_lt_of_ge (I.min'_le j hjI)) hij
 
 /-- A first-failure piece is disjoint from every piece at a later index. -/
 lemma firstFailurePiece_disjoint_of_lt {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
@@ -1126,7 +1458,7 @@ lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
     (A : Finset X) (C : Fin k → Finset X)
-    (hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
+    (_hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
     (hweighted : (δ + 6 * Parameters.η k δ) *
         ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
       ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ))
@@ -1140,7 +1472,63 @@ lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
       Parameters.γ k δ ≤ ((firstFailurePiece C i).dens : ℝ) ∧
       (δ + Parameters.γ k δ) * ((firstFailurePiece C i).dens : ℝ) ≤
         ((A ∩ firstFailurePiece C i).dens : ℝ) := by
-  sorry
+  by_contra h
+  push Not at h
+  let g := Parameters.γ k δ
+  let e := Parameters.η k δ
+  let c := (((IsInsensitive.intersection C)ᶜ).dens : ℝ)
+  let a := ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ)
+  letI : Nonempty (Fin k) := ⟨⟨0, lt_of_lt_of_le Nat.zero_lt_two hk⟩⟩
+  have hg₀ : 0 < g := Parameters.γ_pos hk hδ₀
+  have he₀ : 0 < e := Parameters.η_pos hk hδ₀
+  have hsum_lt :
+      ∑ i, ((A ∩ firstFailurePiece C i).dens : ℝ) <
+        ∑ i, ((δ + g) * ((firstFailurePiece C i).dens : ℝ) + g) := by
+    apply Finset.sum_lt_sum_of_nonempty Finset.univ_nonempty
+    intro i _
+    by_cases hi : g ≤ ((firstFailurePiece C i).dens : ℝ)
+    · linarith [h i (by simpa only [g] using hi)]
+    · have hinter :
+          ((A ∩ firstFailurePiece C i).dens : ℝ) ≤
+            ((firstFailurePiece C i).dens : ℝ) := by
+        exact_mod_cast Finset.dens_le_dens Finset.inter_subset_right
+      have hcoefficient : 0 ≤ δ + g := by
+        linarith
+      nlinarith [mul_nonneg hcoefficient
+        (by positivity : 0 ≤ ((firstFailurePiece C i).dens : ℝ))]
+  have hupper : a < (δ + g) * c + (k : ℝ) * g := by
+    rw [Finset.sum_add_distrib, ← Finset.mul_sum] at hsum_lt
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      nsmul_eq_mul] at hsum_lt
+    rw [hsumPieces, hsumIntersections] at hsum_lt
+    exact hsum_lt
+  have hac : a ≤ c := by
+    dsimp only [a, c]
+    exact_mod_cast Finset.dens_le_dens Finset.inter_subset_right
+  have hc : δ / 2 ≤ c := by
+    dsimp only [a, c] at hlarge hac
+    linarith [Parameters.η_le_δ_div_six k δ]
+  have hcoef : 3 * e ≤ 6 * e - g := by
+    dsimp only [e, g]
+    linarith [Parameters.γ_le_three_mul_η k δ]
+  have hleft :
+      3 * e * (δ / 2) ≤ (6 * e - g) * c := by
+    exact mul_le_mul hcoef hc (by positivity) (by linarith)
+  have hk_real : 0 < (k : ℝ) := by
+    exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_two hk)
+  have hright : (k : ℝ) * g ≤ δ * e ^ 2 := by
+    have hdiv : g ≤ δ * e ^ 2 / (k : ℝ) := by
+      dsimp only [g, e]
+      unfold Parameters.γ
+      exact min_le_left _ _
+    simpa only [mul_comm] using (le_div_iff₀ hk_real).mp hdiv
+  have hstrict : δ * e ^ 2 < 3 * e * (δ / 2) := by
+    dsimp only [e]
+    nlinarith [Parameters.η_le_δ_div_six k δ]
+  have hgap : (6 * e - g) * c < (k : ℝ) * g := by
+    dsimp only [a, c, e, g] at hweighted hupper
+    nlinarith
+  exact (not_lt_of_ge hleft) (hgap.trans_le hright |>.trans hstrict)
 
 /-- The first-failure partition and its quantitative weighted averaging.
 
@@ -1348,7 +1736,7 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
 /-- The structured correlation and the small uncovered part give an aggregate density gain over
 the disjoint tile family. -/
 lemma structured_tiling_density_sum {k d m n : ℕ}
-    (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1)
     (A : Finset (Fin n → Fin (k + 1)))
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
     (D : Fin k → Finset (Fin m → Fin (k + 1)))
@@ -1449,7 +1837,29 @@ lemma Subspace.dens_inter_range_eq_relativeDensity_mul_range
     (W : Combinatorics.Subspace η α ι) (A : Finset (ι → α)) :
     ((A ∩ range W).dens : ℝ) =
       (relativeDensity W A : ℝ) * ((range W).dens : ℝ) := by
-  sorry
+  classical
+  let B := Finset.univ.filter fun x : η → α ↦ W x ∈ A
+  have hAB : A ∩ range W = B.image W := by
+    ext w
+    simp only [B, range, Finset.mem_inter, Finset.mem_image, Finset.mem_filter,
+      Finset.mem_univ, true_and]
+    constructor
+    · rintro ⟨hw, x, hx⟩
+      exact ⟨x, hx.symm ▸ hw, hx⟩
+    · rintro ⟨x, hx, hxy⟩
+      exact ⟨hxy ▸ hx, x, hxy⟩
+  rw [hAB]
+  simp only [Finset.nnratCast_dens, relativeDensity, range, B]
+  rw [Finset.card_image_iff.mpr (Subspace.injective W).injOn,
+    Finset.card_image_iff.mpr (Subspace.injective W).injOn]
+  by_cases h : Fintype.card (η → α) = 0
+  · letI : IsEmpty (η → α) := Fintype.card_eq_zero_iff.mp h
+    have hB : (Finset.univ.filter fun x : η → α ↦ W x ∈ A) = ∅ :=
+      Subsingleton.elim _ _
+    rw [hB]
+    simp
+  · field_simp
+    simp only [Finset.card_univ]
 
 /-- Finite weighted averaging selects a tile whose pullback density realizes the aggregate
 gain. -/

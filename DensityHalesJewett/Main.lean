@@ -314,7 +314,36 @@ lemma exists_dense_prefixCoordinateWord {k m n : ℕ} (hmn : m ≤ n)
       (A.dens : ℝ) ≤
         ((Finset.univ.filter fun x : Fin m → Fin (k + 1) ↦
           prefixCoordinateWord hmn x y ∈ A).dens : ℝ) := by
-  sorry
+  let eCoord := (Equiv.sumComm (Fin (n - m)) (Fin m)).trans (prefixCoordinateEquiv hmn)
+  let eWord := eCoord.arrowCongr (Equiv.refl (Fin (k + 1)))
+  let A' := A.map eWord.symm.toEmbedding
+  have hA' : (A'.dens : ℝ) = (A.dens : ℝ) := by
+    simp only [A', Finset.dens_map_equiv]
+  have havg :
+      (A.dens : ℝ) ≤ Finset.expect Finset.univ (fun y : Fin (n - m) → Fin (k + 1) ↦
+        ((fiber A' y).dens : ℝ)) := by
+    rw [average_density_fiber, hA']
+  obtain ⟨y, _, hy⟩ := Finset.exists_le_of_le_expect Finset.univ_nonempty havg
+  refine ⟨y, ?_⟩
+  have hword (x : Fin m → Fin (k + 1)) :
+      eWord (DensityHalesJewett.concat y x) = prefixCoordinateWord hmn x y := by
+    funext i
+    cases h : (prefixCoordinateEquiv hmn).symm i with
+    | inl j =>
+        simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr,
+          DensityHalesJewett.concat, h, Function.comp_apply]
+    | inr j =>
+        simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr,
+          DensityHalesJewett.concat, h, Function.comp_apply]
+  have hfiber : fiber A' y = Finset.univ.filter fun x : Fin m → Fin (k + 1) ↦
+      prefixCoordinateWord hmn x y ∈ A := by
+    ext x
+    simp only [mem_fiber, Finset.mem_filter, Finset.mem_univ, true_and, A',
+      Finset.mem_map_equiv]
+    simp only [Equiv.symm_symm]
+    rw [hword]
+  rw [← hfiber]
+  exact hy
 
 /-- A coordinate fiber of any prescribed smaller positive dimension has relative density at least
 the ambient density. -/
