@@ -9,14 +9,12 @@ public import DensityHalesJewett.Main
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.Order.Archimedean.Real.Basic
 public import Mathlib.Combinatorics.Pigeonhole
-public import Mathlib.Data.Nat.Digits.Lemmas
-public import Mathlib.Data.List.Indexes
 
 /-!
 # Arithmetic progressions from combinatorial lines
 
-Fixed-length base encoding and the digital transfer from density Hales--Jewett to Szemeredi's
-theorem on finite intervals.
+The digital transfer from density Hales--Jewett to Szemeredi's theorem on finite intervals, using
+mathlib's fixed-length base encoding `finFunctionFinEquiv`.
 -/
 
 @[expose] public section
@@ -52,70 +50,17 @@ end Combinatorics
 
 namespace DensityHalesJewett
 
-/-- Encode a fixed-length word as a natural number in base `k`. -/
-def baseEncode (k m : ℕ) (x : Fin m → Fin k) : ℕ :=
-  ∑ i, (x i : ℕ) * k ^ (i : ℕ)
-
-lemma baseEncode_eq_ofDigits (k m : ℕ) (x : Fin m → Fin k) :
-    baseEncode k m x = Nat.ofDigits k (List.ofFn fun i ↦ (x i : ℕ)) := by
-  rw [Nat.ofDigits_eq_sum_mapIdx, List.mapIdx_eq_ofFn, List.sum_ofFn]
-  simp only [List.get_ofFn]
-  unfold baseEncode
-  refine Fintype.sum_equiv (finCongr List.length_ofFn.symm) _ _ ?_
-  intro i
-  congr 2
-
-/-- A base-`k` encoding of an `m`-digit word lies below `k ^ m`. -/
-lemma baseEncode_lt_pow {k m : ℕ} (hk : 1 < k) (x : Fin m → Fin k) :
-    baseEncode k m x < k ^ m := by
-  rw [baseEncode_eq_ofDigits]
-  apply Nat.mapsTo_ofDigits hk m
-  simp
-
-/-- Fixed-length base-`k` encoding is a bijection with the initial interval of length `k^m`. -/
-noncomputable def baseEncodeEquiv (k m : ℕ) (hk : 1 ≤ k) :
-    (Fin m → Fin k) ≃ Fin (k ^ m) := by
-  classical
-  by_cases hk_one : k = 1
-  · subst k
-    simpa using (Equiv.ofUnique (Fin m → Fin 1) (Fin 1))
-  have hk_two : 1 < k := lt_of_le_of_ne hk (Ne.symm hk_one)
-  let encode (x : Fin m → Fin k) : Fin (k ^ m) := ⟨baseEncode k m x, baseEncode_lt_pow hk_two x⟩
-  apply Equiv.ofBijective encode
-  rw [Fintype.bijective_iff_injective_and_card]
-  constructor
-  · intro x y hxy
-    apply funext
-    intro i
-    apply Fin.ext
-    change (fun j ↦ (x j : ℕ)) i = (fun j ↦ (y j : ℕ)) i
-    apply congrArg (fun f : Fin m → ℕ ↦ f i)
-    apply List.ofFn_injective
-    apply Nat.injOn_ofDigits hk_two m
-    · simp
-    · simp
-    · simpa only [← baseEncode_eq_ofDigits, encode] using
-        congrArg Fin.val hxy
-  · simp
-
-@[simp]
-lemma baseEncodeEquiv_apply (k m : ℕ) (hk : 2 ≤ k) (x : Fin m → Fin k) :
-    (baseEncodeEquiv k m (one_le_two.trans hk) x : ℕ) = baseEncode k m x := by
-  classical
-  by_cases hk_one : k = 1
-  · grind
-  · simp [baseEncodeEquiv, hk_one]
-
 namespace Line
 
-/-- A base-encoded combinatorial line is a nonconstant arithmetic progression. -/
+/-- A base-encoded combinatorial line is a nonconstant arithmetic progression.  The encoding is
+mathlib's `finFunctionFinEquiv`, which reads a word as the base-`k` digits of a natural number. -/
 lemma baseEncode_isArithmeticProgression {k m : ℕ} (hk : 1 ≤ k)
     (l : Combinatorics.Line (Fin k) (Fin m)) :
     ∃ P : Combinatorics.ArithmeticProgression ℕ k,
-      ∀ a, P.term a = baseEncode k m (l a) := by
+      ∀ a, P.term a = (finFunctionFinEquiv (l a) : ℕ) := by
   let d := ∑ i : Fin m, if l.idxFun i = none then k ^ (i : ℕ) else 0
   refine ⟨
-    { start := baseEncode k m (l ⟨0, hk⟩)
+    { start := (finFunctionFinEquiv (l ⟨0, hk⟩) : ℕ)
       diff := d
       diff_ne_zero := ?_ }, ?_⟩
   · apply Nat.ne_of_gt
@@ -126,8 +71,9 @@ lemma baseEncode_isArithmeticProgression {k m : ℕ} (hk : 1 ≤ k)
       refine ⟨i, Finset.mem_univ i, ?_⟩
       simp [hi, Nat.zero_lt_of_lt hk]
   · intro a
-    change baseEncode k m (l ⟨0, hk⟩) + (a : ℕ) • d = baseEncode k m (l a)
-    unfold baseEncode
+    change (finFunctionFinEquiv (l ⟨0, hk⟩) : ℕ) + (a : ℕ) • d
+      = (finFunctionFinEquiv (l a) : ℕ)
+    simp only [finFunctionFinEquiv_apply]
     rw [nsmul_eq_mul, Finset.mul_sum, ← Finset.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro i _
@@ -228,8 +174,7 @@ theorem exists_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ)
     (hAn : A ⊆ range n) (hAδ : δ * n ≤ #A) :
     ∃ P : ArithmeticProgression ℕ k, P.IsSubset (A : Set ℕ) := by
   classical
-  have hk_two : 2 ≤ k := by grind
-  have hk_one : 1 ≤ k := one_le_two.trans hk_two
+  have hk_one : 1 ≤ k := by grind
   let m := Combinatorics.Line.densityTheoremBound k (δ / 2)
   let K := k ^ m
   obtain ⟨q, _, hqA⟩ : ∃ q : ℕ, (q + 1) * K ≤ n ∧
@@ -238,7 +183,7 @@ theorem exists_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ)
     · exact one_le_pow₀ hk_one
     · apply Nat.le_of_ceil_le
       simpa only [densityTheoremBound, m, K] using hn
-  let encode (x : Fin m → Fin k) := q * K + DensityHalesJewett.baseEncode k m x
+  let encode (x : Fin m → Fin k) := q * K + (finFunctionFinEquiv x : ℕ)
   let B := Finset.univ.filter fun x : Fin m → Fin k ↦ encode x ∈ A
   let encodeOnB (x : Fin m → Fin k) (_ : x ∈ B) := encode x
   have hBcard : #B = #(A ∩ Finset.Ico (q * K) ((q + 1) * K)) := by
@@ -249,25 +194,19 @@ theorem exists_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ)
       refine Finset.mem_inter.mpr ⟨hx.2, Finset.mem_Ico.mpr ⟨Nat.le_add_right _ _, ?_⟩⟩
       rw [add_mul, one_mul]
       apply Nat.add_lt_add_left
-      simpa only [K] using DensityHalesJewett.baseEncode_lt_pow hk_two x
+      exact (finFunctionFinEquiv x).isLt
     · intro x _ y _ hxy
       dsimp only [encodeOnB, encode] at hxy
-      apply (DensityHalesJewett.baseEncodeEquiv k m hk_one).injective
-      apply Fin.ext
-      rw [DensityHalesJewett.baseEncodeEquiv_apply k m hk_two x,
-        DensityHalesJewett.baseEncodeEquiv_apply k m hk_two y]
-      exact Nat.add_left_cancel hxy
+      exact finFunctionFinEquiv.injective (Fin.ext (Nat.add_left_cancel hxy))
     · intro y hy
       rw [Finset.mem_inter, Finset.mem_Ico] at hy
       have hz : y - q * K < K := by
         rw [Nat.sub_lt_iff_lt_add hy.2.1]
         simpa only [add_mul, one_mul, Nat.add_comm] using hy.2.2
       let z : Fin K := ⟨y - q * K, hz⟩
-      let x := (DensityHalesJewett.baseEncodeEquiv k m hk_one).symm z
-      have hxencode : DensityHalesJewett.baseEncode k m x = y - q * K := by
-        rw [← DensityHalesJewett.baseEncodeEquiv_apply k m hk_two x]
-        exact congrArg Fin.val (Equiv.apply_symm_apply
-          (DensityHalesJewett.baseEncodeEquiv k m hk_one) z)
+      let x := finFunctionFinEquiv.symm z
+      have hxencode : (finFunctionFinEquiv x : ℕ) = y - q * K :=
+        congrArg Fin.val (Equiv.apply_symm_apply finFunctionFinEquiv z)
       dsimp only [encodeOnB, encode]
       refine ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ _, ?_⟩, ?_⟩
       · dsimp only [encode]

@@ -292,7 +292,7 @@ def prefixCoordinateEquiv {m n : ℕ} (hmn : m ≤ n) : Fin m ⊕ Fin (n - m) �
 /-- Assemble a word from its first `m` coordinates and a fixed remaining suffix. -/
 def prefixCoordinateWord {α : Type*} {m n : ℕ} (hmn : m ≤ n)
     (x : Fin m → α) (y : Fin (n - m) → α) : Fin n → α :=
-  concat x y ∘ (prefixCoordinateEquiv hmn).symm
+  Sum.elim x y ∘ (prefixCoordinateEquiv hmn).symm
 
 /-- The coordinate subspace obtained by fixing every coordinate after the first `m`. -/
 def prefixCoordinateSubspace {α : Type*} {m n : ℕ} (hmn : m ≤ n)
@@ -308,7 +308,7 @@ lemma prefixCoordinateSubspace_apply {α : Type*} {m n : ℕ} (hmn : m ≤ n)
     prefixCoordinateSubspace hmn y x = prefixCoordinateWord hmn x y := by
   funext i
   change (((prefixCoordinateEquiv hmn).symm i).elim Sum.inr (Sum.inl ∘ y)).elim id x =
-    concat x y ((prefixCoordinateEquiv hmn).symm i)
+    Sum.elim x y ((prefixCoordinateEquiv hmn).symm i)
   cases (prefixCoordinateEquiv hmn).symm i <;> rfl
 
 /-- Some fixed suffix leaves a first-coordinate fiber at least as dense as the ambient family. -/
@@ -330,15 +330,15 @@ lemma exists_dense_prefixCoordinateWord {k m n : ℕ} (hmn : m ≤ n)
   obtain ⟨y, _, hy⟩ := Finset.exists_le_of_le_expect Finset.univ_nonempty havg
   refine ⟨y, ?_⟩
   have hword (x : Fin m → Fin (k + 1)) :
-      eWord (DensityHalesJewett.concat y x) = prefixCoordinateWord hmn x y := by
+      eWord (Sum.elim y x) = prefixCoordinateWord hmn x y := by
     funext i
     cases h : (prefixCoordinateEquiv hmn).symm i with
     | inl j =>
         simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr,
-          DensityHalesJewett.concat, h, Function.comp_apply]
+          Sum.elim, h, Function.comp_apply]
     | inr j =>
         simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr,
-          DensityHalesJewett.concat, h, Function.comp_apply]
+          Sum.elim, h, Function.comp_apply]
   have hfiber : fiber A' y = Finset.univ.filter fun x : Fin m → Fin (k + 1) ↦
       prefixCoordinateWord hmn x y ∈ A := by
     ext x

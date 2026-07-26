@@ -215,7 +215,7 @@ lemma exists_line_of_fiber_density {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensity
     (δ : ℝ) (hδ : 0 < δ) (hq : densityOneBound k δ ≤ q)
     (A : Finset (Fin p ⊕ Fin q → Fin k)) (x : Fin p → Fin k)
     (hx : δ ≤ ((fiber A x).dens : ℝ)) :
-    ∃ l : Combinatorics.Line (Fin k) (Fin q), ∀ a, DensityHalesJewett.concat x (l a) ∈ A := by
+    ∃ l : Combinatorics.Line (Fin k) (Fin q), ∀ a, Sum.elim x (l a) ∈ A := by
   obtain ⟨l, hl⟩ :=
     densityOneBound_spec hDHJ δ hδ q hq (fiber A x)
       (card_le_of_density_le hk δ (fiber A x) hx)
@@ -231,7 +231,7 @@ lemma exists_common_dense_line {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensityHJ k
     ∃ l : Combinatorics.Line (Fin k) (Fin q),
       δ / (2 * Fintype.card (Combinatorics.Line (Fin k) (Fin q))) ≤
         ((Finset.univ.filter fun x : Fin p → Fin k ↦
-          ∀ a, DensityHalesJewett.concat x (l a) ∈ A).dens : ℝ) := by
+          ∀ a, Sum.elim x (l a) ∈ A).dens : ℝ) := by
   classical
   letI := lineFintype k q
   let B := Finset.univ.filter fun x : Fin p → Fin k ↦
@@ -313,7 +313,7 @@ lemma exists_eventually_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
         simpa only [A', Finset.dens_map_equiv] using density_le_of_card_le hk δ A hA
       obtain ⟨l, hl⟩ := exists_common_dense_line hk hDHJ δ hδ hq A' hA'
       let C := Finset.univ.filter fun x : Fin p → Fin k ↦
-        ∀ a, DensityHalesJewett.concat x (l a) ∈ A'
+        ∀ a, Sum.elim x (l a) ∈ A'
       have hC : ε ≤ (C.dens : ℝ) := by
         simpa only [ε, C] using hl
       obtain ⟨V, hV⟩ := hP p hPp C (card_le_of_density_le hk ε C hC)
@@ -326,8 +326,8 @@ lemma exists_eventually_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
       intro z
       let x : Fin m → Fin k := fun i ↦ z (finSumFinEquiv (Sum.inl i))
       let a : Fin k := z (finSumFinEquiv (Sum.inr 0))
-      have hx : DensityHalesJewett.concat (V x) (l a) ∈ A' := by
-        have hxC : ∀ b, DensityHalesJewett.concat (V x) (l b) ∈ A' := by
+      have hx : Sum.elim (V x) (l a) ∈ A' := by
+        have hxC : ∀ b, Sum.elim (V x) (l b) ∈ A' := by
           simpa only [C, Finset.mem_filter, Finset.mem_univ, true_and] using hV x
         exact hxC a
       rw [Finset.mem_map_equiv] at hx
@@ -337,9 +337,9 @@ lemma exists_eventually_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
       simp only [W, W₀, Combinatorics.Subspace.reindex_apply, Equiv.refl_apply,
         Equiv.refl_symm]
       change (Subspace.concat V (lineToSubspaceFinOne l)) (z ∘ finSumFinEquiv) (e.symm i) =
-        wordEquiv (DensityHalesJewett.concat (V x) (l a)) i
+        wordEquiv (Sum.elim (V x) (l a)) i
       have hz : z ∘ finSumFinEquiv =
-          DensityHalesJewett.concat x (fun _ : Fin 1 ↦ a) := by
+          Sum.elim x (fun _ : Fin 1 ↦ a) := by
         funext j
         cases j with
         | inl j => rfl
@@ -416,13 +416,13 @@ def prependFixed {α η : Type*} {m p : ℕ} (u : Fin m → α)
 @[simp]
 lemma prependFixed_apply {α η : Type*} {m p : ℕ} (u : Fin m → α)
     (V : Combinatorics.Subspace η α (Fin p)) (x : η → α) :
-    prependFixed u V x = DensityHalesJewett.concat u (V x) ∘ finSumFinEquiv.symm := by
+    prependFixed u V x = Sum.elim u (V x) ∘ finSumFinEquiv.symm := by
   funext i
   simp only [Function.comp_apply, Combinatorics.Subspace.coe_apply, prependFixed]
   cases hi : finSumFinEquiv.symm i with
-  | inl j => simp only [DensityHalesJewett.concat_apply_inl, Sum.elim_inl, id_eq]
+  | inl j => simp only [Sum.elim_inl, Sum.elim_inl, id_eq]
   | inr j =>
-      rw [DensityHalesJewett.concat_apply_inr, Combinatorics.Subspace.coe_apply]
+      rw [Sum.elim_inr, Combinatorics.Subspace.coe_apply]
 
 /-- Regroup a cut of the coordinates following a fixed block. -/
 def prependCoords {m p q r : ℕ} (e : Fin p ⊕ Fin q ≃ Fin r) :
@@ -440,23 +440,23 @@ block and the cut word. -/
 lemma concat_prependFixed {alphabet η m p q r : ℕ} (e : Fin p ⊕ Fin q ≃ Fin r)
     (u : Fin m → Fin alphabet) (V : Combinatorics.Subspace (Fin η) (Fin alphabet) (Fin p))
     (x : Fin η → Fin alphabet) (y : Fin q → Fin alphabet) :
-    DensityHalesJewett.concat (prependFixed u V x) y ∘ (prependCoords e).symm =
-      DensityHalesJewett.concat u (DensityHalesJewett.concat (V x) y ∘ e.symm) := by
+    Sum.elim (prependFixed u V x) y ∘ (prependCoords e).symm =
+      Sum.elim u (Sum.elim (V x) y ∘ e.symm) := by
   funext s
   cases s with
-  | inl a => simp [prependCoords, DensityHalesJewett.concat]
+  | inl a => simp [prependCoords]
   | inr b =>
       cases hb : e.symm b with
-      | inl c => simp [prependCoords, DensityHalesJewett.concat, hb]
-      | inr d => simp [prependCoords, DensityHalesJewett.concat, hb]
+      | inl c => simp [prependCoords, hb]
+      | inr d => simp [prependCoords, hb]
 
 /-- The same identification stated for the cut of the ambient coordinates. -/
 lemma concat_prependFixed_cut {alphabet η m p q r n : ℕ} (h : m + r = n)
     (e : Fin p ⊕ Fin q ≃ Fin r) (u : Fin m → Fin alphabet)
     (V : Combinatorics.Subspace (Fin η) (Fin alphabet) (Fin p))
     (x : Fin η → Fin alphabet) (y : Fin q → Fin alphabet) :
-    DensityHalesJewett.concat (prependFixed u V x) y ∘ (prependCut h e).symm =
-      DensityHalesJewett.concat u (DensityHalesJewett.concat (V x) y ∘ e.symm) ∘
+    Sum.elim (prependFixed u V x) y ∘ (prependCut h e).symm =
+      Sum.elim u (Sum.elim (V x) y ∘ e.symm) ∘
         (cutEquiv h).symm := by
   rw [← concat_prependFixed e u V x y]
   rfl
@@ -602,22 +602,22 @@ lemma average_restrictedParameterSlice {k M : ℕ}
     (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι) :
     Finset.expect Finset.univ (fun y : κ → Fin (k + 1) ↦
       ((Finset.univ.filter fun x : Fin M → Fin k ↦
-        DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) =
+        Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) =
       Finset.expect Finset.univ (fun x : Fin M → Fin k ↦
         ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ)) := by
   simp_rw [← Finset.expect_indicator_one]
   rw [Finset.expect_comm]
   refine Finset.expect_congr rfl fun x _ ↦ ?_
   refine Finset.expect_congr rfl fun y _ ↦ ?_
-  by_cases h : DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A
+  by_cases h : Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A
   · have hx : x ∈ Finset.univ.filter fun z : Fin M → Fin k ↦
-        DensityHalesJewett.concat (W (Fin.castSucc ∘ z)) y ∈ A :=
+        Sum.elim (W (Fin.castSucc ∘ z)) y ∈ A :=
       Finset.mem_filter.mpr ⟨Finset.mem_univ _, h⟩
     have hy : y ∈ fiber A (W (Fin.castSucc ∘ x)) := mem_fiber.mpr h
     rw [Set.indicator_of_mem hx, Set.indicator_of_mem hy]
     simp only [Pi.one_apply]
   · have hx : x ∉ Finset.univ.filter fun z : Fin M → Fin k ↦
-        DensityHalesJewett.concat (W (Fin.castSucc ∘ z)) y ∈ A :=
+        Sum.elim (W (Fin.castSucc ∘ z)) y ∈ A :=
       fun hx ↦ h (Finset.mem_filter.mp hx).2
     have hy : y ∉ fiber A (W (Fin.castSucc ∘ x)) := fun hy ↦ h (mem_fiber.mp hy)
     rw [Set.indicator_of_notMem hx, Set.indicator_of_notMem hy]
@@ -634,12 +634,12 @@ lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (hk : 0 < k) (δ : �
     ∃ y : κ → Fin (k + 1),
       δ / 2 ≤
         ((Finset.univ.filter fun x : Fin M → Fin k ↦
-          DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
+          Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
   letI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
   have havg : δ / 2 ≤
       Finset.expect Finset.univ (fun y : κ → Fin (k + 1) ↦
         ((Finset.univ.filter fun x : Fin M → Fin k ↦
-          DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) := by
+          Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) := by
     rw [average_restrictedParameterSlice]
     exact Finset.le_expect Finset.univ_nonempty fun x _ ↦ hW x
   by_contra h
@@ -657,7 +657,7 @@ lemma extend_restricted_subspace {k m M : ℕ} {ι κ ζ : Type*}
     (A : Finset (ζ → Fin (k + 1)))
     (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι) (y : κ → Fin (k + 1))
     (S : Combinatorics.Subspace (Fin m) (Fin k) (Fin M))
-    (hS : ∀ x, (DensityHalesJewett.concat (W (Fin.castSucc ∘ S x)) y) ∘ e.symm ∈ A) :
+    (hS : ∀ x, (Sum.elim (W (Fin.castSucc ∘ S x)) y) ∘ e.symm ∈ A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ζ,
       restrictAlphabet V Fin.castSuccEmb ⊆ A := by
   let lift_S : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin M) :=
@@ -680,9 +680,9 @@ lemma extend_restricted_subspace {k m M : ℕ} {ι κ ζ : Type*}
         refine ⟨e (Sum.inl i), ?_⟩
         simp [hi] }
   have h_concat_suffix_eval (z : Fin M → Fin (k + 1)) :
-      concat_suffix z = (DensityHalesJewett.concat (W z) y) ∘ e.symm := by
+      concat_suffix z = (Sum.elim (W z) y) ∘ e.symm := by
     ext c
-    simp only [Subspace.coe_apply, DensityHalesJewett.concat, Function.comp_apply, concat_suffix]
+    simp only [Subspace.coe_apply, Function.comp_apply, concat_suffix]
     cases e.symm c with
     | inl i => simp [Combinatorics.Subspace.coe_apply]
     | inr j => simp
@@ -741,7 +741,7 @@ lemma exists_eventually_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k
     exists_dense_suffix_of_restricted_fibers hk δ (splitWords e A) W fun x ↦ by
       linarith [hW (Fin.castSucc ∘ x)]
   let B := Finset.univ.filter fun x : Fin M → Fin k ↦
-    DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ splitWords e A
+    Sum.elim (W (Fin.castSucc ∘ x)) y ∈ splitWords e A
   obtain ⟨S, hS⟩ :=
     exists_of_density hDHJ m hm (δ / 2) (by linarith) M (le_max_right _ _) B
       (card_le_of_density_le hk (δ / 2) B (by simpa only [B] using hy))

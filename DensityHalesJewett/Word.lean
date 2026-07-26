@@ -16,10 +16,10 @@ import Mathlib.Tactic.Ring
 /-!
 # Finite word spaces
 
-Uniform density, concatenation of words, fibers, and elementary averaging results used in the
-density Hales--Jewett argument.  We use `Finset.dens` for uniform density and
-`Equiv.sumArrowEquivProdArrow` for the underlying decomposition of a word on a sum of coordinate
-types.
+Uniform density, fibers, and elementary averaging results used in the density Hales--Jewett
+argument.  We use `Finset.dens` for uniform density, `Sum.elim` to concatenate words on disjoint
+coordinate types, and `Equiv.sumArrowEquivProdArrow` for the underlying decomposition of a word on
+a sum of coordinate types.
 -/
 
 @[expose] public section
@@ -29,29 +29,16 @@ open scoped BigOperators
 
 namespace DensityHalesJewett
 
-/-- Concatenate words on disjoint coordinate types. -/
-def concat {α ι κ : Type*} (x : ι → α) (y : κ → α) : ι ⊕ κ → α :=
-  (Equiv.sumArrowEquivProdArrow ι κ α).symm (x, y)
-
-@[simp]
-lemma concat_apply_inl {α ι κ : Type*} (x : ι → α) (y : κ → α) (i : ι) :
-    concat x y (Sum.inl i) = x i := by
-  rfl
-
-@[simp]
-lemma concat_apply_inr {α ι κ : Type*} (x : ι → α) (y : κ → α) (i : κ) :
-    concat x y (Sum.inr i) = y i := by
-  rfl
-
-/-- The fiber of a word family above a fixed prefix. -/
+/-- The fiber of a word family above a fixed prefix.  Words on a sum of coordinate types are
+concatenations `Sum.elim x y` of their two parts. -/
 def fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
     (A : Finset (ι ⊕ κ → α)) (x : ι → α) : Finset (κ → α) :=
-  Finset.univ.filter fun y ↦ concat x y ∈ A
+  Finset.univ.filter fun y ↦ Sum.elim x y ∈ A
 
 @[simp]
 lemma mem_fiber {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ κ → α)]
     {A : Finset (ι ⊕ κ → α)} {x : ι → α} {y : κ → α} :
-    y ∈ fiber A x ↔ concat x y ∈ A := by
+    y ∈ fiber A x ↔ Sum.elim x y ∈ A := by
   simp [fiber]
 
 /-- Uniform density is the average of the uniform densities of the fibers. -/
@@ -66,14 +53,12 @@ lemma average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (�
   · simp
   · intro x _
     rcases x with ⟨x, y⟩
+    have hy : y ∈ fiber A x ↔ (Equiv.sumArrowEquivProdArrow ι κ α).symm (x, y) ∈ A :=
+      mem_fiber
     by_cases h : (Equiv.sumArrowEquivProdArrow ι κ α).symm (x, y) ∈ A
-    · change concat x y ∈ A at h
-      rw [Set.indicator_of_mem (by simp [fiber, h])]
-      rw [Set.indicator_of_mem (by simpa [concat] using h)]
+    · rw [Set.indicator_of_mem (by simpa [hy] using h), Set.indicator_of_mem h]
       simp only [Pi.one_apply]
-    · change concat x y ∉ A at h
-      rw [Set.indicator_of_notMem (by simp [fiber, h])]
-      rw [Set.indicator_of_notMem (by simpa [concat] using h)]
+    · rw [Set.indicator_of_notMem (by simpa [hy] using h), Set.indicator_of_notMem h]
 
 /-- A bounded function with large average exceeds a lower threshold on a quantitatively large
 set. -/

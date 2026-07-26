@@ -103,16 +103,16 @@ def concat (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ 
 
 @[simp]
 lemma concat_apply (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ α κ)
-    (x : η → α) (y : θ → α) : concat V W (DensityHalesJewett.concat x y) =
-      DensityHalesJewett.concat (V x) (W y) := by
+    (x : η → α) (y : θ → α) : concat V W (Sum.elim x y) =
+      Sum.elim (V x) (W y) := by
   funext i
   cases i with
   | inl i =>
     cases hi : V.idxFun i <;>
-      simp [concat, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply, hi]
+      simp [concat, Combinatorics.Subspace.coe_apply, hi]
   | inr i =>
     cases hi : W.idxFun i <;>
-      simp [concat, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply, hi]
+      simp [concat, Combinatorics.Subspace.coe_apply, hi]
 
 /-- Regard a line as a one-dimensional subspace parameterized by `Fin 1`. -/
 def lineToSubspaceFinOne (l : Combinatorics.Line α ι) :

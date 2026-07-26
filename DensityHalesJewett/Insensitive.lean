@@ -63,13 +63,13 @@ def transportSubspace {α η ι ω ν : Type*} (e : ι ≃ ω ⊕ ν) (z : ω �
 @[simp]
 lemma transportSubspace_apply {α η ι ω ν : Type*} (e : ι ≃ ω ⊕ ν) (z : ω → α)
     (V : Combinatorics.Subspace η α ν) (x : η → α) :
-    transportSubspace e z V x = DensityHalesJewett.concat z (V x) ∘ e := by
+    transportSubspace e z V x = Sum.elim z (V x) ∘ e := by
   funext c
   simp only [Combinatorics.Subspace.coe_apply, transportSubspace, Function.comp_apply]
   cases e c with
-  | inl a => simp only [Sum.elim_inl, DensityHalesJewett.concat_apply_inl, id_eq]
+  | inl a => simp only [Sum.elim_inl, id_eq]
   | inr c =>
-      rw [Sum.elim_inr, DensityHalesJewett.concat_apply_inr, Combinatorics.Subspace.coe_apply]
+      simp only [Sum.elim_inr, Combinatorics.Subspace.coe_apply]
 
 namespace IsInsensitive
 
@@ -90,7 +90,7 @@ lemma fiberSection {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕
   simp only [mem_fiber]
   refine hD fun a hai haj c ↦ ?_
   cases c with
-  | inl c => simp only [DensityHalesJewett.concat_apply_inl]
+  | inl c => simp only [Sum.elim_inl]
   | inr c => exact hxy a hai haj c
 
 /-- Complements preserve insensitivity. -/
@@ -159,16 +159,16 @@ lemma fiber_congr {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ 
   refine hD fun a hai haj c ↦ ?_
   cases c with
   | inl c => exact hvw a hai haj c
-  | inr c => simp only [DensityHalesJewett.concat_apply_inr]
+  | inr c => simp only [Sum.elim_inr]
 
 end IsInsensitive
 
 /-- Regrouping the coordinates of a word with a fixed prefix and a split tail. -/
 private lemma concat_comp_regroup {α ω ν ν₁ ν₂ : Type*} (s : ν ≃ ν₁ ⊕ ν₂)
     (u : ω → α) (r : ν₁ → α) (x : ν₂ → α) :
-    DensityHalesJewett.concat (DensityHalesJewett.concat u r) x ∘
+    Sum.elim (Sum.elim u r) x ∘
         (((Equiv.refl ω).sumCongr s).trans (Equiv.sumAssoc ω ν₁ ν₂).symm) =
-      DensityHalesJewett.concat u (DensityHalesJewett.concat r x ∘ s) := by
+      Sum.elim u (Sum.elim r x ∘ s) := by
   funext c
   cases c with
   | inl a => simp [Equiv.sumAssoc]
@@ -177,9 +177,9 @@ private lemma concat_comp_regroup {α ω ν ν₁ ν₂ : Type*} (s : ν ≃ ν�
 /-- The same regrouping stated after a coordinate splitting of the ambient type. -/
 private lemma concat_comp_regroup_trans {α ι ω ν ν₁ ν₂ : Type*} (e : ι ≃ ω ⊕ ν)
     (s : ν ≃ ν₁ ⊕ ν₂) (u : ω → α) (r : ν₁ → α) (x : ν₂ → α) :
-    DensityHalesJewett.concat (DensityHalesJewett.concat u r) x ∘
+    Sum.elim (Sum.elim u r) x ∘
         (e.trans (((Equiv.refl ω).sumCongr s).trans (Equiv.sumAssoc ω ν₁ ν₂).symm)) =
-      DensityHalesJewett.concat u (DensityHalesJewett.concat r x ∘ s) ∘ e := by
+      Sum.elim u (Sum.elim r x ∘ s) ∘ e := by
   rw [← concat_comp_regroup s u r x]
   rfl
 
@@ -190,7 +190,7 @@ private lemma fiber_transportWords_regroup {α ι ω ν ν₁ ν₂ : Type*}
     (e : ι ≃ ω ⊕ ν) (s : ν ≃ ν₁ ⊕ ν₂) (U : Finset (ι → α)) (u : ω → α) (r : ν₁ → α) :
     DensityHalesJewett.fiber
         (transportWords (e.trans (((Equiv.refl ω).sumCongr s).trans
-          (Equiv.sumAssoc ω ν₁ ν₂).symm)) U) (DensityHalesJewett.concat u r) =
+          (Equiv.sumAssoc ω ν₁ ν₂).symm)) U) (Sum.elim u r) =
       DensityHalesJewett.fiber
         (transportWords s (DensityHalesJewett.fiber (transportWords e U) u)) r := by
   ext x
@@ -198,16 +198,9 @@ private lemma fiber_transportWords_regroup {α ι ω ν ν₁ ν₂ : Type*}
 
 /-- A word is the concatenation of its parts along a coordinate splitting. -/
 private lemma eq_concat_parts {α ι ω ν : Type*} (e : ι ≃ ω ⊕ ν) (w : ι → α) :
-    DensityHalesJewett.concat (fun a ↦ w (e.symm (Sum.inl a)))
+    Sum.elim (fun a ↦ w (e.symm (Sum.inl a)))
         (fun n ↦ w (e.symm (Sum.inr n))) ∘ e = w := by
-  funext c
-  cases hc : e c with
-  | inl a =>
-      rw [Function.comp_apply, hc, DensityHalesJewett.concat_apply_inl, ← hc,
-        Equiv.symm_apply_apply]
-  | inr n =>
-      rw [Function.comp_apply, hc, DensityHalesJewett.concat_apply_inr, ← hc,
-        Equiv.symm_apply_apply]
+  simpa [Function.comp_def] using congrArg (· ∘ e) (Sum.elim_comp_inl_inr (w ∘ e.symm))
 
 /-- Sections commute with set difference. -/
 private lemma fiber_transportWords_sdiff {α ι ω ν : Type*}
@@ -223,8 +216,8 @@ private lemma fiber_transportWords_sdiff {α ι ω ν : Type*}
 /-- Removing a subset from a family subtracts its density. -/
 private lemma dens_sdiff_of_subset {X : Type*} [Fintype X] [DecidableEq X] {A B : Finset X}
     (h : B ⊆ A) : (((A \ B).dens : ℝ)) = (A.dens : ℝ) - (B.dens : ℝ) := by
-  rw [Finset.nnratCast_dens, Finset.nnratCast_dens, Finset.nnratCast_dens,
-    Finset.card_sdiff_of_subset h, Nat.cast_sub (Finset.card_le_card h), sub_div]
+  push_cast [← Finset.dens_sdiff_add_dens_eq_dens h]
+  ring
 
 /-- A nonempty family occupies at least one point of the ambient cube. -/
 private lemma one_div_card_le_dens {X : Type*} [Fintype X] {A : Finset X} (h : A.Nonempty) :
@@ -260,22 +253,16 @@ lemma exists_isContained_of_insensitive {k m b : ℕ} (hDHJ : HasDensityHJ k) (h
         exact iff_of_false (fun h ↦ hal h.symm) (fun h ↦ hai h.symm)
       · rw [dif_neg hx, Fin.castSuccEmb_apply, Fin.castSucc_castPred]
 
-/-- A word on a sum of coordinate types is the concatenation of its two parts. -/
-private lemma concat_inl_inr {α ω ν : Type*} (z : ω ⊕ ν → α) :
-    DensityHalesJewett.concat (fun a ↦ z (Sum.inl a)) (fun n ↦ z (Sum.inr n)) = z := by
-  funext c
-  cases c <;> rfl
-
 /-- The two block orders describe the same ambient word. -/
 private lemma concat_comp_swap {α ι ω ν ν₁ ν₂ : Type*} (e : ι ≃ ω ⊕ ν) (s : ν ≃ ν₁ ⊕ ν₂)
     (u : ω → α) (y : ν₁ → α) (x : ν₂ → α) :
-    DensityHalesJewett.concat (DensityHalesJewett.concat u y) x ∘
+    Sum.elim (Sum.elim u y) x ∘
         (e.trans (((Equiv.refl ω).sumCongr s).trans (Equiv.sumAssoc ω ν₁ ν₂).symm)) =
-      DensityHalesJewett.concat (DensityHalesJewett.concat u x) y ∘
+      Sum.elim (Sum.elim u x) y ∘
         (e.trans (((Equiv.refl ω).sumCongr (s.trans (Equiv.sumComm ν₁ ν₂))).trans
           (Equiv.sumAssoc ω ν₂ ν₁).symm)) := by
   rw [concat_comp_regroup_trans, concat_comp_regroup_trans]
-  refine congrArg (· ∘ e) (congrArg (DensityHalesJewett.concat u) ?_)
+  refine congrArg (· ∘ e) (congrArg (Sum.elim u) ?_)
   funext n
   cases hn : s n <;> simp [hn]
 
@@ -326,15 +313,15 @@ private lemma padExtraSubspace_apply {α η : Type*} {r N n : ℕ}
     (e : Fin r ⊕ Fin N ≃ Fin n) (z : Fin r → α)
     (V : Combinatorics.Subspace η α (Fin N)) (x : η → α) :
     padExtraSubspace e z V x =
-      DensityHalesJewett.concat z (V x) ∘ e.symm := by
+      Sum.elim z (V x) ∘ e.symm := by
   funext i
   cases hi : e.symm i with
   | inl j =>
       simp [padExtraSubspace, Combinatorics.Subspace.coe_apply, hi,
-        DensityHalesJewett.concat, Function.comp_apply]
+        Sum.elim, Function.comp_apply]
   | inr j =>
       simp [padExtraSubspace, Combinatorics.Subspace.coe_apply, hi,
-        DensityHalesJewett.concat, Function.comp_apply]
+        Sum.elim, Function.comp_apply]
 
 /-- The block density-increment tiling of paper Lemma 12.
 
@@ -380,11 +367,11 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
       set B : (ω ⊕ Fin (S * b) → Fin (k + 1)) → Finset (Fin b → Fin (k + 1)) :=
         fun z ↦ fiber (transportWords e₁ U) z with hBdef
       have hB (u : ω → Fin (k + 1)) (r : Fin (S * b) → Fin (k + 1)) :
-          B (concat u r) = fiber (transportWords s (fiber (transportWords e U) u)) r :=
+          B (Sum.elim u r) = fiber (transportWords s (fiber (transportWords e U) u)) r :=
         fiber_transportWords_regroup e s U u r
       have hBins (z : ω ⊕ Fin (S * b) → Fin (k + 1)) :
           IsInsensitive i.castSucc (Fin.last k) (B z) := by
-        rw [← concat_inl_inr z, hB]
+        rw [← Sum.elim_comp_inl_inr z, hB]
         exact fiberSection (reindex s (hins _)) _
       -- the blocks above which the working family is dense
       have havg : (𝔼 z : (ω ⊕ Fin (S * b) → Fin (k + 1)), ((B z).dens : ℝ)) = (U.dens : ℝ) := by
@@ -425,14 +412,14 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
         have hparts : (fun a ↦ tile z x (e₁.symm (Sum.inl a))) = z := by
           funext a
           simp only [htiledef, transportSubspace_apply, Function.comp_apply,
-            Equiv.apply_symm_apply, concat_apply_inl]
+            Equiv.apply_symm_apply, Sum.elim_inl]
         rw [hRdef, Finset.mem_filter]
         refine ⟨hmemU, by rw [hparts]; exact hz, ?_⟩
         rw [hparts]
         refine Subspace.mem_range.mpr ⟨x, ?_⟩
         funext j
         simp only [htiledef, transportSubspace_apply, Function.comp_apply,
-          Equiv.apply_symm_apply, concat_apply_inr]
+          Equiv.apply_symm_apply, Sum.elim_inr]
       have hRtile (w : ι → Fin (k + 1)) (hw : w ∈ R) :
           ∃ z ∈ good, w ∈ Subspace.range (tile z) := by
         rw [hRdef, Finset.mem_filter] at hw
@@ -473,9 +460,9 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
         rw [fiber_transportWords_sdiff]
         set u : ω → Fin (k + 1) := fun a ↦ v (Sum.inl a) with hu
         set x : Fin b → Fin (k + 1) := fun j ↦ v (Sum.inr j) with hx
-        have hv : v = concat u x := (concat_inl_inr v).symm
+        have hv : v = Sum.elim u x := (Sum.elim_comp_inl_inr v).symm
         have hword (y : Fin (S * b) → Fin (k + 1)) :
-            concat v y ∘ e₂ = concat (concat u y) x ∘ e₁ := by
+            Sum.elim v y ∘ e₂ = Sum.elim (Sum.elim u y) x ∘ e₁ := by
           rw [hv, he₁, he₂]
           exact (concat_comp_swap e s u y x).symm
         have hUpart : IsInsensitive i.castSucc (Fin.last k) (fiber (transportWords e₂ U) v) := by
@@ -483,26 +470,26 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
             fiber_transportWords_regroup e (s.trans (Equiv.sumComm (Fin (S * b)) (Fin b))) U u x]
           exact fiberSection (reindex _ (hins _)) _
         refine sdiff hUpart fun y y' hyy' ↦ ?_
-        have hsection : B (concat u y) = B (concat u y') := by
+        have hsection : B (Sum.elim u y) = B (Sum.elim u y') := by
           rw [hB, hB]
           exact fiber_congr (reindex s (hins u)) hyy'
-        have hmemU : concat v y ∘ e₂ ∈ U ↔ concat v y' ∘ e₂ ∈ U := by
+        have hmemU : Sum.elim v y ∘ e₂ ∈ U ↔ Sum.elim v y' ∘ e₂ ∈ U := by
           have := hUpart (x := y) (y := y') hyy'
           rwa [mem_fiber, mem_transportWords, mem_fiber, mem_transportWords] at this
         have hout (z : Fin (S * b) → Fin (k + 1)) :
-            (fun a ↦ (concat v z ∘ e₂) (e₁.symm (Sum.inl a))) = concat u z := by
+            (fun a ↦ (Sum.elim v z ∘ e₂) (e₁.symm (Sum.inl a))) = Sum.elim u z := by
           rw [hword z]
           funext a
-          simp only [Function.comp_apply, Equiv.apply_symm_apply, concat_apply_inl]
+          simp only [Function.comp_apply, Equiv.apply_symm_apply, Sum.elim_inl]
         have hblock (z : Fin (S * b) → Fin (k + 1)) :
-            (fun j ↦ (concat v z ∘ e₂) (e₁.symm (Sum.inr j))) = x := by
+            (fun j ↦ (Sum.elim v z ∘ e₂) (e₁.symm (Sum.inr j))) = x := by
           rw [hword z]
           funext j
-          simp only [Function.comp_apply, Equiv.apply_symm_apply, concat_apply_inr]
+          simp only [Function.comp_apply, Equiv.apply_symm_apply, Sum.elim_inr]
         have hmemR (z : Fin (S * b) → Fin (k + 1)) :
             z ∈ fiber (transportWords e₂ R) v ↔
-              concat v z ∘ e₂ ∈ U ∧ concat u z ∈ good ∧
-                x ∈ Subspace.range (pickSubspace hm hmb (B (concat u z))) := by
+              Sum.elim v z ∘ e₂ ∈ U ∧ Sum.elim u z ∈ good ∧
+                x ∈ Subspace.range (pickSubspace hm hmb (B (Sum.elim u z))) := by
           rw [mem_fiber, mem_transportWords, hRdef, Finset.mem_filter, hout z, hblock z]
         rw [hmemR y, hmemR y']
         simp only [hgooddef, Finset.mem_filter, Finset.mem_univ, true_and]
@@ -526,7 +513,7 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
             funext a
             have h := congrFun (hx.trans hx'.symm) (e₁.symm (Sum.inl a))
             simpa only [htiledef, transportSubspace_apply, Function.comp_apply,
-              Equiv.apply_symm_apply, concat_apply_inl] using h
+              Equiv.apply_symm_apply, Sum.elim_inl] using h
           rw [hzz]
         · intro V hV V' hV' _
           obtain ⟨z, hz, rfl⟩ := hV
@@ -576,7 +563,7 @@ lemma exists_tilingSufficient_dimension (k m : ℕ) (hDHJ : HasDensityHJ k) (hm 
       intro v x y hxy
       simp only [mem_fiber, mem_transportWords]
       refine hD fun a hai hal c ↦ ?_
-      simpa only [Function.comp_apply, Equiv.emptySum_symm_apply, concat_apply_inr] using
+      simpa only [Function.comp_apply, Equiv.emptySum_symm_apply, Sum.elim_inr] using
         hxy a hai hal c
     obtain ⟨𝒱, hfinite, hcontained, hpairwise, hconclusion⟩ :=
       exists_tiling_of_insensitive_sections i hDHJ hm (le_max_left _ _) hβ₀ hβ
@@ -617,9 +604,9 @@ private lemma tilingSufficient_mono {k m N n : ℕ} {β : ℝ}
     intro a hai hal c
     cases hc : e.symm c with
     | inl j =>
-        simp [wordEquiv, Equiv.arrowCongr, DensityHalesJewett.concat, hc]
+        simp [wordEquiv, Equiv.arrowCongr, hc]
     | inr j =>
-        simpa [wordEquiv, Equiv.arrowCongr, DensityHalesJewett.concat, hc] using
+        simpa [wordEquiv, Equiv.arrowCongr, hc] using
           hxy a hai hal j
   have existsLocal (z : Fin r → Fin (k + 1)) :
       ∃ 𝒱 : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin N)),
@@ -667,8 +654,8 @@ private lemma tilingSufficient_mono {k m N n : ℕ} {β : ℝ}
     obtain ⟨x, hx⟩ := Subspace.mem_range.mp hw
     obtain ⟨x', hx'⟩ := Subspace.mem_range.mp hw'
     have hzx :
-        DensityHalesJewett.concat z (V x) =
-          DensityHalesJewett.concat z' (V' x') := by
+        Sum.elim z (V x) =
+          Sum.elim z' (V' x') := by
       funext c
       have hc := congrFun (hx.trans hx'.symm) (e c)
       simpa only [padExtraSubspace_apply, Function.comp_apply,
@@ -704,8 +691,8 @@ private lemma tilingSufficient_mono {k m N n : ℕ} {β : ℝ}
         obtain ⟨z', V, hV, rfl⟩ := hU
         obtain ⟨x, hx⟩ := Subspace.mem_range.mp hyU
         have hconcat :
-            DensityHalesJewett.concat z y =
-              DensityHalesJewett.concat z' (V x) := by
+            Sum.elim z y =
+              Sum.elim z' (V x) := by
           apply wordEquiv.injective
           simpa [padExtraSubspace_apply, wordEquiv, Equiv.arrowCongr] using hx.symm
         have hzz : z = z' := by
@@ -1116,9 +1103,9 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
     intro a hai hal c
     cases hc : e.symm c with
     | inl j =>
-        simp [wordEquiv, Equiv.arrowCongr, DensityHalesJewett.concat, hc]
+        simp [wordEquiv, Equiv.arrowCongr, hc]
     | inr j =>
-        simpa [wordEquiv, Equiv.arrowCongr, DensityHalesJewett.concat, hc] using
+        simpa [wordEquiv, Equiv.arrowCongr, hc] using
           hxy a hai hal j
   let I := intersection D
   let I' := I.map wordEquiv.symm.toEmbedding
@@ -1168,8 +1155,8 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
     rw [← hfiberI z] at hx
     rw [mem_fiber] at hx
     simp only [I', Finset.mem_map_equiv, Equiv.symm_symm] at hx
-    have hword : wordEquiv (DensityHalesJewett.concat z (V x)) =
-        DensityHalesJewett.concat z (V x) ∘ e.symm := by
+    have hword : wordEquiv (Sum.elim z (V x)) =
+        Sum.elim z (V x) ∘ e.symm := by
       rfl
     rw [hword] at hx
     simpa only [I, mem_intersection] using hx
@@ -1182,8 +1169,8 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
     obtain ⟨x, hx⟩ := Subspace.mem_range.mp hw
     obtain ⟨x', hx'⟩ := Subspace.mem_range.mp hw'
     have hzx :
-        DensityHalesJewett.concat z (V x) =
-          DensityHalesJewett.concat z' (V' x') := by
+        Sum.elim z (V x) =
+          Sum.elim z' (V' x') := by
       funext c
       have hc := congrFun (hx.trans hx'.symm) (e c)
       simpa only [padExtraSubspace_apply, Function.comp_apply,
@@ -1225,8 +1212,8 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
           obtain ⟨z', V, hV, rfl⟩ := hU
           obtain ⟨x, hx⟩ := Subspace.mem_range.mp hyU
           have hconcat :
-              DensityHalesJewett.concat z y =
-                DensityHalesJewett.concat z' (V x) := by
+              Sum.elim z y =
+                Sum.elim z' (V x) := by
             apply wordEquiv.injective
             simpa [padExtraSubspace_apply, wordEquiv, Equiv.arrowCongr] using hx.symm
           have hzz : z = z' := by
