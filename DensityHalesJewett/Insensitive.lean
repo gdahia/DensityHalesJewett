@@ -6,6 +6,8 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.UniformFibers
+import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Order.Preorder.Finite
 
@@ -459,6 +461,23 @@ lemma composed_inner_tiles_facts {k d M n : ℕ}
     apply Subspace.injective V
     simpa only [Subspace.compose_apply] using hy.trans hx.symm
 
+/-- Mapping a parameter-cube family into a subspace scales its ambient density by the density of
+the whole subspace range. -/
+private lemma dens_map_subspace_eq_mul_range {α η ι : Type*}
+    [Fintype (η → α)] [Fintype (ι → α)] [DecidableEq (ι → α)]
+    (V : Combinatorics.Subspace η α ι) (A : Finset (η → α)) :
+    ((A.map ⟨V, Subspace.injective V⟩).dens : ℝ) =
+      (A.dens : ℝ) * ((Subspace.range V).dens : ℝ) := by
+  simp only [Finset.nnratCast_dens, Subspace.range, Finset.card_map]
+  rw [Finset.card_image_iff.mpr (Subspace.injective V).injOn]
+  by_cases h : Fintype.card (η → α) = 0
+  · letI : IsEmpty (η → α) := Fintype.card_eq_zero_iff.mp h
+    have hA : A = ∅ := Subsingleton.elim _ _
+    rw [hA]
+    simp
+  · field_simp
+    simp only [Finset.card_univ]
+
 /-- An ambient dimension is sufficient for tiling every dense intersection of `r` insensitive
 families. -/
 def IntersectionTilingSufficient (k r m : ℕ) (β : ℝ) (n : ℕ) : Prop :=
@@ -549,7 +568,157 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
           simp [uncovered]
         rw [huncovered]
         exact lt_of_not_ge hV
-  sorry
+  let tiles := fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
+    Classical.choose (existsInner V)
+  have htiles (V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n)) :
+      (tiles V).Finite ∧
+      (∀ W ∈ tiles V, Subspace.IsContained W (pullback V)) ∧
+      ((tiles V).PairwiseDisjoint fun W ↦
+        (Subspace.range W : Set (Fin M → Fin (k + 1)))) ∧
+      ((uncovered (pullback V) (tiles V)).dens : ℝ) < 2 * β :=
+    Classical.choose_spec (existsInner V)
+  let composed := fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
+    Subspace.compose V '' tiles V
+  have hcomposed (V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n)) :
+      (composed V).Finite ∧
+      (∀ U ∈ composed V, Subspace.IsContained U DLast) ∧
+      ((composed V).PairwiseDisjoint fun U ↦
+        (Subspace.range U : Set (Fin n → Fin (k + 1)))) := by
+    exact composed_inner_tiles_facts DLast V (tiles V)
+      (htiles V).1 (htiles V).2.1 (htiles V).2.2.1
+  letI : Finite 𝒱 := hfinite
+  let global : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)) :=
+    ⋃ V : 𝒱, composed V
+  refine ⟨global, ?_, ?_, ?_, ?_⟩
+  · exact Set.finite_iUnion fun V ↦ (hcomposed V).1
+  · intro U hU x
+    simp only [global, Set.mem_iUnion] at hU
+    obtain ⟨V, hU⟩ := hU
+    obtain ⟨W, hW, rfl⟩ := hU
+    rw [mem_intersection]
+    intro i
+    refine Fin.lastCases ?_ (fun j ↦ ?_) i
+    · exact (hcomposed V).2.1 (Subspace.compose V W)
+        (by simpa only [composed] using
+          Set.mem_image_of_mem (Subspace.compose V.val) hW) x
+    · have hx := hcontained V V.prop (W x)
+      rw [mem_intersection] at hx
+      simpa only [Subspace.compose_apply, D₀] using hx j
+  · rw [Set.pairwiseDisjoint_iff]
+    intro U hU U' hU' hcommon
+    simp only [global, Set.mem_iUnion] at hU hU'
+    obtain ⟨V, hU⟩ := hU
+    obtain ⟨V', hU'⟩ := hU'
+    have hVV : V = V' := by
+      apply Subtype.ext
+      apply Set.pairwiseDisjoint_iff.mp hpairwise V.prop V'.prop
+      obtain ⟨w, hw, hw'⟩ := hcommon
+      obtain ⟨x, hx⟩ := Subspace.mem_range.mp hw
+      obtain ⟨x', hx'⟩ := Subspace.mem_range.mp hw'
+      obtain ⟨W, hW, rfl⟩ := hU
+      obtain ⟨W', hW', rfl⟩ := hU'
+      refine ⟨V.val (W x), Subspace.mem_range.mpr ⟨W x, rfl⟩,
+        Subspace.mem_range.mpr ⟨W' x', ?_⟩⟩
+      simpa only [Subspace.compose_apply] using hx'.trans hx.symm
+    subst V'
+    exact Set.pairwiseDisjoint_iff.mp (hcomposed V).2.2 hU hU' hcommon
+  · let outer := hfinite.toFinset
+    let innerError := fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
+      (uncovered (pullback V) (tiles V)).map ⟨V, Subspace.injective V⟩
+    let errors := outer.biUnion innerError
+    have herror_pairwise : (outer : Set _).PairwiseDisjoint innerError := by
+      intro V hV V' hV' hVV
+      change Disjoint (innerError V) (innerError V')
+      rw [Finset.disjoint_left]
+      intro w hw hw'
+      apply Set.disjoint_left.mp (hpairwise
+        (by simpa [outer] using hV)
+        (by simpa [outer] using hV') hVV)
+      · obtain ⟨x, _hx, hxw⟩ := Finset.mem_map.mp hw
+        exact Subspace.mem_range.mpr ⟨x, hxw⟩
+      · obtain ⟨x', _hx', hx'w⟩ := Finset.mem_map.mp hw'
+        exact Subspace.mem_range.mpr ⟨x', hx'w⟩
+    have herrors : (errors.dens : ℝ) ≤ 2 * β := by
+      simp only [errors]
+      rw [Finset.dens_biUnion herror_pairwise]
+      change (NNRat.castHom ℝ) (∑ V ∈ outer, (innerError V).dens) ≤ 2 * β
+      rw [map_sum (NNRat.castHom ℝ)]
+      refine (Finset.sum_le_sum fun V hV ↦
+        show ((innerError V).dens : ℝ) ≤
+          2 * β * ((Subspace.range V).dens : ℝ) by
+          dsimp only [innerError]
+          rw [dens_map_subspace_eq_mul_range]
+          apply mul_le_mul_of_nonneg_right (htiles V).2.2.2.le
+          positivity).trans ?_
+      rw [← Finset.mul_sum]
+      have hranges_pairwise :
+          (outer : Set (Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n))).PairwiseDisjoint
+            (fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
+              Subspace.range V) := by
+        intro V hV V' hV' hVV
+        change Disjoint (Subspace.range V) (Subspace.range V')
+        rw [Finset.disjoint_left]
+        intro w hw hw'
+        apply Set.disjoint_left.mp (hpairwise
+          (by simpa [outer] using hV)
+          (by simpa [outer] using hV') hVV)
+        · exact hw
+        · exact hw'
+      have hsum : (∑ V ∈ outer, ((Subspace.range V).dens : ℝ)) ≤ 1 := by
+        have hdens_ranges :
+            (((outer.biUnion Subspace.range).dens : ℚ≥0) : ℝ) =
+              ∑ V ∈ outer, ((Subspace.range V).dens : ℝ) := by
+          rw [Finset.dens_biUnion hranges_pairwise]
+          change (NNRat.castHom ℝ)
+            (∑ V ∈ outer, (Subspace.range V).dens) = _
+          rw [map_sum (NNRat.castHom ℝ)]
+          rfl
+        rw [← hdens_ranges]
+        exact_mod_cast Finset.dens_le_one (s := outer.biUnion Subspace.range)
+      simpa only [mul_one] using
+        mul_le_mul_of_nonneg_left hsum (mul_nonneg (by norm_num) hβ₀.le)
+    have huncovered_subset :
+        uncovered (intersection D) global ⊆
+          uncovered (intersection D₀) 𝒱 ∪ errors := by
+      intro w hw
+      simp only [uncovered, Finset.mem_filter] at hw
+      simp only [uncovered, Finset.mem_filter, Finset.mem_union]
+      by_cases hparent : ∃ V ∈ 𝒱, w ∈ Subspace.range V
+      · right
+        obtain ⟨V, hV, hwV⟩ := hparent
+        obtain ⟨x, hx⟩ := Subspace.mem_range.mp hwV
+        refine Finset.mem_biUnion.mpr ⟨V, ?_, ?_⟩
+        · simpa [outer] using hV
+        · apply Finset.mem_map.mpr
+          refine ⟨x, ?_, hx⟩
+          simp only [uncovered, Finset.mem_filter]
+          refine ⟨?_, ?_⟩
+          · simp only [pullback, parameterPreimage, Finset.mem_filter,
+              Finset.mem_univ, true_and]
+            exact hx ▸ (mem_intersection.mp hw.1 (Fin.last r))
+          · intro W hW hxW
+            apply hw.2 (Subspace.compose V W)
+            · exact Set.mem_iUnion_of_mem ⟨V, hV⟩ <|
+                Set.mem_image_of_mem (Subspace.compose V) hW
+            · obtain ⟨y, hy⟩ := Subspace.mem_range.mp hxW
+              exact Subspace.mem_range.mpr ⟨y, by
+                rw [Subspace.compose_apply, hy, hx]⟩
+      · left
+        refine ⟨hsubset hw.1, ?_⟩
+        intro V hV hwV
+        exact hparent ⟨V, hV, hwV⟩
+    have hdens :
+        ((uncovered (intersection D) global).dens : ℝ) ≤
+          ((uncovered (intersection D₀) 𝒱 ∪ errors).dens : ℝ) := by
+      exact_mod_cast Finset.dens_mono huncovered_subset
+    have hdens_union :
+        ((uncovered (intersection D₀) 𝒱 ∪ errors).dens : ℝ) ≤
+          ((uncovered (intersection D₀) 𝒱).dens : ℝ) + (errors.dens : ℝ) := by
+      exact_mod_cast Finset.dens_union_le (uncovered (intersection D₀) 𝒱) errors
+    refine hdens.trans_lt (lt_of_le_of_lt hdens_union ?_)
+    convert add_lt_add_of_lt_of_le huncovered herrors using 1
+    push_cast
+    ring
 
 /-- Induction on the number of insensitive families gives one exact sufficient intersection-tiling
 dimension. -/
