@@ -416,12 +416,41 @@ private lemma padPrefixSubspace_apply {α η : Type*} {p r n : ℕ}
       simp [padPrefixSubspace, Combinatorics.Subspace.coe_apply, hi,
         DensityHalesJewett.concat, Function.comp_apply]
 
+/-- Numerical data for a finite uniform-fibers density-increment iteration. -/
+private structure UniformFibersIterationParameters
+    (alphabet dimension : ℕ) (ε : ℝ) where
+  fuel : ℕ
+  increment : ℝ
+  increment_pos : 0 < increment
+  block_loss : (alphabet ^ dimension : ℝ) * increment ≤ ε
+  exhausts : 1 < (fuel : ℝ) * increment
+
+/-- A positive error tolerance admits an increment small enough for one block and enough fuel to
+force the density above one. -/
+private lemma exists_uniformFibersIterationParameters
+    (alphabet dimension : ℕ) {ε : ℝ} (hε₀ : 0 < ε) :
+    Nonempty (UniformFibersIterationParameters alphabet dimension ε) := by
+  sorry
+
+/-- The block density-increment argument produces a sufficient prefix from fixed numerical
+iteration parameters. -/
+private lemma uniformFibersFinSufficient_of_iterationParameters
+    (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
+    {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
+    (parameters : UniformFibersIterationParameters alphabet dimension ε) :
+    UniformFibersFinSufficient alphabet dimension ε (parameters.fuel * dimension) := by
+  sorry
+
 /-- The finite block-density-increment iteration underlying uniform fibers. -/
 private lemma exists_uniformFibersFinSufficient_block_iteration
     (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
     {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
     ∃ N, UniformFibersFinSufficient alphabet dimension ε N := by
-  sorry
+  obtain ⟨parameters⟩ :=
+    exists_uniformFibersIterationParameters alphabet dimension hε₀
+  refine ⟨parameters.fuel * dimension, ?_⟩
+  exact uniformFibersFinSufficient_of_iterationParameters
+    alphabet dimension hdimension hε₀ hε₁ parameters
 
 /-- A finite fuel density-increment iteration produces one exact sufficient prefix dimension. -/
 lemma exists_uniformFibersFinSufficient (alphabet dimension : ℕ)

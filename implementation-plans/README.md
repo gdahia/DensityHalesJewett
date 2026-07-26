@@ -28,9 +28,9 @@ upward safe even when the color type is empty.
 
 ## Inventory
 
-- `easy/`: 4 plans
-- `medium/`: 0 plans
-- `hard/`: 0 plans
+- `easy/`: 1 plan
+- `medium/`: 1 plan
+- `hard/`: 2 plans
 - `very-hard/`: 0 plans
 
 Within a difficulty level, the plans should still be attempted in source dependency order:

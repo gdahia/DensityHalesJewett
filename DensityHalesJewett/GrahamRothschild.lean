@@ -105,11 +105,22 @@ private def MinColorBlocksFin (colors s L : ℕ) : Prop :=
       ∃ κ : Fin s → Fin colors, ∀ I : Finset (Fin s), (hI : I.Nonempty) →
         χ (I.biUnion B) = κ (I.min' hI)
 
+/-- Binary focusing on an initial coordinate packet adjoins one least-colored block before an
+existing ordered block sequence. -/
+private lemma minColorBlocksFin_succ_of_focus (colors s L n : ℕ)
+    (h : MinColorBlocksFin colors s L)
+    (hn : focusBound 2 colors (2 ^ L) ≤ n) :
+    MinColorBlocksFin colors (s + 1) (n + L) := by
+  sorry
+
 /-- One reverse focusing step adjoins the next least-colored ordered block. -/
 private lemma exists_minColor_blocks_fin_step (colors s : ℕ)
     (h : ∃ L, MinColorBlocksFin colors s L) :
     ∃ L, MinColorBlocksFin colors (s + 1) L := by
-  sorry
+  obtain ⟨L, hL⟩ := h
+  let n := focusBound 2 colors (2 ^ L)
+  refine ⟨n + L, ?_⟩
+  exact minColorBlocksFin_succ_of_focus colors s L n hL le_rfl
 
 private lemma exists_minColor_blocks_fin (colors s : ℕ) :
     ∃ L, ∀ χ : Finset (Fin L) → Fin colors,
@@ -334,12 +345,25 @@ private def LocallyCanonizingDimension (alphabet colors blocks : ℕ)
     ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin N),
       IsLocallyCanonizing V χ
 
+/-- Extend a fixed dimension that locally canonizes `blocks` parameter coordinates to some
+dimension that locally canonizes one additional parameter coordinate. -/
+private lemma exists_locally_canonizing_extension (alphabet colors blocks N : ℕ)
+    [Nontrivial (Fin alphabet)] (halphabet : 2 ≤ alphabet)
+    (hN : ∀ χ : Combinatorics.Line (Fin alphabet) (Fin N) → Fin colors,
+      ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin N),
+        IsLocallyCanonizing V χ) :
+    ∃ M, ∀ χ : Combinatorics.Line (Fin alphabet) (Fin M) → Fin colors,
+      ∃ V : Combinatorics.Subspace (Fin (blocks + 1)) (Fin alphabet) (Fin M),
+        IsLocallyCanonizing V χ := by
+  sorry
+
 /-- One reverse profile-focusing step adjoins a locally canonized parameter block. -/
 private lemma locallyCanonizingDimension_step (alphabet colors blocks : ℕ)
     [Nontrivial (Fin alphabet)] (halphabet : 2 ≤ alphabet)
     (h : LocallyCanonizingDimension alphabet colors blocks) :
     LocallyCanonizingDimension alphabet colors (blocks + 1) := by
-  sorry
+  obtain ⟨N, hN⟩ := h
+  exact exists_locally_canonizing_extension alphabet colors blocks N halphabet hN
 
 lemma exists_locally_canonizing_dimension (alphabet colors blocks : ℕ)
     [Nontrivial (Fin alphabet)] (halphabet : 2 ≤ alphabet) :
