@@ -281,13 +281,50 @@ lemma exists_density_increment_schedule (k R : ℕ) (δ : ℝ) :
     exact le_max_right _ _
   exact ⟨d, h_d_R, h_d_one, h_d_step⟩
 
+/-- Split the first `m` coordinates from the remaining coordinates of `Fin n`. -/
+def prefixCoordinateEquiv {m n : ℕ} (hmn : m ≤ n) : Fin m ⊕ Fin (n - m) ≃ Fin n :=
+  finSumFinEquiv.trans (finCongr (Nat.add_sub_of_le hmn))
+
+/-- Assemble a word from its first `m` coordinates and a fixed remaining suffix. -/
+def prefixCoordinateWord {α : Type*} {m n : ℕ} (hmn : m ≤ n)
+    (x : Fin m → α) (y : Fin (n - m) → α) : Fin n → α :=
+  concat x y ∘ (prefixCoordinateEquiv hmn).symm
+
+/-- The coordinate subspace obtained by fixing every coordinate after the first `m`. -/
+def prefixCoordinateSubspace {α : Type*} {m n : ℕ} (hmn : m ≤ n)
+    (y : Fin (n - m) → α) : Combinatorics.Subspace (Fin m) α (Fin n) where
+  idxFun i := ((prefixCoordinateEquiv hmn).symm i).elim Sum.inr (Sum.inl ∘ y)
+  proper e := by
+    refine ⟨prefixCoordinateEquiv hmn (Sum.inl e), ?_⟩
+    simp only [Equiv.symm_apply_apply, Sum.elim_inl]
+
+@[simp]
+lemma prefixCoordinateSubspace_apply {α : Type*} {m n : ℕ} (hmn : m ≤ n)
+    (y : Fin (n - m) → α) (x : Fin m → α) :
+    prefixCoordinateSubspace hmn y x = prefixCoordinateWord hmn x y := by
+  funext i
+  change (((prefixCoordinateEquiv hmn).symm i).elim Sum.inr (Sum.inl ∘ y)).elim id x =
+    concat x y ((prefixCoordinateEquiv hmn).symm i)
+  cases (prefixCoordinateEquiv hmn).symm i <;> rfl
+
+/-- Some fixed suffix leaves a first-coordinate fiber at least as dense as the ambient family. -/
+lemma exists_dense_prefixCoordinateWord {k m n : ℕ} (hmn : m ≤ n)
+    (A : Finset (Fin n → Fin (k + 1))) :
+    ∃ y : Fin (n - m) → Fin (k + 1),
+      (A.dens : ℝ) ≤
+        ((Finset.univ.filter fun x : Fin m → Fin (k + 1) ↦
+          prefixCoordinateWord hmn x y ∈ A).dens : ℝ) := by
+  sorry
+
 /-- A coordinate fiber of any prescribed smaller positive dimension has relative density at least
 the ambient density. -/
-lemma exists_density_preserving_subspace_of_le {k m n : ℕ} (hm : 1 ≤ m) (hmn : m ≤ n)
+lemma exists_density_preserving_subspace_of_le {k m n : ℕ} (_hm : 1 ≤ m) (hmn : m ≤ n)
     (A : Finset (Fin n → Fin (k + 1))) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       (A.dens : ℝ) ≤ (Subspace.relativeDensity V A : ℝ) := by
-  sorry
+  obtain ⟨y, hy⟩ := exists_dense_prefixCoordinateWord hmn A
+  refine ⟨prefixCoordinateSubspace hmn y, ?_⟩
+  simpa only [Subspace.relativeDensity, prefixCoordinateSubspace_apply] using hy
 
 /-- One scheduled density-increment stage either produces an ambient line or advances the nested
 subspace while preserving the quantitative density invariant. -/
@@ -305,7 +342,34 @@ lemma density_increment_chain_step {k R n j : ℕ} (hk : 2 ≤ k)
       ∃ W : Combinatorics.Subspace (Fin (d (j + 1))) (Fin (k + 1)) (Fin n),
         δ + ((j + 1 : ℕ) : ℝ) * (Parameters.γ k δ / 2) ≤
           (Subspace.relativeDensity W A : ℝ) := by
-  sorry
+  letI : Nontrivial (Fin (k + 1)) :=
+    Fintype.one_lt_card_iff_nontrivial.mp (by
+      simp only [Fintype.card_fin]
+      omega)
+  let ρ := δ + (j : ℝ) * (Parameters.γ k δ / 2)
+  have hγ := Parameters.γ_mono_lowerBound hk hδ
+  have hρ₀ : 0 < ρ := by
+    dsimp only [ρ]
+    nlinarith [hγ.1, (Nat.cast_nonneg j : (0 : ℝ) ≤ (j : ℝ))]
+  have hρ₁ : ρ ≤ 1 := by
+    exact hV.trans <| by
+      exact_mod_cast Finset.dens_le_one (s := pullback V A)
+  have hinc := density_increment hk hDHJ (d (j + 1))
+    (hd (j + 1) (Nat.succ_le_of_lt hj)) ρ hρ₀ hρ₁ (d j) (hstep j hj)
+      (pullback V A) (by
+        simpa only [ρ, Subspace.relativeDensity, pullback] using hV)
+  obtain ⟨l, hl⟩ | ⟨U, hU⟩ := hinc
+  · refine Or.inl ⟨Subspace.mapLine V l, ?_⟩
+    intro a
+    simpa only [Subspace.mapLine_apply, pullback, Finset.mem_filter, Finset.mem_univ,
+      true_and] using hl a
+  · refine Or.inr ⟨Subspace.compose V U, ?_⟩
+    rw [Subspace.relativeDensity_compose]
+    dsimp only [ρ] at hU
+    have hδρ : δ ≤ δ + (j : ℝ) * (Parameters.γ k δ / 2) := by
+      nlinarith [hγ.1, (Nat.cast_nonneg j : (0 : ℝ) ≤ (j : ℝ))]
+    norm_num [Nat.cast_add, Nat.cast_one]
+    linarith [hγ.2 _ hδρ]
 
 /-- Iterating the one-step lemma along the schedule either finds a line or reaches the last
 scheduled subspace with the accumulated density lower bound. -/
@@ -322,7 +386,22 @@ lemma line_or_density_increment_chain {k R n : ℕ} (hk : 2 ≤ k)
       ∃ V : Combinatorics.Subspace (Fin (d R)) (Fin (k + 1)) (Fin n),
         δ + (R : ℝ) * (Parameters.γ k δ / 2) ≤
           (Subspace.relativeDensity V A : ℝ) := by
-  sorry
+  suffices ∀ j, j ≤ R →
+      (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
+        ∃ V : Combinatorics.Subspace (Fin (d j)) (Fin (k + 1)) (Fin n),
+          δ + (j : ℝ) * (Parameters.γ k δ / 2) ≤
+            (Subspace.relativeDensity V A : ℝ) by
+    exact this R le_rfl
+  intro j hj
+  induction j with
+  | zero =>
+      exact Or.inr ⟨V₀, by
+        simpa only [Nat.cast_zero, zero_mul, add_zero] using hV₀⟩
+  | succ j ih =>
+      obtain hline | ⟨V, hV⟩ := ih (Nat.le_of_succ_le hj)
+      · exact Or.inl hline
+      · exact density_increment_chain_step hk hDHJ hδ d hd hstep
+          (Nat.lt_of_succ_le hj) A V hV
 
 /-- Iterate the density-increment dichotomy along a backward dimension schedule.
 

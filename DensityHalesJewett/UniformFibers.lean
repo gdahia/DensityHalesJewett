@@ -347,7 +347,11 @@ lemma uniformFibersBound_fin_spec (alphabet dimension n : ℕ)
     (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
     (hn : uniformFibersBound alphabet dimension ε ≤ n) :
     UniformFibersFinSufficient alphabet dimension ε n := by
-  sorry
+  classical
+  rw [uniformFibersBound,
+    dif_pos ⟨hdimension, hε₀, hε₁⟩] at hn
+  exact Nat.find_spec
+    (exists_eventually_uniformFibersFinSufficient alphabet dimension hdimension hε₀ hε₁) n hn
 
 /-- Uniform fibers over finite cardinal models transport to arbitrary finite alphabets, prefix
 coordinates, and suffix coordinates. -/
@@ -383,7 +387,7 @@ noncomputable def suffixFunctionFintype (α ι κ : Type*)
 
 /-- Uniform fibers remain dense after restricting every parameter letter to the first `k`
 letters. -/
-lemma exists_restricted_parameters_with_dense_fibers {k M : ℕ} (hk : 0 < k)
+lemma exists_restricted_parameters_with_dense_fibers {k M : ℕ} (_hk : 0 < k)
     (hM : 1 ≤ M) (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
@@ -393,11 +397,31 @@ lemma exists_restricted_parameters_with_dense_fibers {k M : ℕ} (hk : 0 < k)
     ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
       ∀ x : Fin M → Fin k,
         δ / 2 ≤ ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ) := by
+  obtain ⟨W, hW⟩ :=
+    exists_fibers_dense (α := Fin (k + 1)) (ι := ι) (κ := κ)
+      M hM (δ / 2) (by linarith) (by linarith)
+        (by simpa only [Fintype.card_fin] using hι) A (by linarith)
+  refine ⟨W, ?_⟩
+  intro x
+  linarith [hW (Fin.castSucc ∘ x)]
+
+/-- Averaging restricted-parameter slice densities over suffixes equals averaging their ambient
+fiber densities over restricted parameter words. -/
+lemma average_restrictedParameterSlice {k M : ℕ}
+    {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
+    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
+    (A : Finset (ι ⊕ κ → Fin (k + 1)))
+    (W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι) :
+    Finset.expect Finset.univ (fun y : κ → Fin (k + 1) ↦
+      ((Finset.univ.filter fun x : Fin M → Fin k ↦
+        DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) =
+      Finset.expect Finset.univ (fun x : Fin M → Fin k ↦
+        ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ)) := by
   sorry
 
 /-- Averaging a pointwise-dense family of suffix fibers produces one suffix above which the
 restricted parameter family is dense. -/
-lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (δ : ℝ)
+lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (hk : 0 < k) (δ : ℝ)
     {ι κ : Type*} [Fintype (κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
     (A : Finset (ι ⊕ κ → Fin (k + 1)))
@@ -408,7 +432,20 @@ lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (δ : ℝ)
       δ / 2 ≤
         ((Finset.univ.filter fun x : Fin M → Fin k ↦
           DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
-  sorry
+  letI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  have havg : δ / 2 ≤
+      Finset.expect Finset.univ (fun y : κ → Fin (k + 1) ↦
+        ((Finset.univ.filter fun x : Fin M → Fin k ↦
+          DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) := by
+    rw [average_restrictedParameterSlice]
+    exact Finset.le_expect Finset.univ_nonempty fun x _ ↦ hW x
+  by_contra h
+  push Not at h
+  apply (not_lt_of_ge havg)
+  apply Finset.expect_lt
+  · intro y _
+    exact (h y).le
+  · exact ⟨fun _ ↦ 0, Finset.mem_univ _, h (fun _ ↦ 0)⟩
 
 /-- Restricting all parameter words to the first `k` letters and averaging over the suffix leaves
 a dense parameter family above one suffix. -/
@@ -427,7 +464,7 @@ lemma exists_dense_restricted_parameters {k M : ℕ} (hk : 0 < k) (hM : 1 ≤ M)
     suffixFunctionFintype (Fin (k + 1)) ι κ
   obtain ⟨W, hW⟩ :=
     exists_restricted_parameters_with_dense_fibers hk hM δ hδ₀ hδ₁ hι A hA
-  obtain ⟨y, hy⟩ := exists_dense_suffix_of_restricted_fibers δ A W hW
+  obtain ⟨y, hy⟩ := exists_dense_suffix_of_restricted_fibers hk δ A W hW
   exact ⟨W, y, hy⟩
 
 /-- Extend a restricted parameter subspace to the full alphabet, attach a fixed suffix, and

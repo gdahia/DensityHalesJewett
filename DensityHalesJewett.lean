@@ -6,4 +6,5 @@ import DensityHalesJewett.Main
 import DensityHalesJewett.Subspace
 import DensityHalesJewett.Szemeredi
 import DensityHalesJewett.UniformFibers
+import DensityHalesJewett.Varnavides
 import DensityHalesJewett.Word

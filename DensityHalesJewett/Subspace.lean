@@ -66,6 +66,24 @@ lemma compose_apply (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Sub
   · simp [compose, Combinatorics.Subspace.coe_apply, hi]
   · simp [compose, Combinatorics.Subspace.coe_apply, hi]
 
+/-- Repeat the first `m` parameter directions to fill a larger `M`-coordinate cube. -/
+def repeatInitial {m M : ℕ} (α : Type*) (hm : 1 ≤ m) (hmM : m ≤ M) :
+    Combinatorics.Subspace (Fin m) α (Fin M) where
+  idxFun i := Sum.inr <|
+    if hi : i.val < m then ⟨i.val, hi⟩ else ⟨0, Nat.zero_lt_of_lt hm⟩
+  proper e := by
+    refine ⟨Fin.castLE hmM e, ?_⟩
+    simp only [Fin.castLE, e.isLt, ↓reduceDIte]
+
+@[simp]
+lemma repeatInitial_map {β : Type*} {m M : ℕ} (α : Type*) (hm : 1 ≤ m) (hmM : m ≤ M)
+    (f : β → α) (x : Fin m → β) :
+    repeatInitial α hm hmM (f ∘ x) = f ∘ repeatInitial β hm hmM x := by
+  funext i
+  simp only [Function.comp_apply]
+  rw [(repeatInitial α hm hmM).apply_inr rfl, (repeatInitial β hm hmM).apply_inr rfl]
+  rfl
+
 /-- Concatenate subspaces on disjoint coordinate blocks. -/
 def concat (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subspace θ α κ) :
     Combinatorics.Subspace (η ⊕ θ) α (ι ⊕ κ) where
@@ -253,6 +271,12 @@ noncomputable def mapLine [Fintype (η → α)] [DecidableEq (ι → α)]
     [Nontrivial α] (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η) :
     Combinatorics.Line α ι :=
   (linesEquiv V l).1
+
+@[simp]
+lemma mapLine_apply [Fintype (η → α)] [DecidableEq (ι → α)]
+    [Nontrivial α] (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η)
+    (a : α) : mapLine V l a = V (l a) := by
+  exact composeLine_apply V l a
 
 /-- Restrict the variable letters of a subspace along an alphabet embedding. -/
 def restrictAlphabet {β : Type*} [Fintype (η → β)] [DecidableEq (ι → α)]

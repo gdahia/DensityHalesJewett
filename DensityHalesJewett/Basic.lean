@@ -6,11 +6,11 @@ Authors: GPT-5.6 Sol, Gabriel Dahia
 module
 
 public import DensityHalesJewett.Main
-public import DensityHalesJewett.Szemeredi
+public import DensityHalesJewett.Varnavides
 
 /-!
 # Positive-density configurations
 
-This module re-exports the density Hales--Jewett and Szemeredi interfaces as the public API of the
-project.
+This module re-exports the density Hales--Jewett, Szemeredi, and Varnavides interfaces as the public
+API of the project.
 -/

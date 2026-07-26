@@ -273,6 +273,22 @@ def IsLocallyCanonizing {α C : Type*} [Fintype α] [Nontrivial α] [DecidableEq
     (∃ i, ∀ j, j ≠ i → p.idxFun j = q.idxFun j) →
       χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q)
 
+/-- Every nonempty coordinate set occurs as the variable support of a line. -/
+lemma exists_line_variableSet_eq (α : Type*) [Nonempty α] {L : ℕ}
+    (S : Finset (Fin L)) (hS : S.Nonempty) :
+    ∃ l : Combinatorics.Line α (Fin L), variableSet l = S := by
+  classical
+  let a : α := Classical.choice inferInstance
+  refine ⟨{
+    idxFun := fun i ↦ if i ∈ S then none else some a
+    proper := ?_
+  }, ?_⟩
+  · obtain ⟨i, hi⟩ := hS
+    exact ⟨i, if_pos hi⟩
+  · ext i
+    simp only [variableSet, Finset.mem_filter, Finset.mem_univ, true_and]
+    by_cases hi : i ∈ S <;> simp only [hi, ↓reduceIte, Option.some_ne_none]
+
 /-- Reverse finite focusing constructs a locally canonizing block subspace in one sufficiently
 large exact dimension. -/
 lemma exists_locally_canonizing_dimension (alphabet colors blocks : ℕ)
@@ -282,6 +298,68 @@ lemma exists_locally_canonizing_dimension (alphabet colors blocks : ℕ)
         IsLocallyCanonizing V χ := by
   sorry
 
+/-- Pad a line with fixed coordinates and reindex the resulting coordinate sum. -/
+private def padLine {α ι κ ζ : Type*} (e : ι ⊕ κ ≃ ζ) (y : κ → α)
+    (l : Combinatorics.Line α ι) : Combinatorics.Line α ζ where
+  idxFun z :=
+    match e.symm z with
+    | Sum.inl i => l.idxFun i
+    | Sum.inr j => some (y j)
+  proper := by
+    obtain ⟨i, hi⟩ := l.proper
+    refine ⟨e (Sum.inl i), ?_⟩
+    simp only [Equiv.symm_apply_apply, hi]
+
+/-- Pad a subspace with fixed coordinates and reindex the resulting coordinate sum. -/
+private def padSubspace {α η ι κ ζ : Type*} (e : ι ⊕ κ ≃ ζ) (y : κ → α)
+    (V : Combinatorics.Subspace η α ι) : Combinatorics.Subspace η α ζ where
+  idxFun z :=
+    match e.symm z with
+    | Sum.inl i => V.idxFun i
+    | Sum.inr j => Sum.inl (y j)
+  proper a := by
+    obtain ⟨i, hi⟩ := V.proper a
+    refine ⟨e (Sum.inl i), ?_⟩
+    simp only [Equiv.symm_apply_apply, hi]
+
+@[simp]
+private lemma padLine_apply {α ι κ ζ : Type*} (e : ι ⊕ κ ≃ ζ) (y : κ → α)
+    (l : Combinatorics.Line α ι) (a : α) :
+    padLine e y l a = DensityHalesJewett.concat (l a) y ∘ e.symm := by
+  funext z
+  cases hz : e.symm z with
+  | inl i =>
+      simp only [padLine, Combinatorics.Line.coe_apply, hz,
+        Function.comp_apply, DensityHalesJewett.concat_apply_inl]
+  | inr j =>
+      simp only [padLine, Combinatorics.Line.coe_apply, hz, Option.getD_some,
+        Function.comp_apply, DensityHalesJewett.concat_apply_inr]
+
+@[simp]
+private lemma padSubspace_apply {α η ι κ ζ : Type*} (e : ι ⊕ κ ≃ ζ) (y : κ → α)
+    (V : Combinatorics.Subspace η α ι) (x : η → α) :
+    padSubspace e y V x = DensityHalesJewett.concat (V x) y ∘ e.symm := by
+  funext z
+  cases hz : e.symm z with
+  | inl i =>
+      simp only [padSubspace, Combinatorics.Subspace.coe_apply, hz,
+        Function.comp_apply, DensityHalesJewett.concat_apply_inl]
+  | inr j =>
+      simp only [padSubspace, Combinatorics.Subspace.coe_apply, hz, Sum.elim_inl,
+        id_eq, Function.comp_apply, DensityHalesJewett.concat_apply_inr]
+
+/-- Mapping a parameter line through a padded subspace gives the padded ambient line. -/
+private lemma mapLine_padSubspace {α η ι κ ζ : Type*} [Fintype (η → α)]
+    [DecidableEq (ι → α)] [DecidableEq (ζ → α)] [Nontrivial α]
+    (e : ι ⊕ κ ≃ ζ) (y : κ → α) (V : Combinatorics.Subspace η α ι)
+    (l : Combinatorics.Line α η) :
+    Subspace.mapLine (padSubspace e y V) l =
+      padLine e y (Subspace.mapLine V l) := by
+  apply Combinatorics.Line.coe_injective
+  funext a
+  rw [Subspace.mapLine_apply, padSubspace_apply, padLine_apply,
+    Subspace.mapLine_apply]
+
 /-- A locally canonizing block subspace remains available after padding with unused final
 coordinates. -/
 lemma exists_locally_canonizing_in_high_dimension (alphabet colors blocks : ℕ)
@@ -289,7 +367,18 @@ lemma exists_locally_canonizing_in_high_dimension (alphabet colors blocks : ℕ)
     ∃ N, ∀ n ≥ N, ∀ χ : Combinatorics.Line (Fin alphabet) (Fin n) → Fin colors,
       ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin n),
         IsLocallyCanonizing V χ := by
-  sorry
+  obtain ⟨N, hN⟩ :=
+    exists_locally_canonizing_dimension alphabet colors blocks halphabet
+  refine ⟨N, ?_⟩
+  intro n hn χ
+  let e : Fin N ⊕ Fin (n - N) ≃ Fin n :=
+    finSumFinEquiv.trans (finCongr (Nat.add_sub_of_le hn))
+  let y : Fin (n - N) → Fin alphabet := fun _ ↦ ⟨0, by omega⟩
+  obtain ⟨V, hV⟩ := hN fun l ↦ χ (padLine e y l)
+  refine ⟨padSubspace e y V, ?_⟩
+  intro p q hpq hi
+  rw [mapLine_padSubspace, mapLine_padSubspace]
+  exact hV p q hpq hi
 
 /-- A block-canonization dimension. -/
 noncomputable def canonizationBound (alphabet colors blocks : ℕ) : ℕ := by
@@ -302,6 +391,33 @@ noncomputable def canonizationBound (alphabet colors blocks : ℕ) : ℕ := by
     Nat.find (exists_locally_canonizing_in_high_dimension alphabet colors blocks halphabet)
   else 0
 
+/-- Mapping the alphabet of a line along an equivalence preserves its variable coordinates. -/
+lemma variableSet_map_equiv {α β ι : Type*} [Fintype ι]
+    (e : α ≃ β) (l : Combinatorics.Line α ι) :
+    variableSet (l.map e) = variableSet l := by
+  classical
+  ext i
+  simp [variableSet, Combinatorics.Line.map]
+
+/-- Mapping a line through an alphabet-reindexed subspace commutes with mapping the resulting
+line back along the alphabet equivalence. -/
+lemma mapLine_reindex_alphabet {α β η ι : Type*} [Fintype (η → α)]
+    [Fintype (η → β)] [DecidableEq (ι → α)] [DecidableEq (ι → β)]
+    [Nontrivial α] [Nontrivial β]
+    (e : α ≃ β) (V : Combinatorics.Subspace η β ι)
+    (l : Combinatorics.Line α η) :
+    Subspace.mapLine
+        (V.reindex (Equiv.refl _) e.symm (Equiv.refl _)) l =
+      (Subspace.mapLine V (l.map e)).map e.symm := by
+  apply Combinatorics.Line.coe_injective
+  funext a
+  rw [Subspace.mapLine_apply, ← e.symm_apply_apply a, Combinatorics.Line.map_apply,
+    Subspace.mapLine_apply]
+  funext i
+  simp only [Combinatorics.Subspace.reindex_apply, Equiv.refl_apply, Equiv.refl_symm,
+    Function.comp_def, Equiv.symm_symm, Equiv.symm_apply_apply,
+    Combinatorics.Line.map_apply]
+
 /-- The cardinal-model canonization threshold transports to arbitrary finite alphabets and color
 types. -/
 lemma canonizationBound_spec (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C]
@@ -310,7 +426,77 @@ lemma canonizationBound_spec (α C : Type*) [Fintype α] [Nontrivial α] [Fintyp
     (χ : Combinatorics.Line α (Fin n) → C) :
     ∃ V : Combinatorics.Subspace (Fin L) α (Fin n),
       IsLocallyCanonizing V χ := by
-  sorry
+  classical
+  let eα := Fintype.equivFin α
+  let eC := Fintype.equivFin C
+  have hα : 2 ≤ Fintype.card α := by
+    have := Fintype.one_lt_card_iff_nontrivial.mpr (inferInstance : Nontrivial α)
+    omega
+  letI : Nontrivial (Fin (Fintype.card α)) :=
+    Fintype.one_lt_card_iff_nontrivial.mp (by
+      simp only [Fintype.card_fin]
+      omega)
+  rw [canonizationBound, dif_pos hα] at hn
+  obtain ⟨V, hV⟩ :=
+    (Nat.find_spec
+      (exists_locally_canonizing_in_high_dimension
+        (Fintype.card α) (Fintype.card C) L hα)) n hn
+      fun l ↦ eC (χ (l.map eα.symm))
+  refine ⟨V.reindex (Equiv.refl _) eα.symm (Equiv.refl _), ?_⟩
+  intro p q hpq ⟨i, hi⟩
+  rw [mapLine_reindex_alphabet eα V p, mapLine_reindex_alphabet eα V q]
+  apply eC.injective
+  exact hV (p.map eα) (q.map eα)
+    ((variableSet_map_equiv eα p).trans <|
+      hpq.trans (variableSet_map_equiv eα q).symm)
+    ⟨i, fun j hj ↦ congrArg (Option.map eα) (hi j hj)⟩
+
+/-- Replace the coordinates in `S` of `p` by those of `q`.  Equality of variable supports
+ensures that the resulting index word still represents a proper line. -/
+private noncomputable def replaceCoordinates {α ι : Type*} [Fintype ι] [DecidableEq ι]
+    (p q : Combinatorics.Line α ι) (hpq : variableSet p = variableSet q)
+    (S : Finset ι) : Combinatorics.Line α ι where
+  idxFun i := if i ∈ S then q.idxFun i else p.idxFun i
+  proper := by
+    obtain ⟨i, hi⟩ := p.proper
+    refine ⟨i, ?_⟩
+    by_cases hiS : i ∈ S
+    · rw [if_pos hiS]
+      have hi_mem : i ∈ variableSet p := by
+        simp only [variableSet, Finset.mem_filter, Finset.mem_univ, true_and, hi]
+      rw [hpq] at hi_mem
+      simpa only [variableSet, Finset.mem_filter, Finset.mem_univ, true_and] using hi_mem
+    · rw [if_neg hiS, hi]
+
+@[simp]
+private lemma replaceCoordinates_empty {α ι : Type*} [Fintype ι] [DecidableEq ι]
+    (p q : Combinatorics.Line α ι) (hpq : variableSet p = variableSet q) :
+    replaceCoordinates p q hpq ∅ = p := by
+  ext i
+  simp only [replaceCoordinates, Finset.notMem_empty, ↓reduceIte]
+
+@[simp]
+private lemma replaceCoordinates_univ {α ι : Type*} [Fintype ι] [DecidableEq ι]
+    (p q : Combinatorics.Line α ι) (hpq : variableSet p = variableSet q) :
+    replaceCoordinates p q hpq Finset.univ = q := by
+  ext i
+  simp only [replaceCoordinates, Finset.mem_univ, ↓reduceIte]
+
+private lemma variableSet_replaceCoordinates {α ι : Type*} [Fintype ι] [DecidableEq ι]
+    (p q : Combinatorics.Line α ι) (hpq : variableSet p = variableSet q)
+    (S : Finset ι) :
+    variableSet (replaceCoordinates p q hpq S) = variableSet p := by
+  classical
+  ext i
+  have hi : p.idxFun i = none ↔ q.idxFun i = none := by
+    simpa only [variableSet, Finset.mem_filter, Finset.mem_univ, true_and] using
+      Finset.ext_iff.mp hpq i
+  simp only [variableSet, Finset.mem_filter, Finset.mem_univ, true_and]
+  change (if i ∈ S then q.idxFun i else p.idxFun i) = none ↔ p.idxFun i = none
+  by_cases hiS : i ∈ S
+  · rw [if_pos hiS]
+    exact hi.symm
+  · rw [if_neg hiS]
 
 /-- Local one-coordinate color invariance extends to arbitrary fixed-letter changes with the same
 variable support. -/
@@ -321,7 +507,22 @@ lemma color_eq_of_locally_canonizing (α C : Type*) [Fintype α] [Nontrivial α]
     (hlocal : IsLocallyCanonizing V χ)
     (p q : Combinatorics.Line α (Fin L)) (hpq : variableSet p = variableSet q) :
     χ (Subspace.mapLine V p) = χ (Subspace.mapLine V q) := by
-  sorry
+  classical
+  have hreplace (S : Finset (Fin L)) :
+      χ (Subspace.mapLine V p) =
+        χ (Subspace.mapLine V (replaceCoordinates p q hpq S)) := by
+    induction S using Finset.induction_on with
+    | empty =>
+        rw [replaceCoordinates_empty]
+    | @insert i S hiS ih =>
+        refine ih.trans <| hlocal
+          (replaceCoordinates p q hpq S)
+          (replaceCoordinates p q hpq (insert i S)) ?_ ?_
+        · rw [variableSet_replaceCoordinates, variableSet_replaceCoordinates]
+        · refine ⟨i, ?_⟩
+          intro j hji
+          simp only [replaceCoordinates, Finset.mem_insert, hji, false_or]
+  simpa only [replaceCoordinates_univ] using hreplace Finset.univ
 
 /-- Block canonization: inside a suitable subspace, the color of a line depends only on its
 variable directions and not on its fixed letters. -/
@@ -364,7 +565,25 @@ lemma exists_canonized_finiteUnions_blocks_of_nonempty (α C : Type*) [Fintype �
       ∃ c, ∀ I : Finset (Fin m), I.Nonempty →
         ∀ p : Combinatorics.Line α (Fin L), variableSet p = I.biUnion B →
           χ (Subspace.mapLine V p) = c := by
-  sorry
+  classical
+  let supportLine (S : Finset (Fin L)) (hS : S.Nonempty) :
+      Combinatorics.Line α (Fin L) :=
+    Classical.choose (exists_line_variableSet_eq α S hS)
+  let supportColor (S : Finset (Fin L)) : C :=
+    if hS : S.Nonempty then χ (Subspace.mapLine V (supportLine S hS))
+    else Classical.choice inferInstance
+  obtain ⟨B, hBne, hBorder, c, hBc⟩ :=
+    FiniteUnions.bound_spec C m L hL supportColor
+  refine ⟨B, hBne, hBorder, c, ?_⟩
+  intro I hI p hp
+  have hUnion : (I.biUnion B).Nonempty := by
+    obtain ⟨i, hi⟩ := hI
+    obtain ⟨x, hx⟩ := hBne i
+    exact ⟨x, Finset.mem_biUnion.mpr ⟨i, hi, hx⟩⟩
+  refine (hχ p (supportLine (I.biUnion B) hUnion) ?_).trans ?_
+  · exact hp.trans (Classical.choose_spec
+      (exists_line_variableSet_eq α (I.biUnion B) hUnion)).symm
+  · simpa only [supportColor, dif_pos hUnion] using hBc I hI
 
 /-- Finite unions applied to a canonized line coloring.
 
@@ -396,6 +615,14 @@ lemma variableSet_nonempty {α : Type*} {m : ℕ} (l : Combinatorics.Line α (Fi
   obtain ⟨a, ha⟩ := l.proper
   exact ⟨a, ⟨by simp, ha⟩⟩
 
+/-- A coordinate belongs to at most one member of an ordered block family. -/
+private lemma ordered_blocks_index_unique {m L : ℕ} (B : Fin m → Finset (Fin L))
+    (hBorder : ∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y)
+    {x : Fin L} {i j : Fin m} (hxi : x ∈ B i) (hxj : x ∈ B j) : i = j := by
+  rcases lt_trichotomy i j with hij | hij | hij
+  · exact (lt_irrefl x (hBorder i j hij x hxi x hxj)).elim
+  · exact hij
+  · exact (lt_irrefl x (hBorder j i hij x hxj x hxi)).elim
 
 /-- Ordered nonempty blocks determine a subspace whose parameter directions occur exactly on
 their corresponding blocks. -/
@@ -405,7 +632,32 @@ lemma exists_subspace_indexed_by_ordered_blocks (α : Type*) [Nontrivial α]
     (hBorder : ∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) :
     ∃ W : Combinatorics.Subspace (Fin m) α (Fin L),
       ∀ i j, W.idxFun i = Sum.inr j ↔ i ∈ B j := by
-  sorry
+  classical
+  let a : α := Classical.choice (inferInstance : Nonempty α)
+  let idxFun : Fin L → α ⊕ Fin m := fun i ↦
+    if h : ∃ j, i ∈ B j then Sum.inr h.choose else Sum.inl a
+  refine ⟨{
+    idxFun := idxFun
+    proper := ?_
+  }, ?_⟩
+  · intro j
+    obtain ⟨i, hi⟩ := hBne j
+    refine ⟨i, ?_⟩
+    have hexists : ∃ e, i ∈ B e := ⟨j, hi⟩
+    dsimp only [idxFun]
+    rw [dif_pos hexists]
+    congr 1
+    exact ordered_blocks_index_unique B hBorder (Classical.choose_spec hexists) hi
+  · intro i j
+    dsimp only [idxFun]
+    split_ifs with h
+    · refine ⟨fun hij ↦ ?_, fun hij ↦ ?_⟩
+      · rw [← Sum.inr.inj hij]
+        exact Classical.choose_spec h
+      · congr 1
+        exact ordered_blocks_index_unique B hBorder (Classical.choose_spec h) hij
+    · simp only [false_iff]
+      exact fun hij ↦ h ⟨j, hij⟩
 
 /-- The variable support of a line mapped through a block-indexed subspace is the union of the
 blocks indexed by the original variable support. -/
@@ -415,7 +667,23 @@ lemma variableSet_mapLine_of_indexed_blocks (α : Type*) [Fintype α] [Nontrivia
     (hW : ∀ i j, W.idxFun i = Sum.inr j ↔ i ∈ B j)
     (l : Combinatorics.Line α (Fin m)) :
     variableSet (Subspace.mapLine W l) = (variableSet l).biUnion B := by
-  sorry
+  ext i
+  simp only [variableSet, Finset.mem_filter, Finset.mem_univ, true_and,
+    Finset.mem_biUnion]
+  change (W.idxFun i).elim some l.idxFun = none ↔
+    ∃ j, l.idxFun j = none ∧ i ∈ B j
+  cases hi : W.idxFun i with
+  | inl a =>
+      simp only [Sum.elim_inl, Option.some_ne_none, false_iff, not_exists]
+      intro j
+      rw [← hW]
+      simp only [hi, Sum.inl_ne_inr, and_false, not_false_eq_true]
+  | inr j =>
+      simp only [Sum.elim_inr]
+      refine ⟨fun hj ↦ ⟨j, hj, (hW i j).mp hi⟩, ?_⟩
+      rintro ⟨e, he, hie⟩
+      rw [← hW] at hie
+      exact (Sum.inr.inj (hi.symm.trans hie)) ▸ he
 
 /-- Mapping a line through a composite subspace agrees with mapping it through the two subspaces
 successively. -/
@@ -425,7 +693,10 @@ lemma mapLine_compose (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
     (l : Combinatorics.Line α (Fin m)) :
     Subspace.mapLine (Subspace.compose V W) l =
       Subspace.mapLine V (Subspace.mapLine W l) := by
-  sorry
+  apply Combinatorics.Line.coe_injective
+  funext a
+  rw [Subspace.mapLine_apply, Subspace.mapLine_apply, Subspace.mapLine_apply]
+  exact Subspace.compose_apply V W (l a)
 
 /-- Assemble ordered finite-unions blocks into a subspace.
 

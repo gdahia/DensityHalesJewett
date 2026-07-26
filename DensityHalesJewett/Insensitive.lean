@@ -68,6 +68,14 @@ noncomputable def intersection {r : ℕ} {X : Type*} [Fintype X]
   classical
   exact Finset.univ.inf D
 
+@[simp]
+lemma mem_intersection {r : ℕ} {X : Type*} [Fintype X]
+    {D : Fin r → Finset X} {x : X} :
+    x ∈ intersection D ↔ ∀ i, x ∈ D i := by
+  classical
+  rw [intersection, ← Finset.singleton_subset_iff, Finset.le_inf_iff]
+  simp only [Finset.mem_univ, forall_const, Finset.singleton_subset_iff]
+
 /-- An ambient dimension is sufficient for tiling every dense one-pair insensitive family. -/
 def TilingSufficient (k m : ℕ) (β : ℝ) (n : ℕ) : Prop :=
   ∀ i : Fin k, ∀ D : Finset (Fin n → Fin (k + 1)),
@@ -103,7 +111,9 @@ dimension. -/
 lemma tilingBound_spec (k m n : ℕ) (hm : 1 ≤ m)
     {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
     (hn : tilingBound k m β ≤ n) : TilingSufficient k m β n := by
-  sorry
+  classical
+  rw [tilingBound, dif_pos ⟨hm, hβ₀, hβ₁⟩] at hn
+  exact Nat.find_spec (exists_eventually_tilingSufficient k m hm hβ₀ hβ₁) n hn
 
 /-- A dense insensitive family can be tiled, up to small error, by disjoint subspaces. -/
 lemma exists_disjoint_subspaces {k : ℕ} (i : Fin k)
@@ -131,7 +141,17 @@ lemma parameterPreimage_isInsensitive {α η ι : Type*}
     {a b : α} (V : Combinatorics.Subspace η α ι) (D : Finset (ι → α))
     (hD : IsInsensitive a b D) :
     IsInsensitive a b (parameterPreimage V D) := by
-  sorry
+  classical
+  intro x y hxy
+  simp only [parameterPreimage, Finset.mem_filter, Finset.mem_univ, true_and]
+  apply hD
+  intro c hca hcb i
+  cases hi : V.idxFun i with
+  | inl d =>
+      rw [V.apply_inl hi, V.apply_inl hi]
+  | inr e =>
+      rw [V.apply_inr hi, V.apply_inr hi]
+      exact hxy c hca hcb e
 
 /-- Composing a finite disjoint family of inner tiles with one outer tile preserves finiteness,
 containment, and pairwise-disjointness. -/
@@ -148,7 +168,26 @@ lemma composed_inner_tiles_facts {k d M n : ℕ}
       (∀ U ∈ 𝒰, Subspace.IsContained U D) ∧
       (𝒰.PairwiseDisjoint fun U ↦
         (Subspace.range U : Set (Fin n → Fin (k + 1)))) := by
-  sorry
+  classical
+  refine ⟨h𝒲.image (Subspace.compose V), ?_, ?_⟩
+  · intro U hU x
+    obtain ⟨W, hW, rfl⟩ := hU
+    simp only [Subspace.compose_apply]
+    simpa only [parameterPreimage, Finset.mem_filter, Finset.mem_univ, true_and] using
+      hcontained W hW x
+  · rw [Set.pairwiseDisjoint_iff]
+    intro U hU U' hU' hcommon
+    obtain ⟨W, hW, rfl⟩ := hU
+    obtain ⟨W', hW', rfl⟩ := hU'
+    apply congrArg (Subspace.compose V)
+    apply Set.pairwiseDisjoint_iff.mp hpairwise hW hW'
+    obtain ⟨z, hz, hz'⟩ := hcommon
+    obtain ⟨x, hx⟩ := Subspace.mem_range.mp hz
+    obtain ⟨y, hy⟩ := Subspace.mem_range.mp hz'
+    refine ⟨W x, Subspace.mem_range.mpr ⟨x, rfl⟩,
+      Subspace.mem_range.mpr ⟨y, ?_⟩⟩
+    apply Subspace.injective V
+    simpa only [Subspace.compose_apply] using hy.trans hx.symm
 
 /-- An ambient dimension is sufficient for tiling every dense intersection of `r` insensitive
 families. -/
@@ -194,7 +233,11 @@ lemma intersectionTilingBound_spec (k r m n : ℕ)
     {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
     (hn : intersectionTilingBound k r m β ≤ n) :
     IntersectionTilingSufficient k r m β n := by
-  sorry
+  classical
+  rw [intersectionTilingBound,
+    dif_pos ⟨hr₀, hrk, hm, hβ₀, hβ₁⟩] at hn
+  exact Nat.find_spec
+    (exists_eventually_intersectionTilingSufficient k r m hr₀ hrk hm hβ₀ hβ₁) n hn
 
 /-- An intersection of insensitive families can be tiled by disjoint subspaces. -/
 lemma exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ)
