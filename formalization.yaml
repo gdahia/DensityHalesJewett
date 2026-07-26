@@ -20,6 +20,10 @@ formalizations:
         role: primary implementer
       - author: GPT-5.6 Lua
         role: primary implementer
+      - author: Opus 5
+        role: planner
+      - author: Opus 5
+        role: implementer
     review:
       - reviewer: Gabriel Dahia
         scope:
@@ -39,6 +43,10 @@ formalizations:
         role: primary implementer
       - author: GPT-5.6 Lua
         role: primary implementer
+      - author: Opus 5
+        role: planner
+      - author: Opus 5
+        role: implementer
     review:
       - reviewer: Gabriel Dahia
         scope:
