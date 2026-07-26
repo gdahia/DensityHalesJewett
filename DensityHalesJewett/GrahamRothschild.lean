@@ -25,6 +25,11 @@ Following `graham_rothschild_lines_from_mhj.tex`, the support canonization lemma
 support of its parameter word, and `FiniteUnions.exists_monochromaticUnions` produces pairwise
 disjoint blocks of parameters all of whose nonempty unions are equally coloured.  Reading those
 blocks as the variable directions of a subspace proves the theorem.
+
+Mathlib's `Combinatorics.Subspace` indexes variable directions by an arbitrary function on
+coordinates rather than by consecutive blocks of coordinates, so the block convention of the
+write-up, and with it the finite Ramsey theorem used to arrange the blocks in increasing order,
+is not needed here: pairwise disjoint blocks already describe a subspace.
 -/
 
 @[expose] public section

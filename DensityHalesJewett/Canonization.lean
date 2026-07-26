@@ -134,14 +134,10 @@ private lemma exists_canonical_aux (α : Type*) [Finite α] (C : Type*) [Finite 
       fun χ ↦ ⟨⟨PEmpty.elim, fun e ↦ e.elim0⟩, fun p s x y _ ↦ ?_⟩⟩
     exact congrArg (fun w ↦ χ p w s) (funext fun i ↦ i.elim)
   | succ ℓ ih =>
-    intro P S hP hS
-    haveI := hP
-    haveI := hS
-    obtain ⟨B, hBfin, hB⟩ := ih P (Unit ⊕ S)
-    haveI := hBfin
-    obtain ⟨B', hB'fin, hB'⟩ := Combinatorics.Line.exists_mono_in_high_dimension α
+    intro P S _ _
+    obtain ⟨B, _, hB⟩ := ih P (Unit ⊕ S)
+    obtain ⟨B', _, hB'⟩ := Combinatorics.Line.exists_mono_in_high_dimension α
       ((P → Option α) → (B → Option α) → (S → Option α) → C)
-    haveI := hB'fin
     refine ⟨B ⊕ B', inferInstance, fun χ ↦ ?_⟩
     obtain ⟨l, prof, hprof⟩ := hB' fun u p b s ↦ χ p (Sum.elim b (some ∘ u)) s
     have hprof' : ∀ (a : α) (p : P → Option α) (b : B → Option α) (s : S → Option α),
@@ -151,9 +147,12 @@ private lemma exists_canonical_aux (α : Type*) [Finite α] (C : Type*) [Finite 
       χ p (Sum.elim b (Line.fillOption l (q (Sum.inl ())))) fun s ↦ q (Sum.inr s)
     refine ⟨consLine V l, fun p s x y hxy ↦ ?_⟩
     rw [wordMap_consLine, wordMap_consLine]
+    -- the inductive hypothesis moves the first `ℓ` variables, the letter of the last one being
+    -- read as one more trailing variable slot
     refine Eq.trans (hV p (Sum.elim (fun _ ↦ x 0) s) (fun i ↦ x i.succ) (fun i ↦ y i.succ)
       fun i ↦ hxy i.succ) ?_
     simp only [Sum.elim_inl, Sum.elim_inr]
+    -- the Hales--Jewett line moves the letter of the last variable
     cases hx : x 0 with
     | none => rw [(hxy 0).1 hx]
     | some a =>
@@ -192,8 +191,9 @@ lemma exists_canonical_of_le (α : Type*) [Finite α] [Nonempty α] (C : Type*) 
   obtain ⟨N, hN⟩ := exists_canonical α C ℓ
   refine ⟨N, fun n hn χ ↦ ?_⟩
   obtain ⟨V, hV⟩ := hN fun w ↦ χ (wordMap (padInitial α hn) w)
-  exact ⟨compose (padInitial α hn) V, fun x y hxy ↦ by
-    rw [wordMap_compose, wordMap_compose]; exact hV x y hxy⟩
+  refine ⟨compose (padInitial α hn) V, fun x y hxy ↦ ?_⟩
+  rw [wordMap_compose, wordMap_compose]
+  exact hV x y hxy
 
 end Canonization
 end DensityHalesJewett
