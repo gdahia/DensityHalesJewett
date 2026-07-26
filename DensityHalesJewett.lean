@@ -1,5 +1,7 @@
 import DensityHalesJewett.Basic
+import DensityHalesJewett.Canonization
 import DensityHalesJewett.DensityIncrement
+import DensityHalesJewett.FiniteUnions
 import DensityHalesJewett.GrahamRothschild
 import DensityHalesJewett.Insensitive
 import DensityHalesJewett.Main

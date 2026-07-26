@@ -272,6 +272,11 @@ noncomputable def mapLine [Fintype (η → α)] [DecidableEq (ι → α)]
     Combinatorics.Line α ι :=
   (linesEquiv V l).1
 
+lemma mapLine_eq_composeLine [Fintype (η → α)] [DecidableEq (ι → α)]
+    [Nontrivial α] (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η) :
+    mapLine V l = composeLine V l :=
+  rfl
+
 @[simp]
 lemma mapLine_apply [Fintype (η → α)] [DecidableEq (ι → α)]
     [Nontrivial α] (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η)
