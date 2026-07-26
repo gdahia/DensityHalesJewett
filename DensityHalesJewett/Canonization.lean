@@ -137,12 +137,9 @@ private lemma exists_canonical_aux (α : Type*) [Finite α] (C : Type*) [Finite 
       χ p (Sum.elim b (Line.fillOption l (q (Sum.inl ())))) fun s ↦ q (Sum.inr s)
     refine ⟨consLine V l, fun p s x y hxy ↦ ?_⟩
     rw [wordMap_consLine, wordMap_consLine]
-    -- the inductive hypothesis moves the first `ℓ` variables, the letter of the last one being
-    -- read as one more trailing variable slot
     refine Eq.trans (hV p (Sum.elim (fun _ ↦ x 0) s) (fun i ↦ x i.succ) (fun i ↦ y i.succ)
       fun i ↦ hxy i.succ) ?_
     simp only [Sum.elim_inl, Sum.elim_inr]
-    -- the Hales--Jewett line moves the letter of the last variable
     cases hx : x 0 with
     | none => rw [(hxy 0).1 hx]
     | some a =>

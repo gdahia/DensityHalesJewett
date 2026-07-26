@@ -343,15 +343,12 @@ theorem exists_many_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 
     nlinarith [mul_le_mul_of_nonneg_right hCbound (Nat.cast_nonneg (α := ℝ) D),
       mul_le_mul_of_nonneg_left (by exact_mod_cast hCD : (C : ℝ) * D ≤ n) hδ.le,
       Nat.cast_nonneg (α := ℝ) (m * D)]
-  -- a quarter of the grids starting in the interior are dense, and each of them contains a
-  -- progression, with at most `m ^ 2` grids sharing the same one
   have hgood := denseGrids_card_lower_bound δ hδ m n D W hm (by simp [W])
     hWsmall A hAn hA
   have hmany := denseGrids_card_le_containedProgressions_mul k hk (δ / 2)
     (by positivity) m n D (by simp [m]) A hAn
   have hAPreal : δ / 4 * n * D ≤ (#(containedProgressions k n A) : ℝ) * m ^ 2 :=
     hgood.trans (by exact_mod_cast hmany)
-  -- the `C` blocks of length `D` almost cover `range n`
   have hnCD : (n : ℝ) ≤ 2 * C * D := by
     have hnle : n ≤ C * (D + 1) := by
       have : C * D + n % C = n := Nat.div_add_mod n C

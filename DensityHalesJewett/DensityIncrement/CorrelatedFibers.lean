@@ -462,7 +462,6 @@ lemma density_near_average {X : Type*} [Fintype X] [Nonempty X]
   by_cases hH : 1 - η ≤ (H.dens : ℝ)
   · exact hH
   · exfalso
-    -- `f` is bounded by the step function that jumps by `η²/2 + 2η` on `H`
     have hfg : ∀ x : X, f x ≤ (δ - 2 * η) + (η ^ 2 / 2 + 2 * η)
         * (Set.indicator H (1 : X → ℝ) x : ℝ) := by
       intro x

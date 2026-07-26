@@ -354,7 +354,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
       by_cases hU : (U.dens : ℝ) < 2 * β
       · exact ⟨∅, Set.finite_empty, by simp, Set.pairwiseDisjoint_empty, Or.inl (by simpa using hU)⟩
       push Not at hU
-      -- split the fresh blocks into the leading ones and the block consumed by this stage
       have hsplit : S * b + b = (S + 1) * b := by ring
       set s : Fin ((S + 1) * b) ≃ Fin (S * b) ⊕ Fin b :=
         (finSumFinEquiv.trans (finCongr hsplit)).symm with hs
@@ -373,7 +372,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           IsInsensitive i.castSucc (Fin.last k) (B z) := by
         rw [← Sum.elim_comp_inl_inr z, hB]
         exact fiberSection (reindex s (hins _)) _
-      -- the blocks above which the working family is dense
       have havg : (𝔼 z : (ω ⊕ Fin (S * b) → Fin (k + 1)), ((B z).dens : ℝ)) = (U.dens : ℝ) := by
         simp only [hBdef]
         rw [average_density_fiber, dens_transportWords]
@@ -387,7 +385,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
         nlinarith
       set good : Finset (ω ⊕ Fin (S * b) → Fin (k + 1)) :=
         Finset.univ.filter fun z ↦ β ≤ ((B z).dens : ℝ) with hgooddef
-      -- the local subspaces chosen canonically from the sections
       set tile : (ω ⊕ Fin (S * b) → Fin (k + 1)) →
           Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι :=
         fun z ↦ transportSubspace e₁ z (pickSubspace hm hmb (B z)) with htiledef
@@ -396,7 +393,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
         pickSubspace_isContained hm hmb
           (exists_isContained_of_insensitive hDHJ hm i hβ₀ hb (B z) (hBins z)
             (by simpa only [hgooddef, Finset.mem_filter, Finset.mem_univ, true_and] using hz))
-      -- the part of the working family removed at this stage
       set R : Finset (ι → Fin (k + 1)) := U.filter (fun w ↦
         (fun a ↦ w (e₁.symm (Sum.inl a))) ∈ good ∧
           (fun j ↦ w (e₁.symm (Sum.inr j))) ∈
@@ -428,7 +424,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
         refine ⟨_, hz, Subspace.mem_range.mpr ⟨x, ?_⟩⟩
         rw [htiledef, transportSubspace_apply, hx]
         exact eq_concat_parts e₁ w
-      -- the removed part is quantitatively large
       have hdensR : β / ((k : ℝ) + 1) ^ b ≤ (R.dens : ℝ) := by
         have hcard : (Fintype.card (Fin b → Fin (k + 1)) : ℝ) = ((k : ℝ) + 1) ^ b := by
           simp only [Fintype.card_pi_const, Fintype.card_fin, Nat.cast_pow, Nat.cast_add,
@@ -439,7 +434,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           refine one_div_card_le_dens ⟨pickSubspace hm hmb (B z) (fun _ ↦ 0), ?_⟩
           rw [mem_fiber, mem_transportWords]
           simpa only [htiledef, transportSubspace_apply] using htileR z hz (fun _ ↦ 0)
-        -- the density of the removed part is the average of its fibre densities
         have haverage : (R.dens : ℝ) = 𝔼 z : (ω ⊕ Fin (S * b) → Fin (k + 1)),
             ((fiber (transportWords e₁ R) z).dens : ℝ) := by
           rw [average_density_fiber, dens_transportWords]
@@ -453,7 +447,6 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
         · rw [Set.indicator_of_notMem (by simpa using hz)]
           simp only [mul_zero]
           positivity
-      -- the invariant survives for the remaining blocks
       have hins' : ∀ v : ω ⊕ Fin b → Fin (k + 1),
           IsInsensitive i.castSucc (Fin.last k) (fiber (transportWords e₂ (U \ R)) v) := by
         intro v
