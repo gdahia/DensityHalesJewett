@@ -8,13 +8,14 @@ by Pandelis Dodos, Vassilis Kanellopoulos, and Konstantinos Tyros. The published
 
 The proof is purely combinatorial and uses the uniform measure on finite word spaces. The
 formalization develops the positive-density combinatorial-line theorem and its consequence for
-arithmetic progressions of arbitrary finite length.
+arithmetic progressions of arbitrary finite length, i.e., Szemerédi's theorem.
 
 ## Status
 
 The formalization is in progress. Type-correct declaration stubs live in the files under
 [`DensityHalesJewett`](DensityHalesJewett), and implementation and review provenance is recorded in
 [`formalization.yaml`](formalization.yaml).
+[`Challenge.lean`](DensityHalesJewett/Challenge.lean) proves both results using only Mathlib's API.
 
 ## Building
 
