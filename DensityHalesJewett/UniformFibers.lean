@@ -6,6 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.GrahamRothschild
+import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Tactic.Linarith
 
@@ -380,6 +381,231 @@ lemma exists_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
     (hA : δ * (k : ℝ) ^ n ≤ #A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin k) (Fin n), IsContained V A := by
   exact densityBound_spec hDHJ m hm δ hδ n hn A hA
+
+/-- Split the coordinates of a word family into a prefix and a suffix along a cut equivalence. -/
+def splitWords {alphabet p q n : ℕ} (e : Fin p ⊕ Fin q ≃ Fin n)
+    (A : Finset (Fin n → Fin alphabet)) : Finset (Fin p ⊕ Fin q → Fin alphabet) :=
+  A.map (e.arrowCongr (Equiv.refl (Fin alphabet))).symm.toEmbedding
+
+@[simp]
+lemma mem_splitWords {alphabet p q n : ℕ} {e : Fin p ⊕ Fin q ≃ Fin n}
+    {A : Finset (Fin n → Fin alphabet)} {w : Fin p ⊕ Fin q → Fin alphabet} :
+    w ∈ splitWords e A ↔ w ∘ e.symm ∈ A := by
+  rw [splitWords, Finset.mem_map_equiv, Equiv.symm_symm]
+  rfl
+
+@[simp]
+lemma dens_splitWords {alphabet p q n : ℕ} (e : Fin p ⊕ Fin q ≃ Fin n)
+    (A : Finset (Fin n → Fin alphabet)) : (splitWords e A).dens = A.dens := by
+  rw [splitWords, Finset.dens_map_equiv]
+
+/-- The canonical cut equivalence associated with a decomposition of the ambient dimension. -/
+def cutEquiv {p q n : ℕ} (h : p + q = n) : Fin p ⊕ Fin q ≃ Fin n :=
+  finSumFinEquiv.trans (finCongr h)
+
+/-- The subspace of a coordinate block whose parameter directions are all of its coordinates. -/
+def blockSubspace (α : Type*) (m : ℕ) : Combinatorics.Subspace (Fin m) α (Fin m) where
+  idxFun i := Sum.inr i
+  proper e := ⟨e, rfl⟩
+
+@[simp]
+lemma blockSubspace_apply {α : Type*} {m : ℕ} (x : Fin m → α) : blockSubspace α m x = x := by
+  funext i
+  exact (blockSubspace α m).apply_inr rfl
+
+/-- Prepend a fixed block of letters to the coordinates of a subspace. -/
+def prependFixed {α η : Type*} {m p : ℕ} (u : Fin m → α)
+    (V : Combinatorics.Subspace η α (Fin p)) : Combinatorics.Subspace η α (Fin (m + p)) where
+  idxFun i :=
+    match finSumFinEquiv.symm i with
+    | Sum.inl j => Sum.inl (u j)
+    | Sum.inr j => V.idxFun j
+  proper e := by
+    obtain ⟨i, hi⟩ := V.proper e
+    exact ⟨finSumFinEquiv (Sum.inr i), by simp only [Equiv.symm_apply_apply, hi]⟩
+
+@[simp]
+lemma prependFixed_apply {α η : Type*} {m p : ℕ} (u : Fin m → α)
+    (V : Combinatorics.Subspace η α (Fin p)) (x : η → α) :
+    prependFixed u V x = DensityHalesJewett.concat u (V x) ∘ finSumFinEquiv.symm := by
+  funext i
+  simp only [Function.comp_apply, Combinatorics.Subspace.coe_apply, prependFixed]
+  cases hi : finSumFinEquiv.symm i with
+  | inl j => simp only [DensityHalesJewett.concat_apply_inl, Sum.elim_inl, id_eq]
+  | inr j =>
+      rw [DensityHalesJewett.concat_apply_inr, Combinatorics.Subspace.coe_apply]
+
+/-- Regroup a cut of the coordinates following a fixed block. -/
+def prependCoords {m p q r : ℕ} (e : Fin p ⊕ Fin q ≃ Fin r) :
+    Fin (m + p) ⊕ Fin q ≃ Fin m ⊕ Fin r :=
+  ((finSumFinEquiv.symm.sumCongr (Equiv.refl (Fin q))).trans
+      (Equiv.sumAssoc (Fin m) (Fin p) (Fin q))).trans ((Equiv.refl (Fin m)).sumCongr e)
+
+/-- Prepend a fixed coordinate block to a cut of the remaining coordinates. -/
+def prependCut {m p q r n : ℕ} (h : m + r = n) (e : Fin p ⊕ Fin q ≃ Fin r) :
+    Fin (m + p) ⊕ Fin q ≃ Fin n :=
+  (prependCoords e).trans (cutEquiv h)
+
+/-- Regrouping the coordinates identifies a prepended word with the concatenation of the fixed
+block and the cut word. -/
+lemma concat_prependFixed {alphabet η m p q r : ℕ} (e : Fin p ⊕ Fin q ≃ Fin r)
+    (u : Fin m → Fin alphabet) (V : Combinatorics.Subspace (Fin η) (Fin alphabet) (Fin p))
+    (x : Fin η → Fin alphabet) (y : Fin q → Fin alphabet) :
+    DensityHalesJewett.concat (prependFixed u V x) y ∘ (prependCoords e).symm =
+      DensityHalesJewett.concat u (DensityHalesJewett.concat (V x) y ∘ e.symm) := by
+  funext s
+  cases s with
+  | inl a => simp [prependCoords, DensityHalesJewett.concat]
+  | inr b =>
+      cases hb : e.symm b with
+      | inl c => simp [prependCoords, DensityHalesJewett.concat, hb]
+      | inr d => simp [prependCoords, DensityHalesJewett.concat, hb]
+
+/-- The same identification stated for the cut of the ambient coordinates. -/
+lemma concat_prependFixed_cut {alphabet η m p q r n : ℕ} (h : m + r = n)
+    (e : Fin p ⊕ Fin q ≃ Fin r) (u : Fin m → Fin alphabet)
+    (V : Combinatorics.Subspace (Fin η) (Fin alphabet) (Fin p))
+    (x : Fin η → Fin alphabet) (y : Fin q → Fin alphabet) :
+    DensityHalesJewett.concat (prependFixed u V x) y ∘ (prependCut h e).symm =
+      DensityHalesJewett.concat u (DensityHalesJewett.concat (V x) y ∘ e.symm) ∘
+        (cutEquiv h).symm := by
+  rw [← concat_prependFixed e u V x y]
+  rfl
+
+/-- The suffix fibers of a prepended cut are the suffix fibers of the family already restricted
+to the fixed prefix block. -/
+lemma fiber_splitWords_prependCut {alphabet η m p q r n : ℕ} (h : m + r = n)
+    (e : Fin p ⊕ Fin q ≃ Fin r) (A : Finset (Fin n → Fin alphabet)) (u : Fin m → Fin alphabet)
+    (V : Combinatorics.Subspace (Fin η) (Fin alphabet) (Fin p)) (x : Fin η → Fin alphabet) :
+    fiber (splitWords (prependCut h e) A) (prependFixed u V x) =
+      fiber (splitWords e (fiber (splitWords (cutEquiv h) A) u)) (V x) := by
+  ext y
+  simp only [mem_fiber, mem_splitWords]
+  rw [concat_prependFixed_cut]
+
+/-- A prefix fiber sparser than the ambient density by `ε` forces another prefix fiber denser
+than the ambient density by a fixed amount. -/
+lemma exists_denser_fiber {alphabet m q : ℕ} (halphabet : 0 < alphabet) {ε : ℝ} (hε : 0 < ε)
+    (A : Finset (Fin m ⊕ Fin q → Fin alphabet)) (u₀ : Fin m → Fin alphabet)
+    (hu₀ : ((fiber A u₀).dens : ℝ) < (A.dens : ℝ) - ε) :
+    ∃ u, (A.dens : ℝ) + ε / (alphabet : ℝ) ^ m ≤ ((fiber A u).dens : ℝ) := by
+  classical
+  by_contra hcon
+  push Not at hcon
+  have halphabetR : (0 : ℝ) < (alphabet : ℝ) := by exact_mod_cast halphabet
+  have hcard : (Fintype.card (Fin m → Fin alphabet) : ℝ) = (alphabet : ℝ) ^ m := by
+    simp only [Fintype.card_pi_const, Fintype.card_fin, Nat.cast_pow]
+  have hsum : ∑ u : Fin m → Fin alphabet, ((fiber A u).dens : ℝ) =
+      (alphabet : ℝ) ^ m * (A.dens : ℝ) := by
+    rw [← average_density_fiber A, ← hcard, ← Finset.card_univ, Finset.card_mul_expect]
+  have hle : ∑ u : Fin m → Fin alphabet, ((fiber A u).dens : ℝ) ≤
+      ∑ u : Fin m → Fin alphabet, (((A.dens : ℝ) + ε / (alphabet : ℝ) ^ m) +
+        if u = u₀ then -(ε + ε / (alphabet : ℝ) ^ m) else 0) := by
+    refine Finset.sum_le_sum fun u _ ↦ ?_
+    by_cases hu : u = u₀
+    · rw [hu, if_pos rfl]
+      linarith
+    · rw [if_neg hu, add_zero]
+      linarith [hcon u]
+  rw [Finset.sum_add_distrib, Finset.sum_const, Finset.sum_ite_eq' Finset.univ u₀,
+    if_pos (Finset.mem_univ u₀), Finset.card_univ, nsmul_eq_mul, hcard, hsum, mul_add,
+    mul_div_cancel₀ ε (by positivity : ((alphabet : ℝ) ^ m) ≠ 0)] at hle
+  have hεpos : 0 < ε / (alphabet : ℝ) ^ m := by positivity
+  linarith
+
+/-- Every ambient dimension admits a cut into a prefix carrying a subspace and a nonempty suffix
+above which all fibers are almost as dense as the whole family. -/
+def VariableCutFibersSufficient (alphabet dimension : ℕ) (ε : ℝ) (n : ℕ) : Prop :=
+  ∀ A : Finset (Fin n → Fin alphabet),
+    ∃ p q : ℕ, ∃ e : Fin p ⊕ Fin q ≃ Fin n, 0 < q ∧
+      ∃ V : Combinatorics.Subspace (Fin dimension) (Fin alphabet) (Fin p),
+        ∀ x, (A.dens : ℝ) - ε ≤ ((fiber (splitWords e A) (V x)).dens : ℝ)
+
+/-- The block density-increment argument: one coordinate block either uniformizes all suffix
+fibers or increases the working density by a fixed amount, and the density upper bound bounds the
+number of increments. -/
+private lemma exists_variableCut_of_fuel (alphabet dimension : ℕ) (halphabet : 0 < alphabet)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∀ t n : ℕ, dimension * (t + 1) < n → ∀ A : Finset (Fin n → Fin alphabet),
+      1 ≤ (A.dens : ℝ) + t * (ε / (alphabet : ℝ) ^ dimension) →
+      ∃ p q : ℕ, ∃ e : Fin p ⊕ Fin q ≃ Fin n, 0 < q ∧
+        ∃ V : Combinatorics.Subspace (Fin dimension) (Fin alphabet) (Fin p),
+          ∀ x, (A.dens : ℝ) - ε ≤ ((fiber (splitWords e A) (V x)).dens : ℝ) := by
+  intro t
+  induction t using Nat.strong_induction_on with
+  | _ t ih =>
+      intro n hn A hfuel
+      have hblock : dimension ≤ dimension * (t + 1) :=
+        Nat.le_mul_of_pos_right dimension (Nat.succ_pos t)
+      have hd : dimension + (n - dimension) = n := by omega
+      have hεpos : 0 < ε / (alphabet : ℝ) ^ dimension := by
+        have : (0 : ℝ) < (alphabet : ℝ) := by exact_mod_cast halphabet
+        positivity
+      by_cases hsucc :
+          ∀ u, (A.dens : ℝ) - ε ≤ ((fiber (splitWords (cutEquiv hd) A) u).dens : ℝ)
+      · exact ⟨dimension, n - dimension, cutEquiv hd, by omega,
+          blockSubspace (Fin alphabet) dimension, by simpa only [blockSubspace_apply] using hsucc⟩
+      push Not at hsucc
+      obtain ⟨u₀, hu₀⟩ := hsucc
+      obtain ⟨u, hu⟩ := exists_denser_fiber halphabet hε (splitWords (cutEquiv hd) A) u₀
+        (by rwa [dens_splitWords])
+      rw [dens_splitWords] at hu
+      have hu₁ : ((fiber (splitWords (cutEquiv hd) A) u).dens : ℝ) ≤ 1 := by
+        exact_mod_cast Finset.dens_le_one (s := fiber (splitWords (cutEquiv hd) A) u)
+      have htR : (1 : ℝ) ≤ (t : ℝ) := by
+        nlinarith [mul_pos hεpos hεpos]
+      obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by
+        have : 1 ≤ t := by exact_mod_cast htR
+        omega⟩
+      have hstep : dimension * (s + 1 + 1) = dimension * (s + 1) + dimension := by ring
+      obtain ⟨p, q, e, hq, V, hV⟩ := ih s (by omega) (n - dimension) (by omega)
+        (fiber (splitWords (cutEquiv hd) A) u)
+        (by rw [Nat.cast_add, Nat.cast_one, add_mul, one_mul] at hfuel; linarith)
+      refine ⟨dimension + p, q, prependCut hd e, hq, prependFixed u V, ?_⟩
+      intro x
+      rw [fiber_splitWords_prependCut]
+      linarith [hV x]
+
+/-- Every sufficiently large ambient dimension is sufficient for variable-cut uniform fibers. -/
+lemma exists_eventually_variableCutFibersSufficient (alphabet dimension : ℕ)
+    (hdimension : 1 ≤ dimension) {ε : ℝ} (hε : 0 < ε) :
+    ∃ N, ∀ n ≥ N, VariableCutFibersSufficient alphabet dimension ε n := by
+  classical
+  by_cases halphabet : alphabet = 0
+  · subst alphabet
+    refine ⟨dimension + 1, ?_⟩
+    intro n hn A
+    refine ⟨dimension, n - dimension, cutEquiv (by omega), by omega,
+      emptyAlphabetSubspace hdimension le_rfl, ?_⟩
+    intro x
+    exact Fin.elim0 (x ⟨0, hdimension⟩)
+  have halphabet₀ : 0 < alphabet := Nat.pos_of_ne_zero halphabet
+  have hεpos : 0 < ε / (alphabet : ℝ) ^ dimension := by
+    have : (0 : ℝ) < (alphabet : ℝ) := by exact_mod_cast halphabet₀
+    positivity
+  obtain ⟨t, ht⟩ := exists_nat_gt (1 / (ε / (alphabet : ℝ) ^ dimension))
+  refine ⟨dimension * (t + 1) + 1, ?_⟩
+  intro n hn A
+  refine exists_variableCut_of_fuel alphabet dimension halphabet₀ hε t n (by omega) A ?_
+  rw [div_lt_iff₀ hεpos] at ht
+  have hdens : (0 : ℝ) ≤ (A.dens : ℝ) := by positivity
+  linarith
+
+/-- A sufficient ambient dimension for the variable-cut uniform-fibers lemma. -/
+noncomputable def variableCutFibersBound (alphabet dimension : ℕ) (ε : ℝ) : ℕ := by
+  classical
+  exact if h : 1 ≤ dimension ∧ 0 < ε then
+    Nat.find (exists_eventually_variableCutFibersSufficient alphabet dimension h.1 h.2)
+  else 0
+
+/-- The selected variable-cut bound is sufficient in every larger ambient dimension. -/
+lemma variableCutFibersBound_spec (alphabet dimension n : ℕ) (hdimension : 1 ≤ dimension)
+    {ε : ℝ} (hε : 0 < ε) (hn : variableCutFibersBound alphabet dimension ε ≤ n) :
+    VariableCutFibersSufficient alphabet dimension ε n := by
+  classical
+  rw [variableCutFibersBound, dif_pos ⟨hdimension, hε⟩] at hn
+  exact Nat.find_spec
+    (exists_eventually_variableCutFibersSufficient alphabet dimension hdimension hε) n hn
 
 /-- A finite prefix dimension is sufficient for uniform fibers over the finite cardinal models. -/
 def UniformFibersFinSufficient (alphabet dimension : ℕ) (ε : ℝ) (n : ℕ) : Prop :=
@@ -820,26 +1046,6 @@ noncomputable def suffixFunctionFintype (α ι κ : Type*)
         (fun w ↦ Sum.elim (fun a : ι ↦ isEmptyElim a) z w) at h
       exact congrFun h (Sum.inr c)
 
-/-- Uniform fibers remain dense after restricting every parameter letter to the first `k`
-letters. -/
-lemma exists_restricted_parameters_with_dense_fibers {k M : ℕ} (_hk : 0 < k)
-    (hM : 1 ≤ M) (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
-    [Fintype (ι ⊕ κ → Fin (k + 1))]
-    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
-    (hι : uniformFibersBound (k + 1) M (δ / 2) ≤ Fintype.card ι)
-    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
-    ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
-      ∀ x : Fin M → Fin k,
-        δ / 2 ≤ ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ) := by
-  obtain ⟨W, hW⟩ :=
-    exists_fibers_dense (α := Fin (k + 1)) (ι := ι) (κ := κ)
-      M hM (δ / 2) (by linarith) (by linarith)
-        (by simpa only [Fintype.card_fin] using hι) A (by linarith)
-  refine ⟨W, ?_⟩
-  intro x
-  linarith [hW (Fin.castSucc ∘ x)]
-
 /-- Averaging restricted-parameter slice densities over suffixes equals averaging their ambient
 fiber densities over restricted parameter words. -/
 lemma average_restrictedParameterSlice {k M : ℕ}
@@ -896,26 +1102,6 @@ lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (hk : 0 < k) (δ : �
   · intro y _
     exact (h y).le
   · exact ⟨fun _ ↦ 0, Finset.mem_univ _, h (fun _ ↦ 0)⟩
-
-/-- Restricting all parameter words to the first `k` letters and averaging over the suffix leaves
-a dense parameter family above one suffix. -/
-lemma exists_dense_restricted_parameters {k M : ℕ} (hk : 0 < k) (hM : 1 ≤ M)
-    (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {ι κ : Type*} [Fintype ι] [Fintype (ι ⊕ κ → Fin (k + 1))]
-    [DecidableEq (ι ⊕ κ → Fin (k + 1))]
-    (hι : uniformFibersBound (k + 1) M (δ / 2) ≤ Fintype.card ι)
-    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
-    ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
-      ∃ y : κ → Fin (k + 1),
-        δ / 2 ≤
-          ((Finset.univ.filter fun x : Fin M → Fin k ↦
-            DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
-  letI : Fintype (κ → Fin (k + 1)) :=
-    suffixFunctionFintype (Fin (k + 1)) ι κ
-  obtain ⟨W, hW⟩ :=
-    exists_restricted_parameters_with_dense_fibers hk hM δ hδ₀ hδ₁ hι A hA
-  obtain ⟨y, hy⟩ := exists_dense_suffix_of_restricted_fibers hk δ A W hW
-  exact ⟨W, y, hy⟩
 
 /-- Extend a restricted parameter subspace to the full alphabet, attach a fixed suffix, and
 transport the resulting subspace along an equivalence of ambient coordinates. -/
@@ -995,41 +1181,27 @@ lemma exists_eventually_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k
     exact exists_empty_restrictAlphabet_subset hm hmn A
   have hk : 0 < k := Nat.pos_of_ne_zero hk₀
   let M := max 1 (densityBound k m (δ / 2))
-  let p := max m (uniformFibersBound (k + 1) M (δ / 2))
-  refine ⟨p, ?_⟩
-  intro n hpn A hA
-  let q := n - p
-  have hpq : p + q = n := Nat.add_sub_of_le hpn
-  let e : Fin p ⊕ Fin q ≃ Fin n := finSumFinEquiv.trans (finCongr hpq)
-  let wordEquiv : (Fin p ⊕ Fin q → Fin (k + 1)) ≃ (Fin n → Fin (k + 1)) :=
-    e.arrowCongr (Equiv.refl _)
-  let A' := A.map wordEquiv.symm.toEmbedding
-  have hA' : δ ≤ (A'.dens : ℝ) := by
-    dsimp only [A']
-    rw [Finset.dens_map_equiv]
+  refine ⟨variableCutFibersBound (k + 1) M (δ / 2), ?_⟩
+  intro n hn A hA
+  have hM : 1 ≤ M := le_max_left _ _
+  have hA' : δ ≤ (A.dens : ℝ) := by
     refine density_le_of_card_le (Nat.zero_lt_succ k) δ A ?_
     convert hA using 1
     norm_num
-  have hM : 1 ≤ M := le_max_left _ _
-  have hδ₁ : δ ≤ 1 := hA'.trans (by exact_mod_cast Finset.dens_le_one (s := A'))
-  have hp : uniformFibersBound (k + 1) M (δ / 2) ≤ Fintype.card (Fin p) := by
-    simpa only [Fintype.card_fin, p] using
-      (le_max_right m (uniformFibersBound (k + 1) M (δ / 2)))
-  obtain ⟨W, y, hy⟩ :=
-    exists_dense_restricted_parameters hk hM δ hδ hδ₁ hp A' hA'
+  obtain ⟨p, q, e, _hq, W, hW⟩ :=
+    variableCutFibersBound_spec (k + 1) M n hM (by linarith) hn A
+  obtain ⟨y, hy⟩ :=
+    exists_dense_suffix_of_restricted_fibers hk δ (splitWords e A) W fun x ↦ by
+      linarith [hW (Fin.castSucc ∘ x)]
   let B := Finset.univ.filter fun x : Fin M → Fin k ↦
-    DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ A'
-  have hB : δ / 2 ≤ (B.dens : ℝ) := by
-    simpa only [B] using hy
+    DensityHalesJewett.concat (W (Fin.castSucc ∘ x)) y ∈ splitWords e A
   obtain ⟨S, hS⟩ :=
     exists_of_density hDHJ m hm (δ / 2) (by linarith) M (le_max_right _ _) B
-      (card_le_of_density_le hk (δ / 2) B hB)
+      (card_le_of_density_le hk (δ / 2) B (by simpa only [B] using hy))
   refine extend_restricted_subspace e A W y S ?_
   intro x
-  have hx : DensityHalesJewett.concat (W (Fin.castSucc ∘ S x)) y ∈ A' := by
-    simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using hS x
-  rw [Finset.mem_map_equiv] at hx
-  exact hx
+  rw [← mem_splitWords]
+  simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using hS x
 
 /-- A bound for the restricted-alphabet subspace lemma. -/
 noncomputable def restrictAlphabetBound (k m : ℕ) (δ : ℝ) : ℕ := by
