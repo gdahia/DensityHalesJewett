@@ -6,7 +6,6 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.GrahamRothschild
-import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Tactic.Linarith
 
@@ -417,80 +416,60 @@ private lemma padPrefixSubspace_apply {α η : Type*} {p r n : ℕ}
       simp [padPrefixSubspace, Combinatorics.Subspace.coe_apply, hi,
         DensityHalesJewett.concat, Function.comp_apply]
 
-/-- Numerical data for a finite uniform-fibers density-increment iteration. -/
-private structure UniformFibersIterationParameters
-    (alphabet dimension : ℕ) (ε : ℝ) where
-  fuel : ℕ
-  increment : ℝ
-  increment_pos : 0 < increment
-  block_loss : (alphabet ^ dimension : ℝ) * increment ≤ ε
-  exhausts : 1 < (fuel : ℝ) * increment
-
-/-- A positive error tolerance admits an increment small enough for one block and enough fuel to
-force the density above one. -/
-private lemma exists_uniformFibersIterationParameters
-    (alphabet dimension : ℕ) {ε : ℝ} (hε₀ : 0 < ε) :
-    Nonempty (UniformFibersIterationParameters alphabet dimension ε) := by
-  let increment := ε / (2 * ((alphabet ^ dimension : ℝ) + 1))
-  have hincrement : 0 < increment := by
-    exact div_pos hε₀ (mul_pos (by norm_num) (by positivity))
-  obtain ⟨fuel, hfuel⟩ := exists_nat_gt (1 / increment)
-  refine ⟨{
-    fuel := fuel
-    increment := increment
-    increment_pos := hincrement
-    block_loss := ?_
-    exhausts := ?_
-  }⟩
-  · dsimp only [increment]
-    have hnonneg : 0 ≤ (alphabet ^ dimension : ℝ) := by positivity
-    have hdenominator : 0 < 2 * ((alphabet ^ dimension : ℝ) + 1) := by positivity
-    rw [← mul_div_assoc, div_le_iff₀ hdenominator]
-    nlinarith [mul_nonneg hnonneg hε₀.le]
-  · exact (div_lt_iff₀ hincrement).mp hfuel
-
-/-- For one suffix length and one dense set, the finite block iteration either exposes a uniform
-coordinate block or reaches the impossible exhausted-density state. -/
-private lemma exists_uniformFibers_block_of_iterationParameters
-    (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
-    {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
-    (parameters : UniformFibersIterationParameters alphabet dimension ε)
-    (q : ℕ)
-    (A : Finset (Fin (parameters.fuel * dimension) ⊕ Fin q → Fin alphabet))
-    (hA : ε < (A.dens : ℝ)) :
-    ∃ V : Combinatorics.Subspace (Fin dimension) (Fin alphabet)
-        (Fin (parameters.fuel * dimension)),
-      ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
-  sorry
-
-/-- The block density-increment argument produces a sufficient prefix from fixed numerical
-iteration parameters. -/
-private lemma uniformFibersFinSufficient_of_iterationParameters
-    (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
-    {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
-    (parameters : UniformFibersIterationParameters alphabet dimension ε) :
-    UniformFibersFinSufficient alphabet dimension ε (parameters.fuel * dimension) := by
-  intro q A hA
-  exact exists_uniformFibers_block_of_iterationParameters
-    alphabet dimension hdimension hε₀ hε₁ parameters q A hA
-
-/-- The finite block-density-increment iteration underlying uniform fibers. -/
-private lemma exists_uniformFibersFinSufficient_block_iteration
-    (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
-    {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
+/-- Density Hales--Jewett for the prefix alphabet supplies the uniform-fibers statement by
+thresholding the prefix words according to their suffix-fiber densities. -/
+private lemma exists_uniformFibersFinSufficient_of_densityHJ
+    (alphabet dimension : ℕ) (hDHJ : HasDensityHJ alphabet)
+    (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) :
     ∃ N, UniformFibersFinSufficient alphabet dimension ε N := by
-  obtain ⟨parameters⟩ :=
-    exists_uniformFibersIterationParameters alphabet dimension hε₀
-  refine ⟨parameters.fuel * dimension, ?_⟩
-  exact uniformFibersFinSufficient_of_iterationParameters
-    alphabet dimension hdimension hε₀ hε₁ parameters
+  classical
+  by_cases halphabet : alphabet = 0
+  · subst alphabet
+    refine ⟨dimension, ?_⟩
+    intro q A hA
+    have hAempty : A = ∅ := by
+      apply Finset.eq_empty_iff_forall_notMem.mpr
+      intro w _
+      exact Fin.elim0 (w (Sum.inl ⟨0, Nat.zero_lt_of_lt hdimension⟩))
+    rw [hAempty, Finset.dens_empty] at hA
+    norm_num at hA
+    linarith
+  have halphabet₀ : 0 < alphabet := Nat.pos_of_ne_zero halphabet
+  letI : Nonempty (Fin alphabet) := ⟨⟨0, halphabet₀⟩⟩
+  obtain ⟨N, hN⟩ :=
+    exists_eventually_of_density hDHJ dimension hdimension ε hε₀
+  letI : Nonempty (Fin N → Fin alphabet) := Pi.instNonempty
+  refine ⟨N, ?_⟩
+  intro q A hA
+  let good := Finset.univ.filter fun x : Fin N → Fin alphabet ↦
+    (A.dens : ℝ) - ε ≤ ((fiber A x).dens : ℝ)
+  have hAdens : (A.dens : ℝ) ≤ 1 := by
+    exact_mod_cast Finset.dens_le_one (s := A)
+  have hgood :
+      ε ≤ (good.dens : ℝ) := by
+    have hthreshold := density_ge_threshold
+      (fun x : Fin N → Fin alphabet ↦ ((fiber A x).dens : ℝ))
+      (A.dens : ℝ) ((A.dens : ℝ) - ε)
+      (fun _ ↦ by positivity)
+      (fun x ↦ by exact_mod_cast Finset.dens_le_one (s := fiber A x))
+      (by linarith) (by linarith)
+      (by simpa only [average_density_fiber] using le_rfl)
+    refine le_trans ?_ hthreshold
+    have hdenominator : 0 < 1 - ((A.dens : ℝ) - ε) := by linarith
+    rw [le_div_iff₀ hdenominator]
+    nlinarith
+  obtain ⟨V, hV⟩ :=
+    hN N le_rfl good (card_le_of_density_le halphabet₀ ε good hgood)
+  refine ⟨V, ?_⟩
+  intro x
+  simpa only [good, Finset.mem_filter, Finset.mem_univ, true_and] using hV x
 
-/-- A finite fuel density-increment iteration produces one exact sufficient prefix dimension. -/
+/-- A sufficiently large prefix contains a subspace above all of whose points the suffix fibers
+retain almost all of the ambient density. -/
 lemma exists_uniformFibersFinSufficient (alphabet dimension : ℕ)
     (hdimension : 1 ≤ dimension) {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1) :
     ∃ N, UniformFibersFinSufficient alphabet dimension ε N := by
-  exact exists_uniformFibersFinSufficient_block_iteration
-    alphabet dimension hdimension hε₀ hε₁
+  sorry
 
 /-- Sufficiency for uniform fibers is upward closed after padding with unused final coordinates. -/
 lemma exists_eventually_uniformFibersFinSufficient (alphabet dimension : ℕ)
