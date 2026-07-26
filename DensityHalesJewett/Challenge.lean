@@ -33,16 +33,15 @@ theorem exists_of_density_atTop (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < 
 
 end Combinatorics.Line
 
-namespace Combinatorics.ArithmeticProgression
-
 /-- **Szemeredi's theorem**: for a positive density `δ`, every sufficiently large `n` has the
 property that any subset of `range n` of size at least `δ * n` contains an arithmetic progression
-of length `k`. -/
+of length `k`, i.e. `k` terms `a, a + d, a + 2 * d, …` with `d ≠ 0`. -/
 theorem exists_of_density_nat_atTop (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ) :
     ∀ᶠ n in atTop, ∀ A : Finset ℕ, A ⊆ range n → δ * n ≤ #A →
-      ∃ P : ArithmeticProgression ℕ k, P.IsSubset (A : Set ℕ) := by
-  refine eventually_atTop.2 ⟨densityTheoremBound k δ, ?_⟩
+      ∃ a d : ℕ, d ≠ 0 ∧ ∀ i : Fin k, a + i * d ∈ A := by
+  refine eventually_atTop.2 ⟨Combinatorics.ArithmeticProgression.densityTheoremBound k δ, ?_⟩
   intro n hn A hAn hAδ
-  exact exists_of_density_nat k hk δ hδ n hn A hAn hAδ
-
-end Combinatorics.ArithmeticProgression
+  obtain ⟨P, hP⟩ :=
+    Combinatorics.ArithmeticProgression.exists_of_density_nat k hk δ hδ n hn A hAn hAδ
+  refine ⟨P.start, P.diff, P.diff_ne_zero, fun i => ?_⟩
+  simpa [Combinatorics.ArithmeticProgression.term, nsmul_eq_mul] using hP i
