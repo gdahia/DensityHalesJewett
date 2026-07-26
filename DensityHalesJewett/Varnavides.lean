@@ -69,32 +69,15 @@ lemma card_gridIncidences_upper_bound (δ : ℝ) (hδ : 0 ≤ δ) (m n D : ℕ)
       intro p hp
       by_cases hpdense : p ∈ denseGrids δ m n D A
       · rw [if_pos hpdense]
-        have hcard : #(indicesIn m A p) ≤ m := by
-          change #((range m).filter fun i ↦ p.1 + i * p.2 ∈ A) ≤ m
-          simpa only [Finset.card_range] using
-            Finset.card_le_card
-              (Finset.filter_subset (p := fun i ↦ p.1 + i * p.2 ∈ A) (range m))
-        have hcardreal : (#(indicesIn m A p) : ℝ) ≤ m := by exact_mod_cast hcard
-        nlinarith
+        refine le_add_of_nonneg_of_le (by positivity) ?_
+        change ((#((range m).filter fun i ↦ p.1 + i * p.2 ∈ A) : ℕ) : ℝ) ≤ m
+        exact_mod_cast (Finset.card_filter_le _ _).trans_eq (Finset.card_range m)
       · simp only [if_neg hpdense, add_zero]
         rw [denseGrids, Finset.mem_filter] at hpdense
         exact le_of_lt (not_le.mp fun h ↦ hpdense ⟨hp, h⟩)
     _ = δ * m * #(grids m n D) + m * #(denseGrids δ m n D A) := by
-      rw [Finset.sum_add_distrib]
-      simp only [Finset.sum_const, nsmul_eq_mul]
-      have hindicator :
-          ∑ x ∈ grids m n D,
-              (if x ∈ denseGrids δ m n D A then (m : ℝ) else 0) =
-            m * #(denseGrids δ m n D A) := by
-        rw [← Finset.sum_filter]
-        have hfilter :
-            (grids m n D).filter (· ∈ denseGrids δ m n D A) =
-              denseGrids δ m n D A := by
-          ext p
-          simp [denseGrids]
-        rw [hfilter]
-        simp [Finset.sum_const, nsmul_eq_mul, mul_comm]
-      rw [hindicator]
+      rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, Finset.sum_ite_mem, denseGrids,
+        Finset.inter_eq_right.mpr (Finset.filter_subset _ _), Finset.sum_const, nsmul_eq_mul]
       ring
 
 lemma card_gridIncidences_lower_bound (m n D W : ℕ) (hW : m * D ≤ W)
@@ -177,33 +160,23 @@ lemma denseGrids_card_lower_bound (δ : ℝ) (hδ : 0 < δ) (m n D W : ℕ)
     (A : Finset ℕ) (hAn : A ⊆ range n) (hA : δ * n ≤ #A) :
     δ / 4 * n * D ≤ #(denseGrids (δ / 2) m n D A) := by
   have hinter : δ * n - 2 * W ≤ (#(A ∩ Icc W (n - W)) : ℝ) := by
-    have := card_inter_interior n W A hAn
-    have thisreal :
-        (#A : ℝ) ≤ #(A ∩ Icc W (n - W)) + 2 * W := by exact_mod_cast this
+    have hcast : (#A : ℝ) ≤ #(A ∩ Icc W (n - W)) + 2 * W := by
+      exact_mod_cast card_inter_interior n W A hAn
     linarith
-  have hincidence :
-      ((#(A ∩ Icc W (n - W)) * D * m : ℕ) : ℝ) ≤
-        #(gridIncidences m n D A) := by
-    exact_mod_cast card_gridIncidences_lower_bound m n D W hW A hAn
-  push_cast at hincidence
-  have hupper := card_gridIncidences_upper_bound (δ / 2) (by positivity) m n D A
-  have hgrids : (#(grids m n D) : ℝ) ≤ n * D := by
-    exact_mod_cast card_grids_le m n D
-  have hmreal : (0 : ℝ) < m := by exact_mod_cast hm
-  have hD : (0 : ℝ) ≤ D := by positivity
-  have hinter_mul :
-      (δ * n - 2 * W) * D * m ≤
-        (#(A ∩ Icc W (n - W)) : ℝ) * D * m := by
-    gcongr
-  have hgridterm :
-      δ / 2 * m * (#(grids m n D) : ℝ) ≤ δ / 2 * m * (n * D) := by
-    gcongr
   have hchain :
       (δ * n - 2 * W) * D * m ≤
-        δ / 2 * m * (n * D) + m * #(denseGrids (δ / 2) m n D A) :=
-    hinter_mul.trans (hincidence.trans (hupper.trans
-      (add_le_add hgridterm le_rfl)))
-  nlinarith [hchain, mul_nonneg (show (0 : ℝ) ≤ D by positivity) hmreal.le]
+        δ / 2 * m * ((n : ℝ) * D) + m * #(denseGrids (δ / 2) m n D A) := by
+    refine le_trans ?_
+      ((card_gridIncidences_upper_bound (δ / 2) (by positivity) m n D A).trans
+        (add_le_add ?_ le_rfl))
+    · refine le_trans (mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right hinter ?_) ?_) ?_
+      · positivity
+      · positivity
+      · exact_mod_cast card_gridIncidences_lower_bound m n D W hW A hAn
+    · refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      exact_mod_cast card_grids_le m n D
+  nlinarith [hchain, (by positivity : (0 : ℝ) ≤ (D : ℝ) * m),
+    (by exact_mod_cast hm : (0 : ℝ) < m)]
 
 lemma exists_containedProgression_of_dense_indices (k : ℕ) (hk : 3 ≤ k)
     (δ : ℝ) (hδ : 0 < δ) (m n : ℕ) (hm : densityTheoremBound k δ ≤ m)
