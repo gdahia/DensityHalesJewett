@@ -111,7 +111,7 @@ lemma card_gridIncidences_lower_bound (m n D W : ℕ) (hW : m * D ≤ W)
       refine ⟨⟨Finset.mem_range.mpr ?_, Finset.mem_Icc.mpr hxd⟩, ?_⟩
       · exact (Nat.sub_le _ _).trans_lt (Finset.mem_range.mp (hAn hxA.1))
       · dsimp only [f, Prod.fst, Prod.snd]
-        have hmdW := (Nat.mul_le_mul_left m hxd.2).trans hW
+        have := (Nat.mul_le_mul_left m hxd.2).trans hW
         omega
     · dsimp only [f, Prod.fst, Prod.snd]
       rw [Nat.sub_add_cancel hidX]
@@ -145,9 +145,9 @@ lemma card_inter_interior (n W : ℕ) (A : Finset ℕ) (hAn : A ⊆ range n) :
     intro x hx
     rw [Finset.mem_sdiff, Finset.mem_Icc] at hx
     rw [Finset.mem_union, Finset.mem_range, Finset.mem_Ico]
-    have hxn := Finset.mem_range.mp (hAn hx.1)
+    have := Finset.mem_range.mp (hAn hx.1)
     omega
-  have houtcard : #(A \ Icc W (n - W)) ≤ 2 * W := by
+  have : #(A \ Icc W (n - W)) ≤ 2 * W := by
     refine (Finset.card_le_card houtside).trans ?_
     refine (Finset.card_union_le _ _).trans ?_
     rw [Finset.card_range, Nat.card_Ico]
@@ -336,59 +336,32 @@ theorem exists_many_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 
   have hCbound : (16 : ℝ) * m ≤ δ * C := by
     have hceil : (16 : ℝ) * m / δ ≤ C := by
       simpa only [C] using Nat.le_ceil (16 * (m : ℝ) / δ)
-    have := (div_le_iff₀ hδ).mp hceil
-    simpa only [mul_comm] using this
+    linarith [(div_le_iff₀ hδ).mp hceil]
   have hWsmall : (8 : ℝ) * W ≤ δ * n := by
     dsimp only [W]
     push_cast
-    have hCDreal : (C : ℝ) * D ≤ n := by exact_mod_cast hCD
-    have hboundD := mul_le_mul_of_nonneg_right hCbound (show (0 : ℝ) ≤ D by positivity)
-    have hboundn := mul_le_mul_of_nonneg_left hCDreal hδ.le
-    nlinarith
+    nlinarith [mul_le_mul_of_nonneg_right hCbound (Nat.cast_nonneg (α := ℝ) D),
+      mul_le_mul_of_nonneg_left (by exact_mod_cast hCD : (C : ℝ) * D ≤ n) hδ.le,
+      Nat.cast_nonneg (α := ℝ) (m * D)]
+  -- a quarter of the grids starting in the interior are dense, and each of them contains a
+  -- progression, with at most `m ^ 2` grids sharing the same one
   have hgood := denseGrids_card_lower_bound δ hδ m n D W hm (by simp [W])
     hWsmall A hAn hA
   have hmany := denseGrids_card_le_containedProgressions_mul k hk (δ / 2)
     (by positivity) m n D (by simp [m]) A hAn
+  have hAPreal : δ / 4 * n * D ≤ (#(containedProgressions k n A) : ℝ) * m ^ 2 :=
+    hgood.trans (by exact_mod_cast hmany)
+  -- the `C` blocks of length `D` almost cover `range n`
   have hnCD : (n : ℝ) ≤ 2 * C * D := by
-    have hmod := Nat.mod_lt n hC
-    have hdecomp := Nat.div_add_mod n C
     have hnle : n ≤ C * (D + 1) := by
-      change C * D + n % C = n at hdecomp
+      have : C * D + n % C = n := Nat.div_add_mod n C
+      have := Nat.mod_lt n hC
       rw [Nat.mul_add, Nat.mul_one]
       omega
-    have hDreal : (1 : ℝ) ≤ D := by exact_mod_cast hD
-    have hnleReal : (n : ℝ) ≤ C * (D + 1) := by exact_mod_cast hnle
-    have hCle : (C : ℝ) ≤ C * D := by
-      nlinarith [mul_le_mul_of_nonneg_left hDreal (show (0 : ℝ) ≤ C by positivity)]
-    nlinarith
-  have hmanyreal :
-      (#(denseGrids (δ / 2) m n D A) : ℝ) ≤
-        #(containedProgressions k n A) * (m : ℝ) ^ 2 := by
-    exact_mod_cast hmany
-  have hmreal : (0 : ℝ) < m := by exact_mod_cast hm
-  have hCreal : (0 : ℝ) < C := by exact_mod_cast hC
-  have hDreal : (0 : ℝ) < D := by exact_mod_cast hD
-  have hgood' :
-      δ * n * D ≤ 4 * (#(denseGrids (δ / 2) m n D A) : ℝ) := by
-    nlinarith
-  have hgoodAP :
-      δ * n * D ≤ 4 * ((#(containedProgressions k n A) : ℝ) * m ^ 2) :=
-    hgood'.trans (mul_le_mul_of_nonneg_left hmanyreal (by norm_num))
-  have htarget :
-      δ * n ^ 2 ≤ 8 * C * m ^ 2 * (#(containedProgressions k n A) : ℝ) := by
-    calc
-      δ * n ^ 2 ≤ δ * n * (2 * C * D) := by
-        have := mul_le_mul_of_nonneg_left hnCD
-          (mul_nonneg hδ.le (show (0 : ℝ) ≤ n by positivity))
-        nlinarith
-      _ = 2 * C * (δ * n * D) := by ring
-      _ ≤ 2 * C * (4 * (#(containedProgressions k n A) : ℝ) * m ^ 2) := by
-        apply mul_le_mul_of_nonneg_left
-        · simpa only [mul_assoc] using hgoodAP
-        · positivity
-      _ = 8 * C * m ^ 2 * (#(containedProgressions k n A) : ℝ) := by ring
-  rw [div_mul_eq_mul_div, div_le_iff₀]
-  · nlinarith [htarget]
-  · positivity
+    nlinarith [(by exact_mod_cast hnle : (n : ℝ) ≤ C * (D + 1)),
+      (by exact_mod_cast hD : (1 : ℝ) ≤ D), Nat.cast_nonneg (α := ℝ) C]
+  rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity)]
+  linarith [mul_le_mul_of_nonneg_left hAPreal (by positivity : (0 : ℝ) ≤ 8 * (C : ℝ)),
+    mul_le_mul_of_nonneg_left hnCD (mul_nonneg hδ.le (Nat.cast_nonneg (α := ℝ) n))]
 
 end Combinatorics.ArithmeticProgression

@@ -52,7 +52,7 @@ noncomputable def correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ :=
 /-- Uniformization followed by line canonization produces a large subspace on which every
 restricted-alphabet line is uniformly good or uniformly sparse. -/
 lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
-    {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    {δ : ℝ} (hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1)
     {ι κ : Type*} [Finite ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
@@ -78,19 +78,10 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
   have hε₀ : 0 < ε := by
     dsimp only [ε]
     positivity [Parameters.η_pos hk hδ₀]
-  have hεδ : ε < δ := by
-    dsimp only [ε]
-    have hdiff : 0 ≤ δ / 6 - Parameters.η k δ := by
-      linarith [Parameters.η_le_δ_div_six k δ]
-    have hsum : 0 ≤ δ / 6 + Parameters.η k δ := by
-      linarith [Parameters.η_pos hk hδ₀]
-    nlinarith [mul_nonneg hdiff hsum]
-  have hε₁ : ε < 1 := hεδ.trans_le hδ₁
   by_cases hM : 1 ≤ M
   · have hL : 1 ≤ L := by
       by_contra hL
-      have hL₀ : L = 0 := by omega
-      subst L
+      obtain rfl : L = 0 := by omega
       obtain ⟨R, _⟩ :=
         GrahamRothschild.lines_twoColor (Fin (k + 1)) M 0 hM
           (by simpa only [Fintype.card_fin] using hGR) ∅
@@ -241,8 +232,6 @@ lemma dense_suffixes_of_uniform_fibers {k M : ℕ} (hk : 2 ≤ k)
       concat (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)
   have hη₀ := Parameters.η_pos hk hδ₀
   have hηδ := Parameters.η_le_δ_div_six k δ
-  have hηsq : Parameters.η k δ ^ 2 ≤ (δ / 6) ^ 2 :=
-    (sq_le_sq₀ hη₀.le (by positivity)).mpr hηδ
   have havg : δ - Parameters.η k δ ^ 2 / 2 ≤
       Finset.expect Finset.univ f := by
     rw [Subspace.average_restrictedParameterSlice]
@@ -473,40 +462,23 @@ lemma density_near_average {X : Type*} [Fintype X] [Nonempty X]
   by_cases hH : 1 - η ≤ (H.dens : ℝ)
   · exact hH
   · exfalso
-    have h_dens_H_lt : (H.dens : ℝ) < 1 - η := by linarith
-    have h_pos : 0 < η ^ 2 / 2 + 2 * η := by nlinarith
+    -- `f` is bounded by the step function that jumps by `η²/2 + 2η` on `H`
     have hfg : ∀ x : X, f x ≤ (δ - 2 * η) + (η ^ 2 / 2 + 2 * η)
         * (Set.indicator H (1 : X → ℝ) x : ℝ) := by
       intro x
       by_cases hxH : x ∈ H
-      · have h_indicator : (Set.indicator H (1 : X → ℝ) x : ℝ) = 1 := by simp [hxH]
-        simp [h_indicator]
+      · rw [Set.indicator_of_mem (by simpa using hxH), Pi.one_apply, mul_one]
         linarith [hupper x]
-      · have hx_lt : f x < δ - 2 * η := by
-          have : ¬(δ - 2 * η ≤ f x) := by simpa [H] using hxH
-          linarith
-        have h_indicator : (Set.indicator H (1 : X → ℝ) x : ℝ) = 0 := by simp [hxH]
-        simp [h_indicator]
+      · rw [Set.indicator_of_notMem (by simpa using hxH), mul_zero, add_zero]
+        have : ¬(δ - 2 * η ≤ f x) := by simpa [H] using hxH
         linarith
-    have h_expect_f_le_expect_g : 𝔼 x : X, f x ≤ 𝔼 x : X, ((δ - 2 * η : ℝ) + (η ^ 2 / 2 + 2 * η) *
-        (Set.indicator H (1 : X → ℝ) x : ℝ)) :=
-      Finset.expect_le_expect (fun x _ => hfg x)
-    have h_expect_g : 𝔼 x : X, ((δ - 2 * η : ℝ) + (η ^ 2 / 2 + 2 * η) *
-        (Set.indicator H (1 : X → ℝ) x : ℝ)) =
-      (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) := by
-      calc
-        𝔼 x : X, ((δ - 2 * η : ℝ) + (η ^ 2 / 2 + 2 * η) * (Set.indicator H (1 : X → ℝ) x : ℝ)) =
-          𝔼 x : X, (δ - 2 * η : ℝ) + 𝔼 x : X, ((η ^ 2 / 2 + 2 * η)
-            * (Set.indicator H (1 : X → ℝ) x : ℝ)) := by
-          rw [Finset.expect_add_distrib]
-        _ = (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * 𝔼 x : X, (Set.indicator H (1 : X → ℝ) x : ℝ) := by
-          rw [Finset.expect_const univ_nonempty, ← Finset.mul_expect]
-        _ = (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) := by simp
-    rw [h_expect_g] at h_expect_f_le_expect_g
-    have h_upper_bound : (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) <
-      (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * (1 - η) := by
-      nlinarith
-    nlinarith
+    have hexpect : 𝔼 x : X, f x ≤ (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) := by
+      refine (Finset.expect_le_expect fun x _ ↦ hfg x).trans_eq ?_
+      rw [Finset.expect_add_distrib, Finset.expect_const univ_nonempty, ← Finset.mul_expect]
+      simp
+    linarith [havg, hexpect,
+      mul_le_mul_of_nonneg_left (not_le.mp hH).le (by positivity : (0 : ℝ) ≤ η ^ 2 / 2 + 2 * η),
+      mul_pos hη₀ hη₀, pow_pos hη₀ 3]
 
 /-- Dense common suffix fibers for every line give the same lower bound for the average
 fixed-suffix line density.  This is the second finite double-counting step. -/
@@ -569,19 +541,10 @@ lemma density_half_threshold {X : Type*} [Fintype X] [Nonempty X]
     (hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
     (havg : θ ≤ 𝔼 x : X, f x) :
     θ / 2 ≤ ((Finset.univ.filter fun x ↦ θ / 2 ≤ f x).dens : ℝ) := by
-  have hθ2_nonneg : 0 ≤ θ / 2 := by positivity
-  have h_ge_threshold : (θ - θ / 2) / (1 - θ / 2) ≤
-      ((Finset.univ.filter fun x ↦ θ / 2 ≤ f x).dens : ℝ) :=
-    density_ge_threshold f θ (θ / 2) hf₀ hf₁ hθ2_nonneg (by linarith) havg
-  have h_simplify : (θ - θ / 2) / (1 - θ / 2) = (θ / 2) / (1 - θ / 2) := by
-    have hnum : θ - θ / 2 = θ / 2 := by ring
-    rw [hnum]
-  rw [h_simplify] at h_ge_threshold
-  have h_half_le_div : θ / 2 ≤ (θ / 2) / (1 - θ / 2) := by
-    have hpos : 0 < 1 - θ / 2 := by linarith
-    rw [le_div_iff₀ hpos]
-    nlinarith [sq_nonneg (θ / 2)]
-  linarith
+  refine le_trans ?_
+    (density_ge_threshold f θ (θ / 2) hf₀ hf₁ (by positivity) (by linarith) havg)
+  rw [le_div_iff₀ (by linarith : (0 : ℝ) < 1 - θ / 2)]
+  nlinarith [sq_nonneg (θ / 2)]
 
 /-- Two subsets of densities at least `1-η` and `θ/2` intersect when `η < θ/2`. -/
 lemma exists_mem_inter_of_large_density {X : Type*} [Fintype X]
@@ -590,15 +553,12 @@ lemma exists_mem_inter_of_large_density {X : Type*} [Fintype X]
     (hηθ : η < θ / 2) : ∃ x, x ∈ S ∧ x ∈ T := by
   classical
   by_contra h
-  have h_inter_empty : S ∩ T = ∅ :=
-    Finset.eq_empty_iff_forall_notMem.mpr fun x hx => h ⟨x, Finset.mem_inter.1 hx⟩
-  have h_union_dens : ((S ∪ T).dens : ℝ) = (S.dens : ℝ) + (T.dens : ℝ) := by
-    have h_disjoint : Disjoint S T :=
-      Finset.disjoint_iff_inter_eq_empty.mpr h_inter_empty
-    exact_mod_cast Finset.dens_union_of_disjoint h_disjoint
-  have h_dens_le_one : ((S ∪ T).dens : ℝ) ≤ 1 := by
+  have hunion : ((S ∪ T).dens : ℝ) = (S.dens : ℝ) + (T.dens : ℝ) := by
+    exact_mod_cast Finset.dens_union_of_disjoint
+      (Finset.disjoint_left.mpr fun x hxS hxT ↦ h ⟨x, hxS, hxT⟩)
+  have hle : ((S ∪ T).dens : ℝ) ≤ 1 := by
     exact_mod_cast Finset.dens_le_one (s := S ∪ T)
-  linarith
+  linarith [hunion, hle]
 
 /-- Correlated fibers yield either a dense fixed suffix or a fixed suffix supporting many
 complete parameter lines. -/

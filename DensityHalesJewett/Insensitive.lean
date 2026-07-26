@@ -452,19 +452,20 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           refine one_div_card_le_dens ⟨pickSubspace hm hmb (B z) (fun _ ↦ 0), ?_⟩
           rw [mem_fiber, mem_transportWords]
           simpa only [htiledef, transportSubspace_apply] using htileR z hz (fun _ ↦ 0)
-        rw [show (R.dens : ℝ) = 𝔼 z : (ω ⊕ Fin (S * b) → Fin (k + 1)),
-            ((fiber (transportWords e₁ R) z).dens : ℝ) from ?_]
-        · rw [show β / ((k : ℝ) + 1) ^ b = (1 / ((k : ℝ) + 1) ^ b) * β from by ring]
-          refine le_trans (mul_le_mul_of_nonneg_left hgood (by positivity)) ?_
-          rw [← Finset.expect_indicator_one (s := good), Finset.mul_expect]
-          refine Finset.expect_le_expect fun z _ ↦ ?_
-          by_cases hz : z ∈ good
-          · rw [Set.indicator_of_mem (by simpa using hz)]
-            simpa only [Pi.one_apply, mul_one] using hfiber z hz
-          · rw [Set.indicator_of_notMem (by simpa using hz)]
-            simp only [mul_zero]
-            positivity
-        · rw [average_density_fiber, dens_transportWords]
+        -- the density of the removed part is the average of its fibre densities
+        have haverage : (R.dens : ℝ) = 𝔼 z : (ω ⊕ Fin (S * b) → Fin (k + 1)),
+            ((fiber (transportWords e₁ R) z).dens : ℝ) := by
+          rw [average_density_fiber, dens_transportWords]
+        rw [haverage, div_eq_mul_inv, mul_comm β (((k : ℝ) + 1) ^ b)⁻¹, ← one_div]
+        refine le_trans (mul_le_mul_of_nonneg_left hgood (by positivity)) ?_
+        rw [← Finset.expect_indicator_one (s := good), Finset.mul_expect]
+        refine Finset.expect_le_expect fun z _ ↦ ?_
+        by_cases hz : z ∈ good
+        · rw [Set.indicator_of_mem (by simpa using hz)]
+          simpa only [Pi.one_apply, mul_one] using hfiber z hz
+        · rw [Set.indicator_of_notMem (by simpa using hz)]
+          simp only [mul_zero]
+          positivity
       -- the invariant survives for the remaining blocks
       have hins' : ∀ v : ω ⊕ Fin b → Fin (k + 1),
           IsInsensitive i.castSucc (Fin.last k) (fiber (transportWords e₂ (U \ R)) v) := by
@@ -889,11 +890,12 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
     simpa only [D₀] using hD (Fin.castSucc i)
   obtain ⟨𝒱, hfinite, hcontained, hpairwise, huncovered⟩ :=
     houter hr₀ (by omega) D₀ hD₀ (by
-        refine (show 2 * r * β ≤ 2 * (r + 1) * β by nlinarith).trans ?_
-        have hdens : ((intersection D).dens : ℝ) ≤ ((intersection D₀).dens : ℝ) := by
-          exact_mod_cast Finset.dens_mono hsubset
-        convert hDβ.trans hdens using 1
-        norm_num)
+        refine le_trans (b := 2 * ((r : ℝ) + 1) * β) ?_ ?_
+        · nlinarith
+        · have hdens : ((intersection D).dens : ℝ) ≤ ((intersection D₀).dens : ℝ) := by
+            exact_mod_cast Finset.dens_mono hsubset
+          convert hDβ.trans hdens using 1
+          norm_num)
   let iLast : Fin k := ⟨r, by omega⟩
   let DLast := D (Fin.last r)
   have hLast : IsInsensitive iLast.castSucc (Fin.last k) DLast := by
@@ -995,13 +997,13 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
       rw [Finset.dens_biUnion herror_pairwise]
       change (NNRat.castHom ℝ) (∑ V ∈ outer, (innerError V).dens) ≤ 2 * β
       rw [map_sum (NNRat.castHom ℝ)]
-      refine (Finset.sum_le_sum fun V hV ↦
-        show ((innerError V).dens : ℝ) ≤
-          2 * β * ((Subspace.range V).dens : ℝ) by
-          dsimp only [innerError]
-          rw [dens_map_subspace_eq_mul_range]
-          apply mul_le_mul_of_nonneg_right (htiles V).2.2.2.le
-          positivity).trans ?_
+      have hsummand (V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n)) :
+          ((innerError V).dens : ℝ) ≤ 2 * β * ((Subspace.range V).dens : ℝ) := by
+        dsimp only [innerError]
+        rw [dens_map_subspace_eq_mul_range]
+        apply mul_le_mul_of_nonneg_right (htiles V).2.2.2.le
+        positivity
+      refine (Finset.sum_le_sum fun V _ ↦ hsummand V).trans ?_
       rw [← Finset.mul_sum]
       have hranges_pairwise :
           (outer : Set (Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n))).PairwiseDisjoint

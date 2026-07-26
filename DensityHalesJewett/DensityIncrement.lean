@@ -91,16 +91,14 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
   let β := Parameters.γ k δ ^ 2 / (4 * (k : ℝ))
   have hγ₀ := Parameters.γ_pos hk hδ₀
   have hγ₁ : Parameters.γ k δ ≤ 1 := by
-    linarith [Parameters.γ_le_three_mul_η k δ,
-      Parameters.η_le_δ_div_six k δ]
+    linarith [Parameters.γ_le_three_mul_η k δ, Parameters.η_le_δ_div_six k δ]
   have hβ₀ : 0 < β := by
     dsimp only [β]
     positivity
   have hβ₁ : β ≤ 1 := by
-    have hk_real : (2 : ℝ) ≤ k := by
-      exact_mod_cast hk
+    have hk_real : (2 : ℝ) ≤ k := by exact_mod_cast hk
     apply (div_le_iff₀ (by positivity : 0 < 4 * (k : ℝ))).mpr
-    nlinarith [sq_nonneg (1 - Parameters.γ k δ)]
+    nlinarith [sq_nonneg (1 - Parameters.γ k δ), hk_real]
   have hβ_simplify :
       2 * (k : ℝ) * β = Parameters.γ k δ ^ 2 / 2 := by
     dsimp only [β]

@@ -189,9 +189,7 @@ lemma exists_monochromaticUnions (C : Type*) [Finite C] (m : ℕ) :
     Finset.exists_subset_card_eq (s := {i | f i = c}) (n := m) (by omega)
   refine ⟨fun j ↦ E (T.orderEmbOfFin hTcard j), fun j ↦ hE _,
     fun i j hij ↦ hEE _ _ fun h ↦ hij ((T.orderEmbOfFin hTcard).injective h), c, fun J hJ ↦ ?_⟩
-  rw [show J.biUnion (fun j ↦ E (T.orderEmbOfFin hTcard j))
-      = (J.image (T.orderEmbOfFin hTcard)).biUnion E from (Finset.image_biUnion ..).symm,
-    hf _ (hJ.image _)]
+  rw [← Finset.image_biUnion, hf _ (hJ.image _)]
   obtain ⟨j, -, hj⟩ :=
     Finset.mem_image.1 (Finset.min'_mem _ (hJ.image (T.orderEmbOfFin hTcard)))
   rw [← hj]

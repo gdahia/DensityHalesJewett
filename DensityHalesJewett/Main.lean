@@ -147,6 +147,12 @@ lemma centralBinom_ratio_le_inv_sqrt (m : ℕ) :
   rw [← sq_le_sq₀ (by positivity) (by positivity), mul_pow, Real.sq_sqrt (by positivity)]
   simpa only [one_pow] using centralBinom_ratio_sq_mul_le m
 
+/-- The two normalizations of the binomial denominator, one per half-dimension and one per
+dimension, agree. -/
+private lemma two_pow_two_mul (m : ℕ) : (2 : ℝ) ^ (2 * m) = 4 ^ m := by
+  rw [pow_mul]
+  norm_num
+
 /-- Reduce the normalized middle binomial coefficient in any dimension to the central coefficient
 in half that dimension. -/
 lemma middleBinomial_ratio_le_central (n : ℕ) :
@@ -156,8 +162,7 @@ lemma middleBinomial_ratio_le_central (n : ℕ) :
   · subst n
     have hdiv : 2 * m / 2 = m := by grind
     rw [hdiv, Nat.centralBinom]
-    rw [show (2 : ℝ) ^ (2 * m) = 4 ^ m by
-      rw [show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul, mul_comm]]
+    rw [two_pow_two_mul]
   · subst n
     have hdiv : (2 * m + 1) / 2 = m := by grind
     rw [hdiv, Nat.centralBinom]
@@ -170,8 +175,7 @@ lemma middleBinomial_ratio_le_central (n : ℕ) :
         simpa only [Nat.add_sub_cancel, two_mul] using
           add_le_add (Nat.choose_le_centralBinom m (m + 1))
             (Nat.choose_le_centralBinom (m + 1) (m + 1))
-      rw [pow_succ, show (2 : ℝ) ^ (2 * (m + 1)) = 4 ^ (m + 1) by
-        rw [show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul, mul_comm]]
+      rw [pow_succ, two_pow_two_mul]
       rw [mul_comm (4 ^ (m + 1) : ℝ) 2]
       refine le_trans (b := (2 * Nat.centralBinom (m + 1) : ℝ) /
         (2 * 4 ^ (m + 1))) ?_ ?_

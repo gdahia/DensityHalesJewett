@@ -187,12 +187,11 @@ lemma θ_le_one {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₁ : δ ≤ 1) :
   unfold θ
   have hden_pos : 0 < ((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ :=
     θ_denominator_pos hk δ
-  have hm₀_pos : 0 < m₀ k δ := m₀_pos k δ
   have h_one_le_diff : 1 ≤ ((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ := by
     have h1 : ((k + 1 : ℕ) : ℝ) ^ 1 - (k : ℝ) ^ 1 = (1 : ℝ) := by norm_num
-    simpa [h1] using power_difference_mono k (Nat.succ_le_of_lt hm₀_pos)
+    simpa [h1] using power_difference_mono k (Nat.succ_le_of_lt (m₀_pos k δ))
   refine (div_le_one hden_pos).mpr ?_
-  linarith
+  linarith [hδ₁, h_one_le_diff]
 
 /-- The numerical parameters turn the absolute density left outside a large intersection into
 the required relative density gain. -/
@@ -201,9 +200,9 @@ lemma large_intersection_complement_gain {k : ℕ} (hk : 2 ≤ k)
     (δ + 6 * η k δ) * (1 - θ k δ / 4) ≤ δ - 3 * η k δ := by
   have hη : η k δ ≤ δ * θ k δ / 48 :=
     min_le_left (δ * θ k δ / 48) (min (θ k δ / 4) (δ / 6))
-  have hθ := θ_pos hk hδ₀
-  nlinarith [mul_nonneg hδ₀.le hθ.le, η_pos hk hδ₀,
-    mul_nonneg (η_pos hk hδ₀).le hθ.le]
+  nlinarith [hη, θ_pos hk hδ₀, η_pos hk hδ₀,
+    mul_nonneg hδ₀.le (θ_pos hk hδ₀).le,
+    mul_nonneg (η_pos hk hδ₀).le (θ_pos hk hδ₀).le]
 
 end Parameters
 

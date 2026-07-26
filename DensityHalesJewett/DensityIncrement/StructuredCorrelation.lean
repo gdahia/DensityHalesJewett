@@ -248,10 +248,9 @@ lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
         ((k + 1 : ℕ) : ℝ) ^ m - (k : ℝ) ^ m := by
     apply (div_le_iff₀ hwordpos).mp at hrestricted
     nlinarith
-  have hθ := Parameters.θ_pos hk hδ₀
   rw [le_div_iff₀ hlinepos] at hgood
   rw [le_div_iff₀ hwordpos]
-  nlinarith
+  nlinarith [hhalf, hgood, Parameters.θ_pos hk hδ₀]
 
 /-- In a line-free ambient family, a word lying both in its pullback and in every endpoint family
 cannot use the final alphabet letter. -/
@@ -338,15 +337,15 @@ lemma density_complement_bounds {X : Type*} [Fintype X] [Nonempty X]
   have hsplitA : ((A ∩ C).dens : ℝ) + ((A ∩ Cᶜ).dens : ℝ) = (A.dens : ℝ) := by
     norm_cast
     simpa only [sdiff_eq_inter_compl] using Finset.dens_inter_add_dens_sdiff A C
-  have houtside : δ - 3 * η ≤ ((A ∩ Cᶜ).dens : ℝ) := by
-    linarith
   have hsplitC : ((Cᶜ).dens : ℝ) + (C.dens : ℝ) = 1 := by
     norm_cast
     simpa only [← compl_eq_univ_sdiff, Finset.dens_univ] using
       Finset.dens_sdiff_add_dens_eq_dens C.subset_univ
+  have houtside : δ - 3 * η ≤ ((A ∩ Cᶜ).dens : ℝ) := by
+    linarith [hsplitA, hA, hAC]
   refine ⟨(mul_le_mul_of_nonneg_left ?_ ?_).trans (hgain.trans houtside), houtside⟩
-  · linarith
-  · nlinarith
+  · linarith [hsplitC, hC]
+  · linarith [hδ₀, hη₀]
 
 /-- A large intersection of insensitive families with a density gain on its complement. -/
 lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
