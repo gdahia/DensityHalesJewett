@@ -198,40 +198,31 @@ def pullback {η α ι : Type*} [Fintype (η → α)] [DecidableEq (ι → α)]
     (A : Finset (ι → α)) : Finset (η → α) :=
   Finset.univ.filter fun x ↦ V x ∈ A
 
-/-- A bound for the correlated-fibers lemma. -/
-noncomputable def correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ :=
-  let M := max m (Parameters.m₀ k δ)
-  let L := GrahamRothschild.bound (k + 1) 2 M
-  Subspace.uniformFibersBound (k + 1) L (Parameters.η k δ ^ 2 / 2)
+/-- The working parameter dimension of the correlated-fibers lemma. -/
+noncomputable def correlatedFibersParameters (k m : ℕ) (δ : ℝ) : ℕ :=
+  max m (Parameters.m₀ k δ)
 
-/-- The correlated-fibers bound leaves room first for uniformizing fibers and then for canonizing
-the resulting two-coloring of parameter lines. -/
-lemma correlatedFibersBound_spec {k : ℕ} (_hk : 2 ≤ k) (_hDHJ : HasDensityHJ k)
-    (m : ℕ) (_hm : 1 ≤ m) {δ : ℝ} (_hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1)
-    {ι : Type*} [Fintype ι]
-    (hι : correlatedFibersBound k m δ ≤ Fintype.card ι) :
-    ∃ M L : ℕ,
-      m ≤ M ∧ Parameters.m₀ k δ ≤ M ∧
-      GrahamRothschild.bound (k + 1) 2 M ≤ L ∧
-      Subspace.uniformFibersBound (k + 1) L (Parameters.η k δ ^ 2 / 2) ≤
-        Fintype.card ι := by
-  refine ⟨max m (Parameters.m₀ k δ),
-    GrahamRothschild.bound (k + 1) 2 (max m (Parameters.m₀ k δ)),
-    le_max_left _ _, le_max_right _ _, le_rfl, ?_⟩
-  simpa only [correlatedFibersBound] using hι
+/-- The line-canonization dimension of the correlated-fibers lemma. -/
+noncomputable def correlatedFibersLines (k m : ℕ) (δ : ℝ) : ℕ :=
+  max 1 (GrahamRothschild.bound (k + 1) 2 (correlatedFibersParameters k m δ))
+
+/-- A bound for the correlated-fibers lemma.  Uniformization now returns its own coordinate cut,
+so the bound constrains the total ambient dimension. -/
+noncomputable def correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ :=
+  Subspace.variableCutFibersBound (k + 1) (correlatedFibersLines k m δ)
+    (Parameters.η k δ ^ 2 / 2)
 
 /-- Uniformization followed by line canonization produces a large subspace on which every
 restricted-alphabet line is uniformly good or uniformly sparse. -/
 lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
+    {ι κ : Type*} [Finite ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
     (hGR : GrahamRothschild.bound (k + 1) 2 M ≤ L)
-    (huniform :
-      Subspace.uniformFibersBound (k + 1) L (Parameters.η k δ ^ 2 / 2) ≤
-        Fintype.card ι)
-    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ)) :
+    (A : Finset (ι ⊕ κ → Fin (k + 1))) (hA : δ ≤ (A.dens : ℝ))
+    (huniform : 1 ≤ L → ∃ U : Combinatorics.Subspace (Fin L) (Fin (k + 1)) ι,
+      ∀ x, (A.dens : ℝ) - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (U x)).dens : ℝ)) :
     ∃ W : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ι,
       (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (W x)).dens : ℝ)) ∧
       ((∀ l : Combinatorics.Line (Fin k) (Fin M),
@@ -268,10 +259,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
           (by simpa only [Fintype.card_fin] using hGR) ∅
       obtain ⟨i, _⟩ := R.proper ⟨0, hM⟩
       exact Fin.elim0 i
-    obtain ⟨U, hU⟩ :=
-      Subspace.exists_fibers_dense (α := Fin (k + 1)) (ι := ι) (κ := κ)
-        L hL ε hε₀ hε₁ (by simpa only [Fintype.card_fin, ε] using huniform)
-        A (hεδ.trans_le hA)
+    obtain ⟨U, hU⟩ := huniform hL
     letI : Fintype (Combinatorics.Line (Fin (k + 1)) (Fin L)) :=
       Subspace.lineFintype (k + 1) L
     let goodLines :=
@@ -286,7 +274,6 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       · intro x
         rw [Subspace.compose_apply]
         have hx := hU (R x)
-        dsimp only [ε] at hx
         linarith
       · intro l
         have hl := hgood (l.map Fin.castSucc)
@@ -297,7 +284,6 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       · intro x
         rw [Subspace.compose_apply]
         have hx := hU (R x)
-        dsimp only [ε] at hx
         linarith
       · intro l
         have hl := hbad (l.map Fin.castSucc)
@@ -366,15 +352,18 @@ output and for the density Hales--Jewett argument at dimension `Parameters.m₀ 
 monochromatic good case, restrict the working subspace to `m` parameters.  In the bad case, retain
 the larger subspace as a certificate whose every restricted-alphabet line has common-suffix density
 strictly below `Parameters.θ k δ`. -/
-lemma exists_correlated_fibers_or_sparse_certificate {k : ℕ} (hk : 2 ≤ k)
-    (hDHJ : HasDensityHJ k) (m : ℕ) (hm : 1 ≤ m)
+lemma exists_correlated_fibers_or_sparse_certificate {k M L : ℕ} (hk : 2 ≤ k)
+    (m : ℕ) (hm : 1 ≤ m)
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
+    {ι κ : Type*} [Finite ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
-    (hι : correlatedFibersBound k m δ ≤ Fintype.card ι)
+    (hmM : m ≤ M) (hm₀M : Parameters.m₀ k δ ≤ M)
+    (hGR : GrahamRothschild.bound (k + 1) 2 M ≤ L)
     (A : Finset (ι ⊕ κ → Fin (k + 1)))
-    (hA : δ ≤ (A.dens : ℝ)) :
+    (hA : δ ≤ (A.dens : ℝ))
+    (huniform : 1 ≤ L → ∃ U : Combinatorics.Subspace (Fin L) (Fin (k + 1)) ι,
+      ∀ x, (A.dens : ℝ) - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (U x)).dens : ℝ)) :
     (∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι,
       (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
       ∀ l : Combinatorics.Line (Fin k) (Fin m),
@@ -388,10 +377,8 @@ lemma exists_correlated_fibers_or_sparse_certificate {k : ℕ} (hk : 2 ≤ k)
             ((Finset.univ.filter fun y ↦
               ∀ a, concat (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
                 Parameters.θ k δ := by
-  obtain ⟨M, L, hmM, hm₀M, hGR, huniform⟩ :=
-    correlatedFibersBound_spec hk hDHJ m hm hδ₀ hδ₁ hι
   obtain ⟨W, hfibers, hgood | hsparse⟩ :=
-    exists_uniform_fibers_and_homogeneous_lines hk hδ₀ hδ₁ hGR huniform A hA
+    exists_uniform_fibers_and_homogeneous_lines hk hδ₀ hδ₁ hGR A hA huniform
   · exact Or.inl <|
       restrict_correlated_fibers_subspace hm hmM A W hfibers hgood
   · exact Or.inr ⟨M, hm₀M, W, hfibers, hsparse⟩
@@ -549,22 +536,25 @@ lemma not_exists_sparse_correlated_fibers_certificate {k : ℕ} (hk : 2 ≤ k)
   exact (not_lt_of_ge hl) (hsparse l)
 
 /-- Every parameter-cube line in a suitable subspace has a dense common fiber. -/
-lemma exists_subspace_correlated_fibers {k : ℕ} (hk : 2 ≤ k)
+lemma exists_subspace_correlated_fibers {k M L : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m : ℕ) (hm : 1 ≤ m)
     (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {ι κ : Type*} [Fintype ι] [Fintype (κ → Fin (k + 1))]
+    {ι κ : Type*} [Finite ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
-    (hι : correlatedFibersBound k m δ ≤ Fintype.card ι)
+    (hmM : m ≤ M) (hm₀M : Parameters.m₀ k δ ≤ M)
+    (hGR : GrahamRothschild.bound (k + 1) 2 M ≤ L)
     (A : Finset (ι ⊕ κ → Fin (k + 1)))
-    (hA : δ ≤ (A.dens : ℝ)) :
+    (hA : δ ≤ (A.dens : ℝ))
+    (huniform : 1 ≤ L → ∃ U : Combinatorics.Subspace (Fin L) (Fin (k + 1)) ι,
+      ∀ x, (A.dens : ℝ) - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (U x)).dens : ℝ)) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ι,
       (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
       ∀ l : Combinatorics.Line (Fin k) (Fin m),
         Parameters.θ k δ ≤
           ((Finset.univ.filter fun y ↦ ∀ a, concat (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
   obtain hV | hsparse :=
-    exists_correlated_fibers_or_sparse_certificate hk hDHJ m hm δ hδ₀ hδ₁ hι A hA
+    exists_correlated_fibers_or_sparse_certificate hk m hm δ hδ₀ hδ₁ hmM hm₀M hGR A hA huniform
   · exact hV
   · exact (not_exists_sparse_correlated_fibers_certificate hk hDHJ δ hδ₀ hδ₁ A
       hsparse).elim
@@ -923,30 +913,30 @@ lemma exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k
         ((Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
           ∀ a, V (Fin.castSucc ∘ l a) ∈ A).dens : ℝ) := by
   classical
-  let p := correlatedFibersBound k m δ
-  let q := n - p
-  have hpn : p ≤ n := by
-    simpa only [manyLinesBound, p] using hn
-  have hpq : p + q = n := Nat.add_sub_of_le hpn
-  let e : Fin p ⊕ Fin q ≃ Fin n := finSumFinEquiv.trans (finCongr hpq)
-  let A' := A.map ((e.arrowCongr (Equiv.refl _)).symm.toEmbedding)
+  have hε₀ : 0 < Parameters.η k δ ^ 2 / 2 := by
+    positivity [Parameters.η_pos hk hδ₀]
+  obtain ⟨p, q, e, _hq, U, hU⟩ :=
+    Subspace.variableCutFibersBound_spec (k + 1) (correlatedFibersLines k m δ) n
+      (le_max_left _ _) hε₀ (by simpa only [manyLinesBound, correlatedFibersBound] using hn) A
+  let A' := Subspace.splitWords e A
   have hA' : δ ≤ (A'.dens : ℝ) := by
-    simpa only [A', Finset.dens_map_equiv] using hA
+    simpa only [A', Subspace.dens_splitWords] using hA
   obtain ⟨W, hWfiber, hWlines⟩ :=
     exists_subspace_correlated_fibers hk hDHJ m hm δ hδ₀ hδ₁
-      (ι := Fin p) (κ := Fin q) (by
-        simp only [Fintype.card_fin]
-        exact le_rfl) A' hA'
+      (ι := Fin p) (κ := Fin q) (M := correlatedFibersParameters k m δ)
+      (L := correlatedFibersLines k m δ) (le_max_left _ _) (le_max_right _ _)
+      (le_max_right _ _) A' hA' (fun _ ↦ ⟨U, fun x ↦ by
+        simpa only [A', Subspace.dens_splitWords] using hU x⟩)
   obtain ⟨y, hy⟩ | ⟨y, hy, hylines⟩ :=
     exists_suffix_many_lines hk δ hδ₀ hδ₁ A' W hWfiber hWlines
   · refine Or.inl ⟨Subspace.fixSuffixReindex e W y, ?_⟩
     rw [(Subspace.fixSuffixReindex_statistics e A W y).1]
-    simpa only [A'] using hy
+    simpa only [A', Subspace.splitWords] using hy
   · refine Or.inr ⟨Subspace.fixSuffixReindex e W y, ?_, ?_⟩
     · rw [(Subspace.fixSuffixReindex_statistics e A W y).1]
-      simpa only [A'] using hy
+      simpa only [A', Subspace.splitWords] using hy
     · rw [(Subspace.fixSuffixReindex_statistics e A W y).2]
-      simpa only [A'] using hylines
+      simpa only [A', Subspace.splitWords] using hylines
 
 /-- A power of the restricted-alphabet proportion eventually falls below the error tolerance. -/
 lemma exists_restrictedParameterWords_decay {k : ℕ} (hk : 2 ≤ k)
@@ -1426,7 +1416,7 @@ lemma firstFailurePiece_pairwiseDisjoint {k : ℕ} {X : Type*} [Fintype X] [Deci
 /-- The first-failure partition converts the densities of its pieces, and of their intersections
 with `A`, into sums. -/
 lemma firstFailurePiece_density_sums {k : ℕ}
-    {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
+    {X : Type*} [Fintype X] [DecidableEq X]
     (A : Finset X) (C : Fin k → Finset X) :
     (∑ i, ((firstFailurePiece C i).dens : ℝ)) =
         (((IsInsensitive.intersection C)ᶜ).dens : ℝ) ∧
@@ -1456,7 +1446,7 @@ lemma firstFailurePiece_density_sums {k : ℕ}
 large and relatively dense in `A`. -/
 lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
+    {X : Type*} [Fintype X] [DecidableEq X]
     (A : Finset X) (C : Fin k → Finset X)
     (_hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
     (hweighted : (δ + 6 * Parameters.η k δ) *
@@ -1537,7 +1527,7 @@ density estimates ensure that one piece is both large enough and has the require
 `A`-density. -/
 lemma exists_dense_firstFailurePiece {k : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
-    {X : Type*} [Fintype X] [Nonempty X] [DecidableEq X]
+    {X : Type*} [Fintype X] [DecidableEq X]
     (A : Finset X) (C : Fin k → Finset X)
     (hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
     (hweighted : (δ + 6 * Parameters.η k δ) *
@@ -1675,7 +1665,7 @@ lemma incrementBound_spec {k d : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) (hd
 /-- The insensitive-intersection tiling theorem supplies a nonempty finite family of disjoint
 `d`-subspaces with small uncovered part. -/
 lemma exists_finite_structured_tiling {k d m : ℕ}
-    (hk : 2 ≤ k) (hd : 1 ≤ d) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) (hd : 1 ≤ d) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (hm_tiling : IsInsensitive.intersectionTilingBound k k d
       (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m)
     (D : Fin k → Finset (Fin m → Fin (k + 1)))
@@ -1713,7 +1703,7 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
     rw [hβ_simplify]
     nlinarith
   obtain ⟨𝒱, h𝒱finite, hcontained, hpairwise, huncovered⟩ :=
-    IsInsensitive.exists_disjoint_subspaces_iInter (k := k) k d m (by omega) le_rfl hd
+    IsInsensitive.exists_disjoint_subspaces_iInter (k := k) k d m hDHJ (by omega) le_rfl hd
       β hβ₀ hβ₁ hm_tiling D (by
         simpa only [Fin.castLE_rfl, id_eq] using hD) hDβ
   have h𝒱nonempty : 𝒱.Nonempty := by
@@ -1911,7 +1901,7 @@ the uncovered-density estimate preserves half of the correlation gain.  Finite a
 selects one `d`-tile of relative `A`-density at least `δ + γ/2`; composing that tile with `V`
 gives the required ambient subspace. -/
 lemma exists_density_increment_subspace_of_structured_correlation {k d m n : ℕ}
-    (hk : 2 ≤ k) (hd : 1 ≤ d) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (hk : 2 ≤ k) (hDHJ : HasDensityHJ k) (hd : 1 ≤ d) {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     (hm_tiling : IsInsensitive.intersectionTilingBound k k d
       (Parameters.γ k δ ^ 2 / (4 * (k : ℝ))) ≤ m)
     (A : Finset (Fin n → Fin (k + 1)))
@@ -1925,7 +1915,7 @@ lemma exists_density_increment_subspace_of_structured_correlation {k d m n : ℕ
     ∃ W : Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin n),
       δ + Parameters.γ k δ / 2 ≤ (Subspace.relativeDensity W A : ℝ) := by
   obtain ⟨𝒱, h𝒱, hcontained, hpairwise, huncovered⟩ :=
-    exists_finite_structured_tiling hk hd hδ₀ hδ₁ hm_tiling D hD hDdense
+    exists_finite_structured_tiling hk hDHJ hd hδ₀ hδ₁ hm_tiling D hD hDdense
   obtain ⟨W, _, hW⟩ :=
     exists_dense_tile_of_density_sum hk A V 𝒱 h𝒱 <|
       structured_tiling_density_sum hk hδ₀ hδ₁ A V D hDdense hcorrelation 𝒱
@@ -1953,7 +1943,7 @@ lemma density_increment {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
     obtain ⟨V, D, hD, hDdense, hcorrelation⟩ :=
       exists_structured_correlation hk hDHJ m n hm δ hδ₀ hδ₁ hm_large hmn A hA hfree
     exact Or.inr <|
-      exists_density_increment_subspace_of_structured_correlation hk hd hδ₀ hδ₁ hm_tiling
+      exists_density_increment_subspace_of_structured_correlation hk hDHJ hd hδ₀ hδ₁ hm_tiling
         A V D hD hDdense hcorrelation
   · rw [IsLineFree] at hfree
     push Not at hfree

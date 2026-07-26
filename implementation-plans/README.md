@@ -30,8 +30,12 @@ upward safe even when the color type is empty.
 
 - `easy/`: 0 plans
 - `medium/`: 0 plans
-- `hard/`: 3 plans
+- `hard/`: 0 plans
 - `very-hard/`: 0 plans
+
+One declaration still ends in `sorry` without a plan in this directory:
+`DensityHalesJewett.GrahamRothschild.lines`, together with the `opaque` stand-in
+`GrahamRothschild.bound`, left by the removal of the false focusing and canonization arguments.
 
 Within a difficulty level, the plans should still be attempted in source dependency order:
 `Word`, `Subspace`, `GrahamRothschild`, `UniformFibers`, `Insensitive`, `DensityIncrement`, `Main`,
