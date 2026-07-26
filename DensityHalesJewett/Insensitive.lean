@@ -109,14 +109,6 @@ lemma union {α ι : Type*} [DecidableEq (ι → α)]
   simp only [mem_union]
   rw [hD hxy, hE hxy]
 
-/-- Intersections preserve insensitivity. -/
-lemma inter {α ι : Type*} [DecidableEq (ι → α)]
-    {i j : α} {D E : Finset (ι → α)} (hD : IsInsensitive i j D)
-    (hE : IsInsensitive i j E) : IsInsensitive i j (D ∩ E) := by
-  intro x y hxy
-  simp only [mem_inter]
-  rw [hD hxy, hE hxy]
-
 /-- The part of `D` left uncovered by a set of subspaces. -/
 noncomputable def uncovered {η α ι : Type*} [Fintype (η → α)]
     [DecidableEq (ι → α)] (D : Finset (ι → α))
@@ -759,19 +751,6 @@ lemma tilingBound_spec (k m n : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
   classical
   rw [tilingBound, dif_pos ⟨hDHJ, hm, hβ₀, hβ₁⟩] at hn
   exact Nat.find_spec (exists_eventually_tilingSufficient k m hDHJ hm hβ₀ hβ₁) n hn
-
-/-- A dense insensitive family can be tiled, up to small error, by disjoint subspaces. -/
-lemma exists_disjoint_subspaces {k : ℕ} (i : Fin k) (hDHJ : HasDensityHJ k)
-    (m n : ℕ) (hm : 1 ≤ m) (β : ℝ) (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
-    (hn : tilingBound k m β ≤ n) (D : Finset (Fin n → Fin (k + 1)))
-    (hD : IsInsensitive i.castSucc (Fin.last k) D)
-    (hDβ : 2 * β ≤ (D.dens : ℝ)) :
-    ∃ 𝒱 : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)),
-      𝒱.Finite ∧
-      (∀ V ∈ 𝒱, Subspace.IsContained V D) ∧
-      (𝒱.PairwiseDisjoint fun V ↦ (Subspace.range V : Set (Fin n → Fin (k + 1)))) ∧
-      ((uncovered D 𝒱).dens : ℝ) < 2 * β := by
-  exact tilingBound_spec k m n hDHJ hm hβ₀ hβ₁ hn i D hD hDβ
 
 /-- The preimage of a word family in a subspace parameter cube. -/
 noncomputable def parameterPreimage {η α ι : Type*} [Fintype (η → α)]

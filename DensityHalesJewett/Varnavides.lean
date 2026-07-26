@@ -332,17 +332,6 @@ noncomputable def supersaturationConstant (k : ℕ) (δ : ℝ) : ℝ :=
   let C := ⌈16 * (m : ℝ) / δ⌉₊
   δ / (8 * C * m ^ 2)
 
-lemma supersaturationConstant_pos (k : ℕ) {δ : ℝ} (hδ : 0 < δ) :
-    0 < supersaturationConstant k δ := by
-  let m := densityTheoremBound k (δ / 2) + 1
-  let C := ⌈16 * (m : ℝ) / δ⌉₊
-  change 0 < δ / (8 * C * m ^ 2)
-  have hm : 0 < m := by simp [m]
-  have hC : 0 < C := by
-    dsimp only [C]
-    exact Nat.one_le_ceil_iff.mpr (by positivity)
-  positivity
-
 /-- A threshold above which Varnavides' quadratic progression count holds. -/
 noncomputable def supersaturationBound (k : ℕ) (δ : ℝ) : ℕ :=
   let m := densityTheoremBound k (δ / 2) + 1

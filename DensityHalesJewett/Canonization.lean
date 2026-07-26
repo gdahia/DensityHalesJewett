@@ -44,11 +44,6 @@ def fillOption (l : Combinatorics.Line α ι) (v : Option α) : ι → Option α
   fun i ↦ (l.idxFun i).elim v some
 
 @[simp]
-lemma fillOption_none (l : Combinatorics.Line α ι) : fillOption l none = l.idxFun := by
-  funext i
-  cases h : l.idxFun i <;> simp [fillOption, h]
-
-@[simp]
 lemma fillOption_some (l : Combinatorics.Line α ι) (a : α) :
     fillOption l (some a) = some ∘ l a := by
   funext i
@@ -73,11 +68,6 @@ lemma wordMap_compose (V : Combinatorics.Subspace η α ι) (W : Combinatorics.S
 lemma composeLine_idxFun (V : Combinatorics.Subspace η α ι) (l : Combinatorics.Line α η) :
     (composeLine V l).idxFun = wordMap V l.idxFun :=
   rfl
-
-lemma wordMap_isNone (V : Combinatorics.Subspace η α ι) {x : η → Option α} {e : η}
-    (he : x e = none) : ∃ i, wordMap V x i = none := by
-  obtain ⟨i, hi⟩ := V.proper e
-  exact ⟨i, by simp [wordMap, hi, he]⟩
 
 /-- Prepend a new variable direction, realized by a line on a fresh block of coordinates, to the
 directions of a subspace. -/

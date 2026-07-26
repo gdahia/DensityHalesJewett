@@ -58,17 +58,6 @@ lemma exists_one_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
   rw [lineToSubspaceFinOne_apply]
   exact hl _
 
-/-- The number of line structures in a finite cube is bounded by the number of index words. -/
-lemma card_line_le (k m : ℕ) [Fintype (Combinatorics.Line (Fin k) (Fin m))] :
-    Fintype.card (Combinatorics.Line (Fin k) (Fin m)) ≤ (k + 1) ^ m := by
-  classical
-  refine (Fintype.card_le_of_injective (fun l ↦ l.idxFun) fun l₁ l₂ h ↦ ?_).trans ?_
-  · cases l₁
-    cases l₂
-    cases h
-    rfl
-  · simp
-
 /-- A line is equivalently an `Option`-valued index word with at least one variable
 coordinate. -/
 private noncomputable def lineIndexEquiv (α ι : Type*) :

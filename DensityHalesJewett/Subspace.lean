@@ -114,30 +114,6 @@ lemma concat_apply (V : Combinatorics.Subspace η α ι) (W : Combinatorics.Subs
     cases hi : W.idxFun i <;>
       simp [concat, DensityHalesJewett.concat, Combinatorics.Subspace.coe_apply, hi]
 
-/-- Concatenate finite-dimensional subspaces and reindex both coordinate sums as finite types. -/
-def concatFin {m p q r : ℕ} (V : Combinatorics.Subspace (Fin m) α (Fin p))
-    (W : Combinatorics.Subspace (Fin q) α (Fin r)) :
-    Combinatorics.Subspace (Fin (m + q)) α (Fin (p + r)) :=
-  (concat V W).reindex finSumFinEquiv (Equiv.refl _) finSumFinEquiv
-
-@[simp]
-lemma concatFin_apply_left {m p q r : ℕ} (V : Combinatorics.Subspace (Fin m) α (Fin p))
-    (W : Combinatorics.Subspace (Fin q) α (Fin r)) (x : Fin (m + q) → α) (i : Fin p) :
-    concatFin V W x (Fin.castAdd r i) = V (fun e ↦ x (Fin.castAdd q e)) i := by
-  rw [concatFin, Combinatorics.Subspace.reindex_apply]
-  simp only [Equiv.refl_apply, Equiv.refl_symm, finSumFinEquiv_symm_apply_castAdd]
-  cases hi : V.idxFun i <;>
-    simp [concat, Combinatorics.Subspace.coe_apply, hi]
-
-@[simp]
-lemma concatFin_apply_right {m p q r : ℕ} (V : Combinatorics.Subspace (Fin m) α (Fin p))
-    (W : Combinatorics.Subspace (Fin q) α (Fin r)) (x : Fin (m + q) → α) (i : Fin r) :
-    concatFin V W x (Fin.natAdd p i) = W (fun e ↦ x (Fin.natAdd m e)) i := by
-  rw [concatFin, Combinatorics.Subspace.reindex_apply]
-  simp only [Equiv.refl_apply, Equiv.refl_symm, finSumFinEquiv_symm_apply_natAdd]
-  cases hi : W.idxFun i <;>
-    simp [concat, Combinatorics.Subspace.coe_apply, hi]
-
 /-- Regard a line as a one-dimensional subspace parameterized by `Fin 1`. -/
 def lineToSubspaceFinOne (l : Combinatorics.Line α ι) :
     Combinatorics.Subspace (Fin 1) α ι :=

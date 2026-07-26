@@ -2,6 +2,9 @@ import DensityHalesJewett.Basic
 import DensityHalesJewett.Canonization
 import DensityHalesJewett.Challenge
 import DensityHalesJewett.DensityIncrement
+import DensityHalesJewett.DensityIncrement.CorrelatedFibers
+import DensityHalesJewett.DensityIncrement.Parameters
+import DensityHalesJewett.DensityIncrement.StructuredCorrelation
 import DensityHalesJewett.FiniteUnions
 import DensityHalesJewett.GrahamRothschild
 import DensityHalesJewett.Insensitive
