@@ -6,6 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.GrahamRothschild
+import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Tactic.Linarith
 
@@ -430,6 +431,36 @@ force the density above one. -/
 private lemma exists_uniformFibersIterationParameters
     (alphabet dimension : ℕ) {ε : ℝ} (hε₀ : 0 < ε) :
     Nonempty (UniformFibersIterationParameters alphabet dimension ε) := by
+  let increment := ε / (2 * ((alphabet ^ dimension : ℝ) + 1))
+  have hincrement : 0 < increment := by
+    exact div_pos hε₀ (mul_pos (by norm_num) (by positivity))
+  obtain ⟨fuel, hfuel⟩ := exists_nat_gt (1 / increment)
+  refine ⟨{
+    fuel := fuel
+    increment := increment
+    increment_pos := hincrement
+    block_loss := ?_
+    exhausts := ?_
+  }⟩
+  · dsimp only [increment]
+    have hnonneg : 0 ≤ (alphabet ^ dimension : ℝ) := by positivity
+    have hdenominator : 0 < 2 * ((alphabet ^ dimension : ℝ) + 1) := by positivity
+    rw [← mul_div_assoc, div_le_iff₀ hdenominator]
+    nlinarith [mul_nonneg hnonneg hε₀.le]
+  · exact (div_lt_iff₀ hincrement).mp hfuel
+
+/-- For one suffix length and one dense set, the finite block iteration either exposes a uniform
+coordinate block or reaches the impossible exhausted-density state. -/
+private lemma exists_uniformFibers_block_of_iterationParameters
+    (alphabet dimension : ℕ) (hdimension : 1 ≤ dimension)
+    {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
+    (parameters : UniformFibersIterationParameters alphabet dimension ε)
+    (q : ℕ)
+    (A : Finset (Fin (parameters.fuel * dimension) ⊕ Fin q → Fin alphabet))
+    (hA : ε < (A.dens : ℝ)) :
+    ∃ V : Combinatorics.Subspace (Fin dimension) (Fin alphabet)
+        (Fin (parameters.fuel * dimension)),
+      ∀ x, (A.dens : ℝ) - ε ≤ ((fiber A (V x)).dens : ℝ) := by
   sorry
 
 /-- The block density-increment argument produces a sufficient prefix from fixed numerical
@@ -439,7 +470,9 @@ private lemma uniformFibersFinSufficient_of_iterationParameters
     {ε : ℝ} (hε₀ : 0 < ε) (hε₁ : ε < 1)
     (parameters : UniformFibersIterationParameters alphabet dimension ε) :
     UniformFibersFinSufficient alphabet dimension ε (parameters.fuel * dimension) := by
-  sorry
+  intro q A hA
+  exact exists_uniformFibers_block_of_iterationParameters
+    alphabet dimension hdimension hε₀ hε₁ parameters q A hA
 
 /-- The finite block-density-increment iteration underlying uniform fibers. -/
 private lemma exists_uniformFibersFinSufficient_block_iteration

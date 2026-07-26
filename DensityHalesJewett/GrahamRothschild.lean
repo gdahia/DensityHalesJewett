@@ -105,13 +105,27 @@ private def MinColorBlocksFin (colors s L : ℕ) : Prop :=
       ∃ κ : Fin s → Fin colors, ∀ I : Finset (Fin s), (hI : I.Nonempty) →
         χ (I.biUnion B) = κ (I.min' hI)
 
+/-- The pointwise binary-focus construction underlying one min-color block extension. -/
+private lemma exists_minColorBlocksFin_succ_witness_of_focus
+    (colors s L n : ℕ) (h : MinColorBlocksFin colors s L)
+    (hn : focusBound 2 colors (2 ^ L) ≤ n)
+    (χ : Finset (Fin (n + L)) → Fin colors) :
+    ∃ B : Fin (s + 1) → Finset (Fin (n + L)),
+      (∀ i, (B i).Nonempty) ∧
+      (∀ i j, i < j → ∀ x ∈ B i, ∀ y ∈ B j, x < y) ∧
+      ∃ κ : Fin (s + 1) → Fin colors,
+        ∀ I : Finset (Fin (s + 1)), (hI : I.Nonempty) →
+          χ (I.biUnion B) = κ (I.min' hI) := by
+  sorry
+
 /-- Binary focusing on an initial coordinate packet adjoins one least-colored block before an
 existing ordered block sequence. -/
 private lemma minColorBlocksFin_succ_of_focus (colors s L n : ℕ)
     (h : MinColorBlocksFin colors s L)
     (hn : focusBound 2 colors (2 ^ L) ≤ n) :
     MinColorBlocksFin colors (s + 1) (n + L) := by
-  sorry
+  intro χ
+  exact exists_minColorBlocksFin_succ_witness_of_focus colors s L n h hn χ
 
 /-- One reverse focusing step adjoins the next least-colored ordered block. -/
 private lemma exists_minColor_blocks_fin_step (colors s : ℕ)
@@ -345,6 +359,19 @@ private def LocallyCanonizingDimension (alphabet colors blocks : ℕ)
     ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin N),
       IsLocallyCanonizing V χ
 
+/-- Finite profile focusing for one fixed old witness dimension produces an extension dimension
+and a locally canonizing subspace for each coloring in that dimension. -/
+private lemma exists_locally_canonizing_profile_extension
+    (alphabet colors blocks N : ℕ) [Nontrivial (Fin alphabet)]
+    (halphabet : 2 ≤ alphabet)
+    (hN : ∀ χ : Combinatorics.Line (Fin alphabet) (Fin N) → Fin colors,
+      ∃ V : Combinatorics.Subspace (Fin blocks) (Fin alphabet) (Fin N),
+        IsLocallyCanonizing V χ) :
+    ∃ M, ∀ χ : Combinatorics.Line (Fin alphabet) (Fin M) → Fin colors,
+      ∃ V : Combinatorics.Subspace (Fin (blocks + 1)) (Fin alphabet) (Fin M),
+        IsLocallyCanonizing V χ := by
+  sorry
+
 /-- Extend a fixed dimension that locally canonizes `blocks` parameter coordinates to some
 dimension that locally canonizes one additional parameter coordinate. -/
 private lemma exists_locally_canonizing_extension (alphabet colors blocks N : ℕ)
@@ -355,7 +382,8 @@ private lemma exists_locally_canonizing_extension (alphabet colors blocks N : �
     ∃ M, ∀ χ : Combinatorics.Line (Fin alphabet) (Fin M) → Fin colors,
       ∃ V : Combinatorics.Subspace (Fin (blocks + 1)) (Fin alphabet) (Fin M),
         IsLocallyCanonizing V χ := by
-  sorry
+  exact exists_locally_canonizing_profile_extension
+    alphabet colors blocks N halphabet hN
 
 /-- One reverse profile-focusing step adjoins a locally canonized parameter block. -/
 private lemma locallyCanonizingDimension_step (alphabet colors blocks : ℕ)
