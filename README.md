@@ -1,27 +1,38 @@
 # DensityHalesJewett
 
-This project is a Lean 4 implementation of the proof in
-[A Simple Proof of the Density Hales–Jewett Theorem](https://doi.org/10.1093/imrn/rnt041)
-by Pandelis Dodos, Vassilis Kanellopoulos, and Konstantinos Tyros. The published paper appeared in
-*International Mathematics Research Notices*, Volume 2014, Issue 12, pages 3340–3352. The authors'
-[preprint is available on arXiv](https://arxiv.org/abs/1209.4986).
+This repository contains the Lean 4 formalization of
+[**A Simple Proof of the Density Hales–Jewett Theorem**](https://doi.org/10.1093/imrn/rnt041), by
+Pandelis Dodos, Vassilis Kanellopoulos, and Konstantinos Tyros. The published paper appeared in
+*International Mathematics Research Notices*, Volume 2014, Issue 12, pages 3340–3352, and the
+authors' [preprint is available on arXiv](https://arxiv.org/abs/1209.4986).
 
-The proof is purely combinatorial and uses the uniform measure on finite word spaces. The
-formalization develops the positive-density combinatorial-line theorem and its consequence for
-arithmetic progressions of arbitrary finite length, i.e., Szemerédi's theorem.
+The proof is purely combinatorial and works with the uniform measure on finite word spaces. The
+main results are the positive-density combinatorial-line theorem
+`Combinatorics.Line.exists_of_density` and its consequence for arithmetic progressions of
+arbitrary finite length, Szemerédi's theorem on the integers,
+`Combinatorics.ArithmeticProgression.exists_of_density_nat`. Both are also stated in the asymptotic
+`Filter.atTop` form in [`Challenge.lean`](DensityHalesJewett/Challenge.lean), proved using only
+Mathlib's API.
 
-## Status
+## Other formalized results
 
-The formalization is in progress. Type-correct declaration stubs live in the files under
-[`DensityHalesJewett`](DensityHalesJewett), and implementation and review provenance is recorded in
-[`formalization.yaml`](formalization.yaml).
-[`Challenge.lean`](DensityHalesJewett/Challenge.lean) proves both results using only Mathlib's API.
+Along the way to the main theorems, the repository develops:
 
-## Building
+- The finite-unions form of the multidimensional Hales--Jewett theorem, its focusing argument, and
+  block canonization, culminating in the Graham--Rothschild theorem for combinatorial lines
+  (`FiniteUnions.lean`, `GrahamRothschild.lean`, `Canonization.lean`).
 
-Install the Lean toolchain specified by `lean-toolchain`, then run:
+Moreover, as a bonus, it also proves:
 
-```shell
+- Varnavides' averaging argument, upgrading the existence of a single arithmetic progression in a
+  dense set to a quadratic lower bound on the number of such progressions
+  (`Varnavides.lean`).
+
+## Build
+
+Build the project:
+
+```bash
 lake exe cache get
 lake build
 ```
