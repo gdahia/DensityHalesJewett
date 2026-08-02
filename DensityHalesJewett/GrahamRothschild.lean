@@ -89,10 +89,16 @@ lemma sameSupport_wordMap_ofBlocks (x : Fin m → Option α) (J : Finset (Fin m)
   by_cases h : ∃ j, i ∈ E j
   · obtain ⟨j, hj⟩ := h
     rw [ofBlocks_idxFun_of_mem hj, Sum.elim_inr, ← hJ j, hite i, Finset.mem_biUnion]
-    refine ⟨fun hjJ ↦ ⟨j, hjJ, hj⟩, ?_⟩
-    rintro ⟨j', hj'J, hij'⟩
-    by_contra hne
-    exact Finset.disjoint_left.1 (hEE j j' fun hjj' ↦ hne (by rw [hjj']; exact hj'J)) hj hij'
+    constructor
+    · intro hjJ
+      exact ⟨j, hjJ, hj⟩
+    · rintro ⟨j', hj'J, hij'⟩
+      by_contra hne
+      refine Finset.disjoint_left.1 (hEE j j' ?_) hj hij'
+      intro hjj'
+      apply hne
+      rw [hjj']
+      exact hj'J
   · rw [not_exists] at h
     rw [ofBlocks_idxFun_of_notMem h, Sum.elim_inl, hite i]
     simp only [reduceCtorEq, false_iff]
@@ -119,11 +125,13 @@ lemma exists_lines (α : Type*) [Finite α] [Nonempty α] (C : Type*) [Finite C]
   classical
   obtain ⟨L, hL⟩ := FiniteUnions.exists_monochromaticUnions C m
   obtain ⟨N, hN⟩ := Canonization.exists_canonical_of_le α C L
-  refine ⟨N, fun n hn χ ↦ ?_⟩
+  refine ⟨N, ?_⟩
+  intro n hn χ
   obtain ⟨V, hV⟩ := hN n hn (extend χ)
   obtain ⟨E, hE, hEE, c, hc⟩ := hL fun I ↦
     extend χ (wordMap V fun i ↦ if i ∈ I then none else some (Classical.arbitrary α))
-  refine ⟨compose V (ofBlocks (Classical.arbitrary α) E hE hEE), c, fun l ↦ ?_⟩
+  refine ⟨compose V (ofBlocks (Classical.arbitrary α) E hE hEE), c, ?_⟩
+  intro l
   rw [← extend_idxFun χ, composeLine_idxFun, wordMap_compose,
     hV _ _ (sameSupport_wordMap_ofBlocks l.idxFun {j | l.idxFun j = none} fun j ↦ by simp)]
   refine hc _ ?_
@@ -169,7 +177,8 @@ lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C] [Nonempty C]
       (le_trans one_le_two Fintype.one_lt_card) Fintype.card_pos n hn
       fun l ↦ Fintype.equivFin C (χ (l.map (Fintype.equivFin α).symm))
   refine ⟨V.reindex (Equiv.refl _) (Fintype.equivFin α).symm (Equiv.refl _),
-    (Fintype.equivFin C).symm c, fun l ↦ ?_⟩
+    (Fintype.equivFin C).symm c, ?_⟩
+  intro l
   rw [Subspace.mapLine_eq_composeLine, composeLine_reindex, ← hc (l.map (Fintype.equivFin α)),
     Equiv.symm_apply_apply]
 

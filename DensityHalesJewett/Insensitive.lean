@@ -79,7 +79,8 @@ lemma reindex {α ι ι' : Type*}
     IsInsensitive i j (DensityHalesJewett.transportWords e D) := by
   intro x y hxy
   simp only [mem_transportWords]
-  refine hD fun a hai haj c ↦ ?_
+  apply hD
+  intro a hai haj c
   exact hxy a hai haj (e c)
 
 /-- Fixing a prefix of coordinates preserves insensitivity of the remaining section. -/
@@ -88,7 +89,8 @@ lemma fiberSection {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕
     IsInsensitive i j (DensityHalesJewett.fiber D v) := by
   intro x y hxy
   simp only [mem_fiber]
-  refine hD fun a hai haj c ↦ ?_
+  apply hD
+  intro a hai haj c
   cases c with
   | inl c => simp only [Sum.elim_inl]
   | inr c => exact hxy a hai haj c
@@ -156,7 +158,8 @@ lemma fiber_congr {α ι κ : Type*} [Fintype (κ → α)] [DecidableEq (ι ⊕ 
     DensityHalesJewett.fiber D v = DensityHalesJewett.fiber D w := by
   ext y
   simp only [mem_fiber]
-  refine hD fun a hai haj c ↦ ?_
+  apply hD
+  intro a hai haj c
   cases c with
   | inl c => exact hvw a hai haj c
   | inr c => simp only [Sum.elim_inr]
@@ -240,17 +243,23 @@ lemma exists_isContained_of_insensitive {k m b : ℕ} (hDHJ : HasDensityHJ k) (h
         have := Subspace.card_le_of_density_le (k := k + 1) (Nat.succ_pos k) β E hdens
         push_cast at this ⊢
         exact this)
-  refine ⟨V, fun x ↦ ?_⟩
-  refine (hE fun a hai hal c ↦ ?_).mpr
+  refine ⟨V, ?_⟩
+  intro x
+  refine (hE ?_).mpr
     (hV (Finset.mem_image.mpr ⟨fun e ↦ if h : x e = Fin.last k then i else (x e).castPred h,
       Finset.mem_univ _, rfl⟩))
+  intro a hai hal c
   cases hc : V.idxFun c with
   | inl t => simp only [V.apply_inl hc]
   | inr e =>
       simp only [V.apply_inr hc, Function.comp_apply]
       by_cases hx : x e = Fin.last k
       · rw [dif_pos hx, hx, Fin.castSuccEmb_apply]
-        exact iff_of_false (fun h ↦ hal h.symm) (fun h ↦ hai h.symm)
+        apply iff_of_false
+        · intro h
+          exact hal h.symm
+        · intro h
+          exact hai h.symm
       · rw [dif_neg hx, Fin.castSuccEmb_apply, Fin.castSucc_castPred]
 
 /-- The two block orders describe the same ambient word. -/
@@ -438,7 +447,7 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
             ((fiber (transportWords e₁ R) z).dens : ℝ) := by
           rw [average_density_fiber, dens_transportWords]
         rw [haverage, div_eq_mul_inv, mul_comm β (((k : ℝ) + 1) ^ b)⁻¹, ← one_div]
-        refine le_trans (mul_le_mul_of_nonneg_left hgood (by positivity)) ?_
+        apply le_trans (mul_le_mul_of_nonneg_left hgood (by positivity))
         rw [← Finset.expect_indicator_one (s := good), Finset.mul_expect]
         refine Finset.expect_le_expect fun z _ ↦ ?_
         by_cases hz : z ∈ good
@@ -462,7 +471,8 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           rw [hv, he₂,
             fiber_transportWords_regroup e (s.trans (Equiv.sumComm (Fin (S * b)) (Fin b))) U u x]
           exact fiberSection (reindex _ (hins _)) _
-        refine sdiff hUpart fun y y' hyy' ↦ ?_
+        apply sdiff hUpart
+        intro y y' hyy'
         have hsection : B (Sum.elim u y) = B (Sum.elim u y') := by
           rw [hB, hB]
           exact fiber_congr (reindex s (hins u)) hyy'
@@ -522,7 +532,8 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           simp only [uncovered, Finset.mem_filter, Finset.mem_sdiff, Set.mem_union, Set.mem_image]
           constructor
           · rintro ⟨hwU, hfree⟩
-            refine ⟨⟨hwU, fun hwR ↦ ?_⟩, fun V hV ↦ hfree V (Or.inr hV)⟩
+            refine ⟨⟨hwU, ?_⟩, fun V hV ↦ hfree V (Or.inr hV)⟩
+            intro hwR
             obtain ⟨z, hz, hmem⟩ := hRtile w hwR
             exact hfree (tile z) (Or.inl ⟨z, hz, rfl⟩) hmem
           · rintro ⟨⟨hwU, hwR⟩, hfree⟩
@@ -555,7 +566,8 @@ lemma exists_tilingSufficient_dimension (k m : ℕ) (hDHJ : HasDensityHJ k) (hm 
           (fiber (transportWords (Equiv.emptySum (Fin 0) (Fin (T * b))).symm D) v) := by
       intro v x y hxy
       simp only [mem_fiber, mem_transportWords]
-      refine hD fun a hai hal c ↦ ?_
+      apply hD
+      intro a hai hal c
       simpa only [Function.comp_apply, Equiv.emptySum_symm_apply, Sum.elim_inr] using
         hxy a hai hal c
     obtain ⟨𝒱, hfinite, hcontained, hpairwise, hconclusion⟩ :=
@@ -713,7 +725,9 @@ lemma exists_eventually_tilingSufficient (k m : ℕ) (hDHJ : HasDensityHJ k) (hm
     {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
     ∃ N, ∀ n ≥ N, TilingSufficient k m β n := by
   obtain ⟨N, hN⟩ := exists_tilingSufficient_dimension k m hDHJ hm hβ₀ hβ₁
-  exact ⟨N, fun _n hn ↦ tilingSufficient_mono hN hn⟩
+  refine ⟨N, ?_⟩
+  intro _n hn
+  exact tilingSufficient_mono hN hn
 
 /-- A sufficient ambient dimension for tiling one insensitive family.  The tiling argument needs
 density Hales--Jewett for the smaller alphabet, so the witness is selected under
@@ -738,7 +752,9 @@ noncomputable def parameterPreimage {η α ι : Type*} [Fintype (η → α)]
     [DecidableEq (ι → α)] (V : Combinatorics.Subspace η α ι)
     (D : Finset (ι → α)) : Finset (η → α) := by
   classical
-  exact Finset.univ.filter fun x ↦ V x ∈ D
+  apply Finset.univ.filter
+  intro x
+  exact V x ∈ D
 
 /-- Pulling an insensitive family back through a subspace preserves its sensitivity pair. -/
 lemma parameterPreimage_isInsensitive {α η ι : Type*}
@@ -832,7 +848,11 @@ private lemma intersectionTilingSufficient_one {k m n : ℕ} {β : ℝ}
   have hintersection : intersection D = D 0 := by
     ext x
     simp only [mem_intersection]
-    exact ⟨fun hx ↦ hx 0, fun hx i ↦ by simpa only [Fin.eq_zero i] using hx⟩
+    constructor
+    · intro hx
+      exact hx 0
+    · intro hx i
+      simpa only [Fin.eq_zero i] using hx
   have hsensitive :
       IsInsensitive (Fin.castLE hrk 0).castSucc (Fin.last k) (D 0) :=
     hD 0
@@ -931,11 +951,12 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
     obtain ⟨W, hW, rfl⟩ := hU
     rw [mem_intersection]
     intro i
-    refine Fin.lastCases ?_ (fun j ↦ ?_) i
+    refine Fin.lastCases ?_ ?_ i
     · exact (hcomposed V).2.1 (Subspace.compose V W)
         (by simpa only [composed] using
           Set.mem_image_of_mem (Subspace.compose V.val) hW) x
-    · have hx := hcontained V V.prop (W x)
+    · intro j
+      have hx := hcontained V V.prop (W x)
       rw [mem_intersection] at hx
       simpa only [Subspace.compose_apply, D₀] using hx j
   · rw [Set.pairwiseDisjoint_iff]

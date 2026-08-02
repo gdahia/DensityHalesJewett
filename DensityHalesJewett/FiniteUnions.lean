@@ -38,7 +38,8 @@ lemma exists_translatedCube (C : Type*) [Finite C] (n : ℕ) :
           ∃ c, ∀ I : Finset (Fin n), d (E ∪ I.biUnion G) = c := by
   classical
   obtain ⟨M, hM⟩ := Combinatorics.Subspace.exists_mono_in_high_dimension_fin Bool C (Fin (n + 1))
-  refine ⟨M, fun d ↦ ?_⟩
+  refine ⟨M, ?_⟩
+  intro d
   obtain ⟨W, c, hc⟩ := hM fun x ↦ d {i | x i}
   set S : Finset (Fin M) := {i | W.idxFun i = Sum.inl true} with hS
   set X : Fin (n + 1) → Finset (Fin M) := fun j ↦ {i | W.idxFun i = Sum.inr j} with hX
@@ -177,7 +178,8 @@ lemma exists_monochromaticUnions (C : Type*) [Finite C] (m : ℕ) :
   classical
   have := Fintype.ofFinite C
   obtain ⟨D, hD⟩ := exists_minCanonical C ((m - 1) * Fintype.card C + 1)
-  refine ⟨D, fun d ↦ ?_⟩
+  refine ⟨D, ?_⟩
+  intro d
   obtain ⟨E, hE, hEE, f, hf⟩ := hD d
   obtain ⟨c, -, hcard⟩ :=
     Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to (s := Finset.univ)
@@ -188,7 +190,8 @@ lemma exists_monochromaticUnions (C : Type*) [Finite C] (m : ℕ) :
   obtain ⟨T, hTsub, hTcard⟩ :=
     Finset.exists_subset_card_eq (s := {i | f i = c}) (n := m) (by omega)
   refine ⟨fun j ↦ E (T.orderEmbOfFin hTcard j), fun j ↦ hE _,
-    fun i j hij ↦ hEE _ _ fun h ↦ hij ((T.orderEmbOfFin hTcard).injective h), c, fun J hJ ↦ ?_⟩
+    fun i j hij ↦ hEE _ _ fun h ↦ hij ((T.orderEmbOfFin hTcard).injective h), c, ?_⟩
+  intro J hJ
   rw [← Finset.image_biUnion, hf _ (hJ.image _)]
   obtain ⟨j, -, hj⟩ :=
     Finset.mem_image.1 (Finset.min'_mem _ (hJ.image (T.orderEmbOfFin hTcard)))
