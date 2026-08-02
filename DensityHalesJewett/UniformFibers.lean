@@ -491,7 +491,8 @@ lemma exists_denser_fiber {alphabet m q : ℕ} (halphabet : 0 < alphabet) {ε : 
   have hle : ∑ u : Fin m → Fin alphabet, ((fiber A u).dens : ℝ) ≤
       ∑ u : Fin m → Fin alphabet, (((A.dens : ℝ) + ε / (alphabet : ℝ) ^ m) +
         if u = u₀ then -(ε + ε / (alphabet : ℝ) ^ m) else 0) := by
-    refine Finset.sum_le_sum fun u _ ↦ ?_
+    apply Finset.sum_le_sum
+    intro u _
     by_cases hu : u = u₀
     · rw [hu, if_pos rfl]
       linarith
@@ -573,7 +574,7 @@ lemma exists_eventually_variableCutFibersSufficient (alphabet dimension : ℕ)
   obtain ⟨t, ht⟩ := exists_nat_gt (1 / (ε / (alphabet : ℝ) ^ dimension))
   refine ⟨dimension * (t + 1) + 1, ?_⟩
   intro n hn A
-  refine exists_variableCut_of_fuel alphabet dimension halphabet₀ hε t n (by omega) A ?_
+  apply exists_variableCut_of_fuel alphabet dimension halphabet₀ hε t n (by omega) A
   rw [div_lt_iff₀ hεpos] at ht
   linarith [NNRat.cast_nonneg (α := ℝ) A.dens]
 
@@ -607,8 +608,10 @@ lemma average_restrictedParameterSlice {k M : ℕ}
         ((fiber A (W (Fin.castSucc ∘ x))).dens : ℝ)) := by
   simp_rw [← Finset.expect_indicator_one]
   rw [Finset.expect_comm]
-  refine Finset.expect_congr rfl fun x _ ↦ ?_
-  refine Finset.expect_congr rfl fun y _ ↦ ?_
+  apply Finset.expect_congr rfl
+  intro x _
+  apply Finset.expect_congr rfl
+  intro y _
   by_cases h : Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A
   · have hx : x ∈ Finset.univ.filter fun z : Fin M → Fin k ↦
         Sum.elim (W (Fin.castSucc ∘ z)) y ∈ A :=
@@ -732,7 +735,7 @@ lemma exists_eventually_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k
   intro n hn A hA
   have hM : 1 ≤ M := le_max_left _ _
   have hA' : δ ≤ (A.dens : ℝ) := by
-    refine density_le_of_card_le (Nat.zero_lt_succ k) δ A ?_
+    apply density_le_of_card_le (Nat.zero_lt_succ k) δ A
     convert hA using 1
     norm_num
   obtain ⟨p, q, e, _hq, W, hW⟩ :=
@@ -745,7 +748,7 @@ lemma exists_eventually_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k
   obtain ⟨S, hS⟩ :=
     exists_of_density hDHJ m hm (δ / 2) (by linarith) M (le_max_right _ _) B
       (card_le_of_density_le hk (δ / 2) B (by simpa only [B] using hy))
-  refine extend_restricted_subspace e A W y S ?_
+  apply extend_restricted_subspace e A W y S
   intro x
   rw [← mem_splitWords]
   simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using hS x

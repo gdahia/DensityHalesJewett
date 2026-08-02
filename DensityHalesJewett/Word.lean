@@ -75,7 +75,7 @@ lemma density_ge_threshold {X : Type*} [Fintype X] [Nonempty X]
     exact hba.trans_le <| havg.trans <|
       Finset.expect_le Finset.univ_nonempty fun x _ ↦ hf₁ x
   rw [div_le_iff₀ h1b, sub_le_iff_le_add]
-  refine havg.trans ?_
+  apply havg.trans
   convert Finset.expect_le_expect (s := Finset.univ) (f := f)
     (g := fun x ↦ b + (1 - b) * Set.indicator (H : Set X) 1 x) ?_ using 1
   · symm

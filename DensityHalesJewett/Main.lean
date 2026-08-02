@@ -134,7 +134,7 @@ lemma centralBinom_ratio_sq_mul_le (m : ℕ) :
       rw [hratio, mul_pow, mul_assoc]
       refine le_trans (mul_le_mul_of_nonneg_left ?_ (sq_nonneg _)) ih
       rw [div_pow, div_mul_eq_mul_div]
-      refine (div_le_iff₀ (sq_pos_of_pos (by positivity))).mpr ?_
+      apply (div_le_iff₀ (sq_pos_of_pos (by positivity))).mpr
       push_cast
       ring_nf
       nlinarith
@@ -177,8 +177,8 @@ lemma middleBinomial_ratio_le_central (n : ℕ) :
             (Nat.choose_le_centralBinom (m + 1) (m + 1))
       rw [pow_succ, two_pow_two_mul]
       rw [mul_comm (4 ^ (m + 1) : ℝ) 2]
-      refine le_trans (b := (2 * Nat.centralBinom (m + 1) : ℝ) /
-        (2 * 4 ^ (m + 1))) ?_ ?_
+      apply le_trans (b := (2 * Nat.centralBinom (m + 1) : ℝ) /
+        (2 * 4 ^ (m + 1)))
       · exact (div_le_div_iff_of_pos_right
           (by positivity : (0 : ℝ) < 2 * 4 ^ (m + 1))).mpr <| by
             exact_mod_cast hchoose
@@ -200,7 +200,7 @@ lemma exists_middleBinomial_lt (δ : ℝ) (hδ : 0 < δ) :
   refine ⟨2 * M, ?_⟩
   intro n hn
   have hMn : M ≤ n / 2 := (Nat.le_div_iff_mul_le (by norm_num)).mpr (by grind)
-  refine (div_lt_iff₀ (by positivity : (0 : ℝ) < 2 ^ n)).mp ?_
+  apply (div_lt_iff₀ (by positivity : (0 : ℝ) < 2 ^ n)).mp
   refine (middleBinomial_ratio_le_central n).trans_lt <|
     (centralBinom_ratio_le_inv_sqrt (n / 2)).trans_lt ?_
   exact hM (n / 2) hMn
