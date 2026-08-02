@@ -1,4 +1,3 @@
-import DensityHalesJewett.Basic
 import DensityHalesJewett.Canonization
 import DensityHalesJewett.Challenge
 import DensityHalesJewett.DensityIncrement

@@ -5,10 +5,10 @@ Authors: Gabriel Dahia
 -/
 module
 
-public import DensityHalesJewett.Main
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.Order.Archimedean.Real.Basic
 public import Mathlib.Combinatorics.Pigeonhole
+public import DensityHalesJewett.Main
 
 /-!
 # Arithmetic progressions from combinatorial lines
