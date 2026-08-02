@@ -749,8 +749,7 @@ lemma tilingBound_spec (k m n : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
 
 /-- The preimage of a word family in a subspace parameter cube. -/
 noncomputable def parameterPreimage {η α ι : Type*} [Fintype (η → α)]
-    [DecidableEq (ι → α)] (V : Combinatorics.Subspace η α ι)
-    (D : Finset (ι → α)) : Finset (η → α) := by
+    (V : Combinatorics.Subspace η α ι) (D : Finset (ι → α)) : Finset (η → α) := by
   classical
   apply Finset.univ.filter
   intro x
@@ -758,10 +757,8 @@ noncomputable def parameterPreimage {η α ι : Type*} [Fintype (η → α)]
 
 /-- Pulling an insensitive family back through a subspace preserves its sensitivity pair. -/
 lemma parameterPreimage_isInsensitive {α η ι : Type*}
-    [Fintype (η → α)] [DecidableEq (ι → α)]
-    {a b : α} (V : Combinatorics.Subspace η α ι) (D : Finset (ι → α))
-    (hD : IsInsensitive a b D) :
-    IsInsensitive a b (parameterPreimage V D) := by
+    [Fintype (η → α)] {a b : α} (V : Combinatorics.Subspace η α ι) (D : Finset (ι → α))
+    (hD : IsInsensitive a b D) : IsInsensitive a b (parameterPreimage V D) := by
   classical
   intro x y hxy
   simp only [parameterPreimage, Finset.mem_filter, Finset.mem_univ, true_and]
