@@ -419,11 +419,12 @@ lemma firstFailureFamily_intersection {k : ℕ} {X : Type*} [Fintype X] [Decidab
     Finset.mem_inter, Finset.mem_compl, Finset.mem_filter, Finset.mem_univ, true_and]
   constructor
   · intro hx
-    refine ⟨?_, fun j hij ↦ ?_⟩
+    constructor
     · have hxi := hx i
       simp only [lt_self_iff_false, ↓reduceIte, Finset.mem_compl] at hxi
       exact hxi
-    · simpa only [if_pos hij] using hx j
+    · intro j hij
+      simpa only [if_pos hij] using hx j
   · rintro ⟨hnot, hbefore⟩ j
     by_cases hij : j < i
     · simpa only [if_pos hij] using hbefore j hij

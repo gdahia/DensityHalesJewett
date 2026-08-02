@@ -431,8 +431,10 @@ lemma average_suffixPullback_lower {α η ι κ : Type*} [Nonempty α] [Fintype 
         rw [Finset.expect_comm (Finset.univ : Finset (η → α)) (Finset.univ : Finset (κ → α))]
       _ = 𝔼 y : κ → α, 𝔼 x : η → α,
           (Set.indicator (suffixPullback V A y) (1 : (η → α) → ℝ) x : ℝ) := by
-        refine Finset.expect_congr rfl fun y _ => ?_
-        refine Finset.expect_congr rfl fun x _ => ?_
+        apply Finset.expect_congr rfl
+        intro y _
+        apply Finset.expect_congr rfl
+        intro x _
         by_cases h : Sum.elim (V x) y ∈ A
         · have hy : y ∈ fiber A (V x) := by simpa [fiber] using h
           have hx : x ∈ suffixPullback V A y := by
@@ -472,7 +474,7 @@ lemma density_near_average {X : Type*} [Fintype X] [Nonempty X]
         have : ¬(δ - 2 * η ≤ f x) := by simpa [H] using hxH
         linarith
     have hexpect : 𝔼 x : X, f x ≤ (δ - 2 * η) + (η ^ 2 / 2 + 2 * η) * ((H.dens : ℝ)) := by
-      refine (Finset.expect_le_expect fun x _ ↦ hfg x).trans_eq ?_
+      apply (Finset.expect_le_expect fun x _ ↦ hfg x).trans_eq
       rw [Finset.expect_add_distrib, Finset.expect_const univ_nonempty, ← Finset.mul_expect]
       simp
     linarith [havg, hexpect,
@@ -505,7 +507,8 @@ lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
             (Set.indicator (Finset.univ.filter fun y ↦
               ∀ a, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A)
               (1 : (κ → Fin (k + 1)) → ℝ) y : ℝ) := by
-        refine Finset.expect_congr rfl fun l _ => ?_
+        apply Finset.expect_congr rfl
+        intro l _
         rw [← Finset.expect_indicator_one]
       _ = 𝔼 y : κ → Fin (k + 1),
           𝔼 l : Combinatorics.Line (Fin k) (Fin m),
@@ -518,8 +521,10 @@ lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
           𝔼 l : Combinatorics.Line (Fin k) (Fin m),
           (Set.indicator (suffixLines V A y)
             (1 : Combinatorics.Line (Fin k) (Fin m) → ℝ) l : ℝ) := by
-        refine Finset.expect_congr rfl fun y _ => ?_
-        refine Finset.expect_congr rfl fun l _ => ?_
+        apply Finset.expect_congr rfl
+        intro y _
+        apply Finset.expect_congr rfl
+        intro l _
         dsimp [suffixLines]
         by_cases h : ∀ a : Fin k, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A
         · simp [h]
@@ -584,7 +589,7 @@ lemma exists_suffix_many_lines {k m : ℕ} (hk : 2 ≤ k)
   let g := fun y : κ → Fin (k + 1) ↦ ((suffixLines V A y).dens : ℝ)
   by_cases hinc : ∃ y, δ + Parameters.η k δ ^ 2 / 2 ≤ f y
   · exact Or.inl hinc
-  refine Or.inr ?_
+  apply Or.inr
   have hη₀ : 0 < Parameters.η k δ := Parameters.η_pos hk hδ₀
   have hη₁ : Parameters.η k δ ≤ 1 :=
     (Parameters.η_le_δ_div_six k δ).trans (by linarith)
@@ -670,10 +675,12 @@ lemma Subspace.fixSuffixReindex_statistics {k m : ℕ} {ι κ ζ : Type*}
   · dsimp [suffixLines]
     congr
     ext l
-    refine ⟨fun h a => ?_, fun h a => ?_⟩
-    · rw [← h_mem_map (Fin.castSucc ∘ l a)]
+    constructor
+    · intro h a
+      rw [← h_mem_map (Fin.castSucc ∘ l a)]
       exact h a
-    · rw [h_mem_map (Fin.castSucc ∘ l a)]
+    · intro h a
+      rw [h_mem_map (Fin.castSucc ∘ l a)]
       exact h a
 
 /-- A bound for the many-lines lemma. -/

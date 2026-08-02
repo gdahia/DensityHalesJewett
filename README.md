@@ -2,17 +2,16 @@
 
 This repository contains the Lean 4 formalization of
 [**A Simple Proof of the Density Hales–Jewett Theorem**](https://doi.org/10.1093/imrn/rnt041), by
-Pandelis Dodos, Vassilis Kanellopoulos, and Konstantinos Tyros. The published paper appeared in
-*International Mathematics Research Notices*, Volume 2014, Issue 12, pages 3340–3352, and the
-authors' [preprint is available on arXiv](https://arxiv.org/abs/1209.4986).
+Pandelis Dodos, Vassilis Kanellopoulos, and Konstantinos Tyros.
+The paper appeared in *International Mathematics Research Notices*, Volume 2014, Issue 12, pages
+3340–3352, and the authors' [preprint is available on arXiv](https://arxiv.org/abs/1209.4986).
 
-The proof is purely combinatorial and works with the uniform measure on finite word spaces. The
-main results are the positive-density combinatorial-line theorem
+The main results are the positive-density combinatorial-line theorem
 `Combinatorics.Line.exists_of_density` and its consequence for arithmetic progressions of
 arbitrary finite length, Szemerédi's theorem on the integers,
-`Combinatorics.ArithmeticProgression.exists_of_density_nat`. Both are also stated in the asymptotic
-`Filter.atTop` form in [`Challenge.lean`](DensityHalesJewett/Challenge.lean), proved using only
-Mathlib's API.
+`Combinatorics.ArithmeticProgression.exists_of_density_nat`.
+Both are also stated in the asymptotic `Filter.atTop` form in
+[`Challenge.lean`](DensityHalesJewett/Challenge.lean), proved using only Mathlib's API.
 
 ## Other formalized results
 

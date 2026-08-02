@@ -45,7 +45,7 @@ lemma m₀_antitone {k : ℕ} (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
   apply Nat.succ_le_succ
   apply Nat.find_min'
   intro n hn A hA
-  refine Nat.find_spec (hDHJ (δ / 4) (by linarith)) n hn A (le_trans (by gcongr) hA)
+  exact Nat.find_spec (hDHJ (δ / 4) (by linarith)) n hn A (le_trans (by gcongr) hA)
 
 /-- The denominator in the parameter definition grows with the selected dimension. -/
 lemma power_difference_mono (k : ℕ) {m n : ℕ} (hmn : m ≤ n) :
@@ -55,7 +55,7 @@ lemma power_difference_mono (k : ℕ) {m n : ℕ} (hmn : m ≤ n) :
   | base => rfl
   | succ n _ ih =>
     rw [pow_succ, pow_succ]
-    refine ih.trans ?_
+    apply ih.trans
     rw [Nat.cast_add, Nat.cast_one]
     suffices 0 ≤ (k : ℝ) * (((k + 1 : ℕ) : ℝ) ^ n - (k : ℝ) ^ n) by
       rw [Nat.cast_add, Nat.cast_one] at this
@@ -159,7 +159,7 @@ lemma γ_pos {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) : 0 < γ k δ :=
 lemma η_lt_θ_div_two {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ : 0 < δ) :
     η k δ < θ k δ / 2 := by
   unfold η
-  refine lt_of_le_of_lt ((min_le_right _ _).trans (min_le_left _ _)) ?_
+  apply lt_of_le_of_lt ((min_le_right _ _).trans (min_le_left _ _))
   linarith [θ_pos hk hδ]
 
 lemma η_le_δ_div_six (k : ℕ) (δ : ℝ) : η k δ ≤ δ / 6 := by
@@ -190,7 +190,7 @@ lemma θ_le_one {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₁ : δ ≤ 1) :
   have h_one_le_diff : 1 ≤ ((k + 1 : ℕ) : ℝ) ^ m₀ k δ - (k : ℝ) ^ m₀ k δ := by
     have h1 : ((k + 1 : ℕ) : ℝ) ^ 1 - (k : ℝ) ^ 1 = (1 : ℝ) := by norm_num
     simpa [h1] using power_difference_mono k (Nat.succ_le_of_lt (m₀_pos k δ))
-  refine (div_le_one hden_pos).mpr ?_
+  apply (div_le_one hden_pos).mpr
   linarith [hδ₁, h_one_le_diff]
 
 /-- The numerical parameters turn the absolute density left outside a large intersection into

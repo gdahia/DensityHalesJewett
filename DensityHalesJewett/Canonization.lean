@@ -120,22 +120,28 @@ private lemma exists_canonical_aux (α : Type*) [Finite α] (C : Type*) [Finite 
   induction ℓ with
   | zero =>
     intro P S _ _
-    refine ⟨PEmpty, inferInstance,
-      fun χ ↦ ⟨⟨PEmpty.elim, fun e ↦ e.elim0⟩, fun p s x y _ ↦ ?_⟩⟩
-    exact congrArg (fun w ↦ χ p w s) (funext fun i ↦ i.elim)
+    refine ⟨PEmpty, inferInstance, ?_⟩
+    intro χ
+    refine ⟨⟨PEmpty.elim, ?_⟩, ?_⟩
+    · intro e
+      exact e.elim0
+    · intro p s _ _ _
+      exact congrArg (fun w ↦ χ p w s) (funext fun i ↦ i.elim)
   | succ ℓ ih =>
     intro P S _ _
     obtain ⟨B, _, hB⟩ := ih P (Unit ⊕ S)
     obtain ⟨B', _, hB'⟩ := Combinatorics.Line.exists_mono_in_high_dimension α
       ((P → Option α) → (B → Option α) → (S → Option α) → C)
-    refine ⟨B ⊕ B', inferInstance, fun χ ↦ ?_⟩
+    refine ⟨B ⊕ B', inferInstance, ?_⟩
+    intro χ
     obtain ⟨l, prof, hprof⟩ := hB' fun u p b s ↦ χ p (Sum.elim b (some ∘ u)) s
     have hprof' : ∀ (a : α) (p : P → Option α) (b : B → Option α) (s : S → Option α),
         χ p (Sum.elim b (some ∘ l a)) s = prof p b s :=
       fun a p b s ↦ congrFun (congrFun (congrFun (hprof a) p) b) s
     obtain ⟨V, hV⟩ := hB fun p b q ↦
       χ p (Sum.elim b (Line.fillOption l (q (Sum.inl ())))) fun s ↦ q (Sum.inr s)
-    refine ⟨consLine V l, fun p s x y hxy ↦ ?_⟩
+    refine ⟨consLine V l, ?_⟩
+    intro p s x y hxy
     rw [wordMap_consLine, wordMap_consLine]
     refine Eq.trans (hV p (Sum.elim (fun _ ↦ x 0) s) (fun i ↦ x i.succ) (fun i ↦ y i.succ)
       fun i ↦ hxy i.succ) ?_
@@ -157,7 +163,8 @@ lemma exists_canonical (α : Type*) [Finite α] (C : Type*) [Finite C] (ℓ : �
         ∀ x y : Fin ℓ → Option α, SameSupport x y → χ (wordMap V x) = χ (wordMap V y) := by
   obtain ⟨B, _, hB⟩ := exists_canonical_aux α C ℓ PEmpty PEmpty
   have := Fintype.ofFinite B
-  refine ⟨Fintype.card B, fun χ ↦ ?_⟩
+  refine ⟨Fintype.card B, ?_⟩
+  intro χ
   obtain ⟨V, hV⟩ := hB fun _ w _ ↦ χ (w ∘ (Fintype.equivFin B).symm)
   have hw : ∀ z : Fin ℓ → Option α,
       wordMap (V.reindex (Equiv.refl _) (Equiv.refl _) (Fintype.equivFin B)) z
@@ -166,7 +173,8 @@ lemma exists_canonical (α : Type*) [Finite α] (C : Type*) [Finite C] (ℓ : �
     funext i
     cases h : V.idxFun ((Fintype.equivFin B).symm i) <;>
       simp [wordMap, Combinatorics.Subspace.reindex, h]
-  refine ⟨V.reindex (Equiv.refl _) (Equiv.refl _) (Fintype.equivFin B), fun x y hxy ↦ ?_⟩
+  refine ⟨V.reindex (Equiv.refl _) (Equiv.refl _) (Fintype.equivFin B), ?_⟩
+  intro x y hxy
   rw [hw x, hw y]
   exact hV PEmpty.elim PEmpty.elim x y hxy
 
@@ -176,9 +184,11 @@ lemma exists_canonical_of_le (α : Type*) [Finite α] [Nonempty α] (C : Type*) 
       ∃ V : Combinatorics.Subspace (Fin ℓ) α (Fin n),
         ∀ x y : Fin ℓ → Option α, SameSupport x y → χ (wordMap V x) = χ (wordMap V y) := by
   obtain ⟨N, hN⟩ := exists_canonical α C ℓ
-  refine ⟨N, fun n hn χ ↦ ?_⟩
+  refine ⟨N, ?_⟩
+  intro n hn χ
   obtain ⟨V, hV⟩ := hN fun w ↦ χ (wordMap (padInitial α hn) w)
-  refine ⟨compose (padInitial α hn) V, fun x y hxy ↦ ?_⟩
+  refine ⟨compose (padInitial α hn) V, ?_⟩
+  intro x y hxy
   rw [wordMap_compose, wordMap_compose]
   exact hV x y hxy
 

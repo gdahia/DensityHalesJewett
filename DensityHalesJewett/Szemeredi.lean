@@ -5,10 +5,10 @@ Authors: Gabriel Dahia
 -/
 module
 
-public import DensityHalesJewett.Main
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.Order.Archimedean.Real.Basic
 public import Mathlib.Combinatorics.Pigeonhole
+public import DensityHalesJewett.Main
 
 /-!
 # Arithmetic progressions from combinatorial lines
@@ -179,8 +179,7 @@ theorem exists_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ)
   let K := k ^ m
   obtain ⟨q, _, hqA⟩ : ∃ q : ℕ, (q + 1) * K ≤ n ∧
       δ / 2 * K ≤ #(A ∩ Finset.Ico (q * K) ((q + 1) * K)) := by
-    refine DensityHalesJewett.exists_dense_digitBlock ?_ hδ ?_ A hAn hAδ
-    · exact one_le_pow₀ hk_one
+    refine DensityHalesJewett.exists_dense_digitBlock (one_le_pow₀ hk_one) hδ ?_ A hAn hAδ
     · apply Nat.le_of_ceil_le
       simpa only [densityTheoremBound, m, K] using hn
   let encode (x : Fin m → Fin k) := q * K + (finFunctionFinEquiv x : ℕ)

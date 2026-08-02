@@ -54,7 +54,7 @@ noncomputable def denseGrids (δ : ℝ) (m n D : ℕ) (A : Finset ℕ) : Finset 
 
 lemma card_grids_le (m n D : ℕ) :
     #(grids m n D) ≤ n * D := by
-  refine (Finset.card_le_card (Finset.filter_subset _ _)).trans ?_
+  apply (Finset.card_le_card (Finset.filter_subset _ _)).trans
   simp [Nat.card_Icc]
 
 lemma card_gridIncidences_upper_bound (δ : ℝ) (hδ : 0 ≤ δ) (m n D : ℕ)
@@ -69,7 +69,7 @@ lemma card_gridIncidences_upper_bound (δ : ℝ) (hδ : 0 ≤ δ) (m n D : ℕ)
       intro p hp
       by_cases hpdense : p ∈ denseGrids δ m n D A
       · rw [if_pos hpdense]
-        refine le_add_of_nonneg_of_le (by positivity) ?_
+        apply le_add_of_nonneg_of_le (by positivity)
         change ((#((range m).filter fun i ↦ p.1 + i * p.2 ∈ A) : ℕ) : ℝ) ≤ m
         exact_mod_cast (Finset.card_filter_le _ _).trans_eq (Finset.card_range m)
       · simp only [if_neg hpdense, add_zero]
@@ -106,7 +106,7 @@ lemma card_gridIncidences_lower_bound (m n D W : ℕ) (hW : m * D ≤ W)
     have hidW : x.2 * x.1.2 ≤ W := by
       exact (Nat.mul_le_mul hxi.le hxd.2).trans hW
     have hidX : x.2 * x.1.2 ≤ x.1.1 := hidW.trans hxA.2.1
-    refine ⟨?_, ?_⟩
+    constructor
     · refine ⟨?_, Finset.mem_range.mpr hxi⟩
       refine ⟨⟨Finset.mem_range.mpr ?_, Finset.mem_Icc.mpr hxd⟩, ?_⟩
       · exact (Nat.sub_le _ _).trans_lt (Finset.mem_range.mp (hAn hxA.1))
@@ -148,8 +148,8 @@ lemma card_inter_interior (n W : ℕ) (A : Finset ℕ) (hAn : A ⊆ range n) :
     have := Finset.mem_range.mp (hAn hx.1)
     omega
   have : #(A \ Icc W (n - W)) ≤ 2 * W := by
-    refine (Finset.card_le_card houtside).trans ?_
-    refine (Finset.card_union_le _ _).trans ?_
+    apply (Finset.card_le_card houtside).trans
+    apply (Finset.card_union_le _ _).trans
     rw [Finset.card_range, Nat.card_Ico]
     omega
   rw [← Finset.card_inter_add_card_sdiff A (Icc W (n - W))]
