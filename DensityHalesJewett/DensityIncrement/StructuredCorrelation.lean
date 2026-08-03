@@ -229,7 +229,7 @@ lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
     have hgne : good.Nonempty := by
       apply Finset.dens_pos.mp
       exact_mod_cast hgoodpos
-    letI : Nonempty (Combinatorics.Line (Fin k) (Fin m)) := ⟨hgne.choose⟩
+    let : Nonempty (Combinatorics.Line (Fin k) (Fin m)) := ⟨hgne.choose⟩
     exact_mod_cast Fintype.card_pos
   rw [Finset.nnratCast_dens, Finset.card_map]
   rw [Finset.nnratCast_dens] at hgood hrestricted
@@ -377,11 +377,11 @@ lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
         δ - 3 * Parameters.η k δ ≤
           ((pullback V A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) := by
   classical
-  letI : Fintype (Combinatorics.Line (Fin k) (Fin m)) :=
+  let : Fintype (Combinatorics.Line (Fin k) (Fin m)) :=
     Fintype.ofInjective (fun l ↦ l.idxFun) fun _ _ h ↦ Combinatorics.Line.ext h
   obtain ⟨V, hV⟩ | ⟨V, hV, hlines⟩ :=
     exists_subspace_many_lines hk hDHJ m hm δ hδ₀ hδ₁ n hn A hA
-  · exact False.elim <| (not_lt_of_ge hV) (hsmall V)
+  · exact ((not_lt_of_ge hV) (hsmall V)).elim
   obtain ⟨C, hC, hCdense, hAC⟩ :=
     exists_endpoint_insensitive_intersection hk δ hδ₀ hδ₁ hm_large A V hfree hlines
   refine ⟨V, C, hC, ?_⟩
@@ -459,8 +459,7 @@ lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X
   · rw [Finset.mem_compl]
     intro hx
     have hfailed : ∃ i, x ∉ C i := by
-      by_contra h
-      push Not at h
+      by_contra! h
       exact hx <| IsInsensitive.mem_intersection.mpr h
     let I := Finset.univ.filter fun i : Fin k ↦ x ∉ C i
     have hI : I.Nonempty := by
@@ -548,13 +547,12 @@ lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
       Parameters.γ k δ ≤ ((firstFailurePiece C i).dens : ℝ) ∧
       (δ + Parameters.γ k δ) * ((firstFailurePiece C i).dens : ℝ) ≤
         ((A ∩ firstFailurePiece C i).dens : ℝ) := by
-  by_contra h
-  push Not at h
+  by_contra! h
   let g := Parameters.γ k δ
   let e := Parameters.η k δ
   let c := (((IsInsensitive.intersection C)ᶜ).dens : ℝ)
   let a := ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ)
-  letI : Nonempty (Fin k) := ⟨⟨0, lt_of_lt_of_le Nat.zero_lt_two hk⟩⟩
+  let : Nonempty (Fin k) := ⟨⟨0, lt_of_lt_of_le Nat.zero_lt_two hk⟩⟩
   have hg₀ : 0 < g := Parameters.γ_pos hk hδ₀
   have he₀ : 0 < e := Parameters.η_pos hk hδ₀
   have hsum_lt :
@@ -665,8 +663,8 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
   by_cases hlarge : ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       δ + Parameters.η k δ ^ 2 / 2 ≤ (Subspace.relativeDensity V A : ℝ)
   · obtain ⟨V, hV⟩ := hlarge
-    letI : Nonempty (Fin k) := ⟨⟨0, by omega⟩⟩
-    letI : DecidableEq (Fin m → Fin (k + 1)) := Classical.decEq _
+    let : Nonempty (Fin k) := ⟨⟨0, by omega⟩⟩
+    let : DecidableEq (Fin m → Fin (k + 1)) := Classical.decEq _
     let D := fun _ : Fin k ↦ (Finset.univ : Finset (Fin m → Fin (k + 1)))
     have hD : IsInsensitive.intersection D = Finset.univ := by
       simpa only [IsInsensitive.intersection, D] using

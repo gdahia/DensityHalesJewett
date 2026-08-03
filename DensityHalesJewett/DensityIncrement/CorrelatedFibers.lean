@@ -70,7 +70,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
           ((Finset.univ.filter fun y ↦
             ∀ a, Sum.elim (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
               Parameters.θ k δ)) := by
-  letI : Nontrivial (Fin (k + 1)) :=
+  let : Nontrivial (Fin (k + 1)) :=
     Fintype.one_lt_card_iff_nontrivial.mp (by
       simp only [Fintype.card_fin]
       omega)
@@ -88,7 +88,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       obtain ⟨i, _⟩ := R.proper ⟨0, hM⟩
       exact Fin.elim0 i
     obtain ⟨U, hU⟩ := huniform hL
-    letI : Fintype (Combinatorics.Line (Fin (k + 1)) (Fin L)) :=
+    let : Fintype (Combinatorics.Line (Fin (k + 1)) (Fin L)) :=
       Subspace.lineFintype (k + 1) L
     let goodLines :=
       Finset.univ.filter fun q : Combinatorics.Line (Fin (k + 1)) (Fin L) ↦
@@ -120,7 +120,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
         simpa only [Subspace.compose_apply] using lt_of_not_ge hl
   · have hM₀ : M = 0 := by omega
     subst M
-    letI : Fintype (ι → Fin (k + 1)) := Fintype.ofFinite _
+    let : Fintype (ι → Fin (k + 1)) := Fintype.ofFinite _
     have havg :
         δ ≤ 𝔼 x : ι → Fin (k + 1), ((fiber A x).dens : ℝ) := by
       simpa only [average_density_fiber] using hA
@@ -226,7 +226,7 @@ lemma dense_suffixes_of_uniform_fibers {k M : ℕ} (hk : 2 ≤ k)
         δ / 4 ≤
           ((Finset.univ.filter fun x : Fin M → Fin k ↦
             Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)).dens : ℝ) := by
-  letI : Nonempty (Fin k) := ⟨⟨0, by omega⟩⟩
+  let : Nonempty (Fin k) := ⟨⟨0, by omega⟩⟩
   let f := fun y : κ → Fin (k + 1) ↦
     ((Finset.univ.filter fun x : Fin M → Fin k ↦
       Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)
@@ -271,7 +271,7 @@ lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
     intro x
     simpa only [W₀, Subspace.compose_apply] using hfibers (R x)
   have hdense := dense_suffixes_of_uniform_fibers hk hδ₀ hδ₁ A W₀ hW₀
-  letI := Subspace.lineFintype k q
+  let := Subspace.lineFintype k q
   let B := Finset.univ.filter fun y : κ → Fin (k + 1) ↦
     δ / 4 ≤
       ((Finset.univ.filter fun x : Fin q → Fin k ↦
@@ -297,12 +297,9 @@ lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
           (by simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and, S] using hy)
     exact ⟨l, fun a ↦ by
       simpa only [S, Finset.mem_filter, Finset.mem_univ, true_and] using hl a⟩
-  let y₀ := hBne.choose
-  have hy₀ : y₀ ∈ B := hBne.choose_spec
-  obtain ⟨l₀, _⟩ := existsLine y₀ hy₀
-  letI : Nonempty (Combinatorics.Line (Fin k) (Fin q)) := ⟨l₀⟩
-  let lineAt : {y // y ∈ B} → Combinatorics.Line (Fin k) (Fin q) := fun y ↦
-    Classical.choose <| existsLine y y.2
+  choose lineAt hlineAt using fun y : {y // y ∈ B} ↦ existsLine y y.2
+  let l₀ := lineAt ⟨hBne.choose, hBne.choose_spec⟩
+  let : Nonempty (Combinatorics.Line (Fin k) (Fin q)) := ⟨l₀⟩
   let f : (κ → Fin (k + 1)) → Combinatorics.Line (Fin k) (Fin q) := fun y ↦
     if hy : y ∈ B then lineAt ⟨y, hy⟩ else l₀
   obtain ⟨l, hl⟩ := Subspace.exists_fiber_density B f
@@ -316,7 +313,7 @@ lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
       simpa only [f, dif_pos hy.1] using hy.2
     intro a
     rw [← hline]
-    exact Classical.choose_spec (existsLine y hy.1) a
+    exact hlineAt ⟨y, hy.1⟩ a
   have hcard :
       (Fintype.card (Combinatorics.Line (Fin k) (Fin q)) : ℝ) =
         ((k + 1 : ℕ) : ℝ) ^ q - (k : ℝ) ^ q := by

@@ -376,7 +376,7 @@ lemma density_increment_chain_step {k R n j : ℕ} (hk : 2 ≤ k)
       ∃ W : Combinatorics.Subspace (Fin (d (j + 1))) (Fin (k + 1)) (Fin n),
         δ + ((j + 1 : ℕ) : ℝ) * (Parameters.γ k δ / 2) ≤
           (Subspace.relativeDensity W A : ℝ) := by
-  letI : Nontrivial (Fin (k + 1)) :=
+  let : Nontrivial (Fin (k + 1)) :=
     Fintype.one_lt_card_iff_nontrivial.mp (by
       simp only [Fintype.card_fin]
       omega)
@@ -491,8 +491,8 @@ lemma exists_of_density_card_le_one (α : Type*) [Fintype α]
     (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
     ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
   classical
-  letI : Subsingleton α := Fintype.card_le_one_iff_subsingleton.mp hα
-  letI : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
+  let : Subsingleton α := Fintype.card_le_one_iff_subsingleton.mp hα
+  let : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
   refine ⟨Line.diagonal α (Fin n), ?_⟩
   intro x
   have hcard : Fintype.card α = 1 :=

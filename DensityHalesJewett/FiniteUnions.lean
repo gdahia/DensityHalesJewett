@@ -187,7 +187,7 @@ lemma exists_monochromaticUnions (C : Type*) [Finite C] (m : ℕ) :
       (∀ i, (E i).Nonempty) ∧ (∀ i j, i ≠ j → Disjoint (E i) (E j)) ∧
         ∃ c, ∀ J : Finset (Fin m), J.Nonempty → d (J.biUnion E) = c := by
   classical
-  have := Fintype.ofFinite C
+  let _ := Fintype.ofFinite C
   obtain ⟨D, hD⟩ := exists_minCanonical C ((m - 1) * Fintype.card C + 1)
   refine ⟨D, ?_⟩
   intro d

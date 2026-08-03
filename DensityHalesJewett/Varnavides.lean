@@ -111,7 +111,7 @@ lemma card_gridIncidences_lower_bound (m n D W : ℕ) (hW : m * D ≤ W)
       refine ⟨⟨Finset.mem_range.mpr ?_, Finset.mem_Icc.mpr hxd⟩, ?_⟩
       · exact (Nat.sub_le _ _).trans_lt (Finset.mem_range.mp (hAn hxA.1))
       · dsimp only [f, Prod.fst, Prod.snd]
-        have := (Nat.mul_le_mul_left m hxd.2).trans hW
+        have : m * x.1.2 ≤ W := (Nat.mul_le_mul_left m hxd.2).trans hW
         omega
     · dsimp only [f, Prod.fst, Prod.snd]
       rw [Nat.sub_add_cancel hidX]
@@ -244,18 +244,7 @@ lemma denseGrids_card_le_containedProgressions_mul (k : ℕ) (hk : 3 ≤ k)
     refine exists_containedProgression_of_dense_indices k hk δ hδ m n hm A hAn p.1 ?_ hp.2
     rw [grids, Finset.mem_filter, Finset.mem_product] at hp
     exact ne_of_gt (Finset.mem_Icc.mp hp.1.1.2).1
-  let q (p : ↥S) := (hex p).choose
-  have hq (p : ↥S) :
-      q p ∈ containedProgressions k n A ∧
-        ∃ P : ArithmeticProgression ℕ k,
-          P.start < m ∧ P.diff < m ∧
-          q p = (p.1.1 + P.start * p.1.2, P.diff * p.1.2) :=
-    (hex p).choose_spec
-  let P (p : ↥S) := (hq p).2.choose
-  have hP (p : ↥S) :
-      (P p).start < m ∧ (P p).diff < m ∧
-        q p = (p.1.1 + (P p).start * p.1.2, (P p).diff * p.1.2) :=
-    (hq p).2.choose_spec
+  choose q hq P hP using hex
   have hfiber (y : ℕ × ℕ) :
       #{p ∈ (Finset.univ : Finset ↥S) | q p = y} ≤ m ^ 2 := by
     rw [pow_two, ← Finset.card_range (n := m), ← Finset.card_product]
@@ -297,7 +286,7 @@ lemma denseGrids_card_le_containedProgressions_mul (k : ℕ) (hk : 3 ≤ k)
       intro y hy
       rw [Finset.mem_image] at hy
       obtain ⟨p, _, rfl⟩ := hy
-      exact (hq p).1
+      exact hq p
 
 /-- The positive proportion of progressions supplied by Varnavides' argument. -/
 noncomputable def supersaturationConstant (k : ℕ) (δ : ℝ) : ℝ :=

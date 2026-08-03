@@ -151,8 +151,8 @@ noncomputable def bound (alphabet colors dimension : ℕ) : ℕ :=
 
 private lemma isLineBound_of_bound_le {k r m : ℕ} (hk : 1 ≤ k) (hr : 1 ≤ r) (n : ℕ)
     (hn : bound k r m ≤ n) : IsLineBound k r m n := by
-  haveI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
-  haveI : Nonempty (Fin r) := ⟨⟨0, hr⟩⟩
+  have : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  have : Nonempty (Fin r) := ⟨⟨0, hr⟩⟩
   exact Nat.sInf_mem (exists_lines (Fin k) (Fin r) m) n hn
 
 /-- Transporting a subspace along an alphabet equivalence transports the lines it carries. -/

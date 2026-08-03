@@ -232,9 +232,9 @@ lemma exists_isContained_of_insensitive {k m b : ℕ} (hDHJ : HasDensityHJ k) (h
   obtain ⟨V, hV⟩ :=
     Subspace.exists_restrictAlphabet_subset hDHJ m hm β hβ b hb E
       (by
-        have := Subspace.card_le_of_density_le (k := k + 1) (Nat.succ_pos k) β E hdens
-        push_cast at this ⊢
-        exact this)
+        have hcard := Subspace.card_le_of_density_le (k := k + 1) (Nat.succ_pos k) β E hdens
+        push_cast at hcard ⊢
+        exact hcard)
   refine ⟨V, ?_⟩
   intro x
   refine (hE ?_).mpr
@@ -696,10 +696,8 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
             Subspace.range (pickSubspace hm hmb (B (fun a ↦ w (e₁.symm (Sum.inl a))))))
         with hRdef
       have hRU : R ⊆ U := Finset.filter_subset _ _
-      have htileFacts := canonical_tiles_cover hm hmb e₁ U B hBdef good tile htiledef
-        hpick R hRdef
-      have htileR := htileFacts.1
-      have hRtile := htileFacts.2
+      obtain ⟨htileR, hRtile⟩ :=
+        canonical_tiles_cover hm hmb e₁ U B hBdef good tile htiledef hpick R hRdef
       have hdensR : β / ((k : ℝ) + 1) ^ b ≤ (R.dens : ℝ) := by
         apply density_of_nonempty_fibers e₁ R good
           (by simpa only [hgooddef] using hgood)
@@ -747,15 +745,16 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           simpa only [htiledef, transportSubspace_apply, Function.comp_apply,
             Equiv.apply_symm_apply, Sum.elim_inl] using h
         rw [hzz]
-      have hcombine := combine_tiling_stage U R newTiles 𝒲
-        (good.finite_toSet.image tile) hfin' hRU
-        (fun _ hV ↦ by obtain ⟨z, hz, rfl⟩ := hV; exact htileR z hz)
-        (fun w hw ↦ by
-          obtain ⟨z, hz, hmem⟩ := hRtile w hw
-          exact ⟨tile z, ⟨z, hz, rfl⟩, hmem⟩)
-        hnewdisjoint hcont' hdisj' hdensR hdens'
-      refine ⟨newTiles ∪ 𝒲, hcombine.1, hcombine.2.1, hcombine.2.2.1, ?_⟩
-      simpa only [Nat.cast_add, Nat.cast_one] using hcombine.2.2.2
+      obtain ⟨hfinite, hcontained, hdisjoint, hdensity⟩ :=
+        combine_tiling_stage U R newTiles 𝒲
+          (good.finite_toSet.image tile) hfin' hRU
+          (fun _ hV ↦ by obtain ⟨z, hz, rfl⟩ := hV; exact htileR z hz)
+          (fun w hw ↦ by
+            obtain ⟨z, hz, hmem⟩ := hRtile w hw
+            exact ⟨tile z, ⟨z, hz, rfl⟩, hmem⟩)
+          hnewdisjoint hcont' hdisj' hdensR hdens'
+      refine ⟨newTiles ∪ 𝒲, hfinite, hcontained, hdisjoint, ?_⟩
+      simpa only [Nat.cast_add, Nat.cast_one] using hdensity
 
 /-- Finite-stage block packing gives one exact sufficient dimension for one-family tiling. -/
 lemma exists_tilingSufficient_dimension (k m : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
@@ -837,21 +836,14 @@ private lemma tilingSufficient_mono {k m N n : ℕ} {β : ℝ}
           simp [uncovered]
         rw [huncovered]
         exact lt_of_not_ge hz
-  let tiles := fun z : Fin r → Fin (k + 1) ↦ Classical.choose (existsLocal z)
-  have hlocal (z : Fin r → Fin (k + 1)) :
-      (tiles z).Finite ∧
-      (∀ V ∈ tiles z, Subspace.IsContained V (slice z)) ∧
-      ((tiles z).PairwiseDisjoint fun V ↦
-        (Subspace.range V : Set (Fin N → Fin (k + 1)))) ∧
-      ((uncovered (slice z) (tiles z)).dens : ℝ) < 2 * β :=
-    Classical.choose_spec (existsLocal z)
+  choose tiles hlocalFinite hlocalContained hlocalDisjoint hlocalDensity using existsLocal
   let global : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)) :=
     ⋃ z, padExtraSubspace e z '' tiles z
-  have hglobal := padded_tiles_facts e D tiles
-    (fun z ↦ (hlocal z).1)
-    (fun z V hV ↦ by simpa only [slice, D'] using (hlocal z).2.1 V hV)
-    (fun z ↦ (hlocal z).2.2.1)
-  refine ⟨global, hglobal.1, hglobal.2.1, hglobal.2.2, ?_⟩
+  obtain ⟨hglobalFinite, hglobalContained, hglobalDisjoint⟩ := padded_tiles_facts e D tiles
+    hlocalFinite
+    (fun z V hV ↦ by simpa only [slice, D'] using hlocalContained z V hV)
+    hlocalDisjoint
+  refine ⟨global, hglobalFinite, hglobalContained, hglobalDisjoint, ?_⟩
   · let E := (uncovered D global).map wordEquiv.symm.toEmbedding
     have hfiber (z : Fin r → Fin (k + 1)) :
         fiber E z = uncovered (slice z) (tiles z) := by
@@ -864,11 +856,11 @@ private lemma tilingSufficient_mono {k m N n : ℕ} {β : ℝ}
     apply Finset.expect_lt
     · intro z _
       rw [hfiber]
-      exact (hlocal z).2.2.2.le
+      exact (hlocalDensity z).le
     · let z : Fin r → Fin (k + 1) := fun _ ↦ 0
       refine ⟨z, Finset.mem_univ z, ?_⟩
       rw [hfiber]
-      exact (hlocal z).2.2.2
+      exact hlocalDensity z
 
 /-- One-family tiling sufficiency is upward closed after padding with unused final coordinates. -/
 lemma exists_eventually_tilingSufficient (k m : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
@@ -967,7 +959,7 @@ private lemma dens_map_subspace_eq_mul_range {α η ι : Type*}
   simp only [Finset.nnratCast_dens, Subspace.range, Finset.card_map]
   rw [Finset.card_image_iff.mpr (Subspace.injective V).injOn]
   by_cases h : Fintype.card (η → α) = 0
-  · letI : IsEmpty (η → α) := Fintype.card_eq_zero_iff.mp h
+  · let : IsEmpty (η → α) := Fintype.card_eq_zero_iff.mp h
     have hA : A = ∅ := Subsingleton.elim _ _
     rw [hA]
     simp
@@ -1143,7 +1135,7 @@ private lemma composed_outer_tiles_facts {k r m M n : ℕ}
       (global.PairwiseDisjoint fun U ↦
         (Subspace.range U : Set (Fin n → Fin (k + 1)))) := by
   classical
-  letI : Finite 𝒱 := hfinite
+  let : Finite 𝒱 := hfinite
   dsimp only
   refine ⟨Set.finite_iUnion fun V ↦ (hinner V).1, ?_, ?_⟩
   · intro U hU x
@@ -1232,15 +1224,7 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
           simp [uncovered]
         rw [huncovered]
         exact lt_of_not_ge hV
-  let tiles := fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
-    Classical.choose (existsInner V)
-  have htiles (V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n)) :
-      (tiles V).Finite ∧
-      (∀ W ∈ tiles V, Subspace.IsContained W (pullback V)) ∧
-      ((tiles V).PairwiseDisjoint fun W ↦
-        (Subspace.range W : Set (Fin M → Fin (k + 1)))) ∧
-      ((uncovered (pullback V) (tiles V)).dens : ℝ) < 2 * β :=
-    Classical.choose_spec (existsInner V)
+  choose tiles htilesFinite htilesContained htilesDisjoint htilesDensity using existsInner
   let composed := fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
     Subspace.compose V '' tiles V
   have hcomposed (V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n)) :
@@ -1249,15 +1233,16 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
       ((composed V).PairwiseDisjoint fun U ↦
         (Subspace.range U : Set (Fin n → Fin (k + 1)))) := by
     exact composed_inner_tiles_facts DLast V (tiles V)
-      (htiles V).1 (htiles V).2.1 (htiles V).2.2.1
+      (htilesFinite V) (htilesContained V) (htilesDisjoint V)
   let global : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)) :=
     ⋃ V : 𝒱, composed V
-  have hglobal := composed_outer_tiles_facts D D₀ (fun _ ↦ rfl) 𝒱 hfinite
-    hcontained hpairwise tiles (fun V ↦ by simpa only [composed] using hcomposed V)
+  obtain ⟨hglobalFinite, hglobalContained, hglobalDisjoint⟩ :=
+    composed_outer_tiles_facts D D₀ (fun _ ↦ rfl) 𝒱 hfinite
+      hcontained hpairwise tiles (fun V ↦ by simpa only [composed] using hcomposed V)
   refine ⟨global, ?_, ?_, ?_, ?_⟩
-  · simpa only [global, composed] using hglobal.1
-  · simpa only [global, composed] using hglobal.2.1
-  · simpa only [global, composed] using hglobal.2.2
+  · simpa only [global, composed] using hglobalFinite
+  · simpa only [global, composed] using hglobalContained
+  · simpa only [global, composed] using hglobalDisjoint
   · let outer := hfinite.toFinset
     let innerError := fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
       (uncovered (pullback V) (tiles V)).map ⟨V, Subspace.injective V⟩
@@ -1266,7 +1251,7 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
       simpa only [errors, outer, innerError] using
         mapped_inner_errors_density_le hβ₀ 𝒱 hfinite hpairwise
           (fun V ↦ uncovered (pullback V) (tiles V))
-          (fun V ↦ (htiles V).2.2.2.le)
+          (fun V ↦ (htilesDensity V).le)
     have huncovered_subset :
         uncovered (intersection D) global ⊆
           uncovered (intersection D₀) 𝒱 ∪ errors := by
@@ -1358,25 +1343,18 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
           simp [uncovered]
         rw [huncovered]
         exact lt_of_not_ge hz
-  let tiles := fun z : Fin q → Fin (k + 1) ↦ Classical.choose (existsLocal z)
-  have hlocal (z : Fin q → Fin (k + 1)) :
-      (tiles z).Finite ∧
-      (∀ V ∈ tiles z, Subspace.IsContained V (intersection (slice z))) ∧
-      ((tiles z).PairwiseDisjoint fun V ↦
-        (Subspace.range V : Set (Fin N → Fin (k + 1)))) ∧
-      ((uncovered (intersection (slice z)) (tiles z)).dens : ℝ) < 2 * r * β :=
-    Classical.choose_spec (existsLocal z)
+  choose tiles hlocalFinite hlocalContained hlocalDisjoint hlocalDensity using existsLocal
   let global : Set (Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n)) :=
     ⋃ z, padExtraSubspace e z '' tiles z
-  have hglobal := padded_tiles_facts e I tiles
-    (fun z ↦ (hlocal z).1)
+  obtain ⟨hglobalFinite, hglobalContained, hglobalDisjoint⟩ := padded_tiles_facts e I tiles
+    hlocalFinite
     (fun z V hV ↦ by
-      have h := (hlocal z).2.1 V hV
+      have h := hlocalContained z V hV
       rw [← hfiberI z] at h
       simpa only [I'] using h)
-    (fun z ↦ (hlocal z).2.2.1)
-  refine ⟨global, hglobal.1, ?_, hglobal.2.2, ?_⟩
-  · simpa only [I, mem_intersection] using hglobal.2.1
+    hlocalDisjoint
+  refine ⟨global, hglobalFinite, ?_, hglobalDisjoint, ?_⟩
+  · simpa only [I, mem_intersection] using hglobalContained
   · let E := (uncovered I global).map wordEquiv.symm.toEmbedding
     have hfiber (z : Fin q → Fin (k + 1)) :
         fiber E z = uncovered (intersection (slice z)) (tiles z) := by
@@ -1389,11 +1367,11 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
     apply Finset.expect_lt
     · intro z _
       rw [hfiber]
-      exact (hlocal z).2.2.2.le
+      exact (hlocalDensity z).le
     · let z : Fin q → Fin (k + 1) := fun _ ↦ 0
       refine ⟨z, Finset.mem_univ z, ?_⟩
       rw [hfiber]
-      exact (hlocal z).2.2.2
+      exact hlocalDensity z
 
 /-- Intersection-tiling sufficiency is upward closed after padding with unused final
 coordinates. -/

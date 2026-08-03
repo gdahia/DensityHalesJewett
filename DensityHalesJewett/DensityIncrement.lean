@@ -245,7 +245,7 @@ lemma Subspace.dens_inter_range_eq_relativeDensity_mul_range
   rw [Finset.card_image_iff.mpr (Subspace.injective W).injOn,
     Finset.card_image_iff.mpr (Subspace.injective W).injOn]
   by_cases h : Fintype.card (η → α) = 0
-  · letI : IsEmpty (η → α) := Fintype.card_eq_zero_iff.mp h
+  · let : IsEmpty (η → α) := Fintype.card_eq_zero_iff.mp h
     have hB : (Finset.univ.filter fun x : η → α ↦ W x ∈ A) = ∅ :=
       Subsingleton.elim _ _
     rw [hB]
@@ -266,8 +266,7 @@ lemma exists_dense_tile_of_density_sum {k d m n : ℕ}
     ∃ W ∈ 𝒱,
       δ + Parameters.γ k δ / 2 ≤
         (Subspace.relativeDensity W (pullback V A) : ℝ) := by
-  by_contra h
-  push Not at h
+  by_contra! h
   apply (not_lt_of_ge hsum)
   calc
     (∑ W ∈ 𝒱, ((pullback V A ∩ Subspace.range W).dens : ℝ)) <
@@ -339,8 +338,8 @@ lemma density_increment {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
   by_cases hfree : IsLineFree A
   · obtain ⟨m, hm, hm_large, hmn, hm_tiling⟩ :=
       incrementBound_spec hk hDHJ hd hδ₀ hδ₁ hn
-    letI : Nonempty (Fin m) := ⟨⟨0, hm⟩⟩
-    letI : Nonempty (Combinatorics.Line (Fin k) (Fin m)) :=
+    let : Nonempty (Fin m) := ⟨⟨0, hm⟩⟩
+    let : Nonempty (Combinatorics.Line (Fin k) (Fin m)) :=
       ⟨Combinatorics.Line.diagonal (Fin k) (Fin m)⟩
     obtain ⟨V, D, hD, hDdense, hcorrelation⟩ :=
       exists_structured_correlation hk hDHJ m n hm δ hδ₀ hδ₁ hm_large hmn A hA hfree

@@ -117,7 +117,7 @@ private noncomputable def fixedIndexWordEquiv (α ι : Type*) [Nonempty α] :
 lemma card_line (k m : ℕ) (hk : 0 < k)
     [Fintype (Combinatorics.Line (Fin k) (Fin m))] :
     Fintype.card (Combinatorics.Line (Fin k) (Fin m)) = (k + 1) ^ m - k ^ m := by
-  letI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  let : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
   rw [Fintype.card_congr (lineIndexEquiv (Fin k) (Fin m)),
     Fintype.card_subtype_compl (fun f : Fin m → Option (Fin k) ↦ ∀ i, f i ≠ none),
     Fintype.card_pi_const, Fintype.card_option, Fintype.card_fin,
@@ -198,8 +198,8 @@ lemma half_density_prefixes {k p q : ℕ} (hk : 0 < k) (δ : ℝ) (hδ : 0 < δ)
     (A : Finset (Fin p ⊕ Fin q → Fin k)) (hA : δ ≤ (A.dens : ℝ)) :
     δ / 2 ≤
       ((Finset.univ.filter fun x : Fin p → Fin k ↦ δ / 2 ≤ ((fiber A x).dens : ℝ)).dens : ℝ) := by
-  letI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
-  letI : Nonempty (Fin p → Fin k) := Pi.instNonempty
+  let : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  let : Nonempty (Fin p → Fin k) := Pi.instNonempty
   have hδ₁ : δ ≤ 1 := hA.trans (by exact_mod_cast Finset.dens_le_one (s := A))
   have hthreshold := density_ge_threshold (fun x : Fin p → Fin k ↦ ((fiber A x).dens : ℝ))
     δ (δ / 2)
@@ -233,7 +233,7 @@ lemma exists_common_dense_line {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensityHJ k
         ((Finset.univ.filter fun x : Fin p → Fin k ↦
           ∀ a, Sum.elim x (l a) ∈ A).dens : ℝ) := by
   classical
-  letI := lineFintype k q
+  let := lineFintype k q
   let B := Finset.univ.filter fun x : Fin p → Fin k ↦
     δ / 2 ≤ ((fiber A x).dens : ℝ)
   have hB : δ / 2 ≤ (B.dens : ℝ) := half_density_prefixes hk δ hδ A hA
@@ -242,14 +242,13 @@ lemma exists_common_dense_line {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensityHJ k
     rw [Finset.not_nonempty_iff_eq_empty.mp h, Finset.dens_empty] at hB
     norm_num at hB
     linarith
-  let x₀ := hBne.choose
-  have hx₀ : x₀ ∈ B := hBne.choose_spec
-  obtain ⟨l₀, _⟩ := exists_line_of_fiber_density hk hDHJ (δ / 2) (by linarith) hq A x₀
-    (by simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using hx₀)
-  letI : Nonempty (Combinatorics.Line (Fin k) (Fin q)) := ⟨l₀⟩
-  let lineAt : {x // x ∈ B} → Combinatorics.Line (Fin k) (Fin q) := fun x ↦
-    Classical.choose <| exists_line_of_fiber_density hk hDHJ (δ / 2) (by linarith)
-      hq A x (by simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using x.2)
+  have existsLine (x : {x // x ∈ B}) : ∃ l : Combinatorics.Line (Fin k) (Fin q),
+      ∀ a, Sum.elim x (l a) ∈ A :=
+    exists_line_of_fiber_density hk hDHJ (δ / 2) (by linarith) hq A x
+      (by simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using x.2)
+  choose lineAt hlineAt using existsLine
+  let l₀ := lineAt ⟨hBne.choose, hBne.choose_spec⟩
+  let : Nonempty (Combinatorics.Line (Fin k) (Fin q)) := ⟨l₀⟩
   let f : (Fin p → Fin k) → Combinatorics.Line (Fin k) (Fin q) := fun x ↦
     if hx : x ∈ B then lineAt ⟨x, hx⟩ else l₀
   obtain ⟨l, hl⟩ := exists_fiber_density B f
@@ -264,9 +263,7 @@ lemma exists_common_dense_line {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensityHJ k
         simpa only [f, dif_pos hx.1] using hx.2
       intro a
       rw [← hfl]
-      exact Classical.choose_spec
-        (exists_line_of_fiber_density hk hDHJ (δ / 2) (by linarith) hq A x
-          (by simpa only [B, Finset.mem_filter, Finset.mem_univ, true_and] using hx.1)) a
+      exact hlineAt ⟨x, hx.1⟩ a
 
 /-- Every positive target density eventually forces a subspace of any fixed positive
 dimension. -/
@@ -290,8 +287,8 @@ lemma exists_eventually_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
       let q := max 1 (densityOneBound k (δ / 2))
       have hqpos : 0 < q := lt_of_lt_of_le Nat.zero_lt_one (le_max_left _ _)
       have hq : densityOneBound k (δ / 2) ≤ q := le_max_right _ _
-      letI : Nonempty (Fin q) := ⟨⟨0, hqpos⟩⟩
-      letI := lineFintype k q
+      let : Nonempty (Fin q) := ⟨⟨0, hqpos⟩⟩
+      let := lineFintype k q
       let ε := δ / (2 * Fintype.card (Combinatorics.Line (Fin k) (Fin q)))
       have hε : 0 < ε := by
         have hlinecard : 0 < Fintype.card (Combinatorics.Line (Fin k) (Fin q)) :=
@@ -479,8 +476,7 @@ lemma exists_denser_fiber {alphabet m q : ℕ} (halphabet : 0 < alphabet) {ε : 
     (hu₀ : ((fiber A u₀).dens : ℝ) < (A.dens : ℝ) - ε) :
     ∃ u, (A.dens : ℝ) + ε / (alphabet : ℝ) ^ m ≤ ((fiber A u).dens : ℝ) := by
   classical
-  by_contra hcon
-  push Not at hcon
+  by_contra! hcon
   have halphabetR : (0 : ℝ) < (alphabet : ℝ) := by exact_mod_cast halphabet
   have hpow : (0 : ℝ) < (alphabet : ℝ) ^ m := pow_pos halphabetR m
   have hcard : (Fintype.card (Fin m → Fin alphabet) : ℝ) = (alphabet : ℝ) ^ m := by
@@ -638,15 +634,14 @@ lemma exists_dense_suffix_of_restricted_fibers {k M : ℕ} (hk : 0 < k) (δ : �
       δ / 2 ≤
         ((Finset.univ.filter fun x : Fin M → Fin k ↦
           Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ) := by
-  letI : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  let : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
   have havg : δ / 2 ≤
       Finset.expect Finset.univ (fun y : κ → Fin (k + 1) ↦
         ((Finset.univ.filter fun x : Fin M → Fin k ↦
           Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)) := by
     rw [average_restrictedParameterSlice]
     exact Finset.le_expect Finset.univ_nonempty fun x _ ↦ hW x
-  by_contra h
-  push Not at h
+  by_contra! h
   apply (not_lt_of_ge havg)
   apply Finset.expect_lt
   · intro y _
