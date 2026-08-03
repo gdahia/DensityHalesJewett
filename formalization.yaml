@@ -1,54 +1,94 @@
-version: 1
+# Repo-root metadata for this formalization project.
+# Format: https://github.com/mathlib-initiative/formalization.yaml (v0.3)
+
+version: "v0.3"
 
 project:
   name: DensityHalesJewett
-  proof_assistant: Lean 4
-  library: mathlib
-  challenge_file: DensityHalesJewett/Challenge.lean
+  authors:
+    - Gabriel Dahia
+  license: Apache-2.0
 
-formalizations:
-  - declaration: Combinatorics.ArithmeticProgression.exists_of_density_nat
-    description: >-
-      Every sufficiently large dense subset of an initial interval of the natural numbers contains
-      a nonconstant arithmetic progression of any prescribed finite length.
-    status: challenge
-    proof: sorry
-    implementation:
-      - author: GPT-5.6 Sol
-        role: planner
-      - author: GPT-5.6 Terra
-        role: primary implementer
-      - author: GPT-5.6 Lua
-        role: primary implementer
-      - author: Opus 5
-        role: planner
-      - author: Opus 5
-        role: implementer
-    review:
-      - reviewer: Gabriel Dahia
-        scope:
-          - mathematical correctness
-          - mathlib style
+sources:
+  - title: A Simple Proof of the Density Hales–Jewett Theorem
+    authors:
+      - Pandelis Dodos
+      - Vassilis Kanellopoulos
+      - Konstantinos Tyros
+    id: https://doi.org/10.1093/imrn/rnt041
+    type: journal article
 
-  - declaration: Combinatorics.Line.exists_of_density
-    description: >-
-      Every sufficiently high-dimensional dense family of words over a finite alphabet contains a
-      combinatorial line.
-    status: challenge
-    proof: sorry
-    implementation:
-      - author: GPT-5.6 Sol
-        role: planner
-      - author: GPT-5.6 Terra
-        role: primary implementer
-      - author: GPT-5.6 Lua
-        role: primary implementer
-      - author: Opus 5
-        role: planner
-      - author: Opus 5
-        role: implementer
-    review:
-      - reviewer: Gabriel Dahia
-        scope:
-          - mathematical correctness
-          - mathlib style
+status:
+  scope: >-
+    A Lean 4 formalization of the density Hales–Jewett theorem and its supporting argument,
+    together with Szemerédi's theorem as a consequence. The development also includes the
+    finite-unions theorem, the Graham–Rothschild theorem for combinatorial lines, block
+    canonization, and Varnavides' averaging argument.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  main_results:
+    - declaration: Combinatorics.Line.exists_of_density
+      file: DensityHalesJewett/Main.lean
+      sorry_count: 0
+      axioms:
+        - propext
+        - Classical.choice
+        - Quot.sound
+    - declaration: Combinatorics.ArithmeticProgression.exists_of_density_nat
+      file: DensityHalesJewett/Szemeredi.lean
+      sorry_count: 0
+      axioms:
+        - propext
+        - Classical.choice
+        - Quot.sound
+
+automation:
+  methods:
+    - method: agent
+      models:
+        - GPT-5.6 Sol
+        - GPT-5.6 Terra
+        - GPT-5.6 Lua
+        - Opus 5
+      prompting_notes: >-
+        GPT-5.6 Sol and Opus 5 contributed planning; GPT-5.6 Terra, GPT-5.6 Lua, and Opus 5
+        contributed implementation.
+  notes: >-
+    The agent-produced implementation was reviewed by Gabriel Dahia for mathematical correctness
+    and mathlib style.
+
+fidelity:
+  divergences: |-
+    - The paper cites its Graham–Rothschild line-canonization proposition as background. The Lean
+      development proves the required two-color line theorem internally from multidimensional
+      Hales–Jewett.
+    - The paper sets `eta = delta * theta / 48` and `gamma = delta * eta^2 / k`. The formalization
+      replaces these by smaller minima that also enforce `eta <= theta / 4`, `eta <= delta / 6`,
+      `gamma <= eta^2 / 2`, and `gamma <= 3 * eta`. Consequently its numerical thresholds and
+      density increment are weaker, while the qualitative theorem is unchanged.
+    - Several displayed paper bounds (`M_0`, `F`, and `N`) are replaced by sufficient bounds
+      selected with `Nat.find` from eventual-existence lemmas.
+
+review:
+  status: self-assessed
+  reviewers:
+    - Gabriel Dahia
+  notes: Reviewed for mathematical correctness and mathlib style.
+
+alignment:
+  namespace: Combinatorics
+  statements:
+    - source: Density Hales–Jewett theorem
+      lean: Combinatorics.Line.exists_of_density
+      module: DensityHalesJewett.Main
+      status: proved
+    - source: Szemerédi's theorem (derived consequence)
+      lean: Combinatorics.ArithmeticProgression.exists_of_density_nat
+      module: DensityHalesJewett.Szemeredi
+      status: proved
+
+acknowledgements: Built on Mathlib.
