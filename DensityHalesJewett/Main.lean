@@ -191,7 +191,8 @@ lemma exists_middleBinomial_lt (δ : ℝ) (hδ : 0 < δ) :
     ∃ N, ∀ n, N ≤ n → (n.choose (n / 2) : ℝ) < δ * 2 ^ n := by
   have ht : Filter.Tendsto (fun m : ℕ ↦ (√(3 * (m : ℝ) + 1))⁻¹)
       Filter.atTop (nhds 0) := by
-    refine tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp ?_)
+    apply tendsto_inv_atTop_zero.comp
+    apply Real.tendsto_sqrt_atTop.comp
     simpa only [add_comm] using
       tendsto_const_nhds.add_atTop
         ((tendsto_natCast_atTop_atTop : Filter.Tendsto (fun m : ℕ ↦ (m : ℝ))
@@ -201,8 +202,8 @@ lemma exists_middleBinomial_lt (δ : ℝ) (hδ : 0 < δ) :
   intro n hn
   have hMn : M ≤ n / 2 := (Nat.le_div_iff_mul_le (by norm_num)).mpr (by grind)
   apply (div_lt_iff₀ (by positivity : (0 : ℝ) < 2 ^ n)).mp
-  refine (middleBinomial_ratio_le_central n).trans_lt <|
-    (centralBinom_ratio_le_inv_sqrt (n / 2)).trans_lt ?_
+  apply (middleBinomial_ratio_le_central n).trans_lt
+  apply (centralBinom_ratio_le_inv_sqrt (n / 2)).trans_lt
   exact hM (n / 2) hMn
 
 /-- Density Hales--Jewett for the binary alphabet. -/
@@ -392,11 +393,13 @@ lemma density_increment_chain_step {k R n j : ℕ} (hk : 2 ≤ k)
       (pullback V A) (by
         simpa only [ρ, Subspace.relativeDensity, pullback] using hV)
   obtain ⟨l, hl⟩ | ⟨U, hU⟩ := hinc
-  · refine Or.inl ⟨Subspace.mapLine V l, ?_⟩
+  · left
+    use Subspace.mapLine V l
     intro a
     simpa only [Subspace.mapLine_apply, pullback, Finset.mem_filter, Finset.mem_univ,
       true_and] using hl a
-  · refine Or.inr ⟨Subspace.compose V U, ?_⟩
+  · right
+    use Subspace.compose V U
     rw [Subspace.relativeDensity_compose]
     dsimp only [ρ] at hU
     have hδρ : δ ≤ δ + (j : ℝ) * (Parameters.γ k δ / 2) := by
@@ -455,7 +458,8 @@ lemma line_or_iterated_density_le_one {k R n : ℕ} (hk : 2 ≤ k) (hDHJ : HasDe
   obtain hline | ⟨V, hV⟩ :=
     line_or_density_increment_chain hk hDHJ hδ d hd hstep A V₀ (hA.trans hV₀)
   · exact Or.inl hline
-  · refine Or.inr <| hV.trans ?_
+  · apply Or.inr
+    apply hV.trans
     exact_mod_cast Finset.dens_le_one (s := pullback V A)
 
 /-- Density Hales--Jewett for every finite alphabet of cardinality at least two. -/

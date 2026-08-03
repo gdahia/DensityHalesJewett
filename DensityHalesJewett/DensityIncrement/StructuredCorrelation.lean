@@ -325,7 +325,7 @@ lemma exists_endpoint_insensitive_intersection {k m n : ℕ} (hk : 2 ≤ k)
         Parameters.η k δ := by
   refine ⟨endpointFamily A V, endpointFamily_isInsensitive A V, ?_, ?_⟩
   · refine endpointFamily_intersection_dense hk hδ₀ A V ?_ hlines
-    refine (restrictedParameterWords_density_le_eta hk hδ₀ hm_large).trans ?_
+    apply (restrictedParameterWords_density_le_eta hk hδ₀ hm_large).trans
     exact (Parameters.η_le_δ_div_six k δ).trans (by linarith)
   · refine le_trans ?_ <|
       restrictedParameterWords_density_le_eta hk hδ₀ hm_large
@@ -351,9 +351,11 @@ lemma density_complement_bounds {X : Type*} [Fintype X] [Nonempty X]
       Finset.dens_sdiff_add_dens_eq_dens C.subset_univ
   have houtside : δ - 3 * η ≤ ((A ∩ Cᶜ).dens : ℝ) := by
     linarith [hsplitA, hA, hAC]
-  refine ⟨(mul_le_mul_of_nonneg_left ?_ ?_).trans (hgain.trans houtside), houtside⟩
-  · linarith [hsplitC, hC]
-  · linarith [hδ₀, hη₀]
+  constructor
+  · refine (mul_le_mul_of_nonneg_left ?_ ?_).trans (hgain.trans houtside)
+    · linarith [hsplitC, hC]
+    · linarith [hδ₀, hη₀]
+  · exact houtside
 
 /-- An intersection of insensitive families with a density gain on its complement. -/
 lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
@@ -468,12 +470,13 @@ lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X
     rw [Finset.mem_biUnion]
     refine ⟨i, Finset.mem_univ _, ?_⟩
     rw [firstFailurePiece, Finset.mem_inter, Finset.mem_compl]
-    refine ⟨(Finset.mem_filter.mp (I.min'_mem hI)).2, ?_⟩
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-    intro j hij
-    by_contra hj
-    have hjI : j ∈ I := Finset.mem_filter.mpr ⟨Finset.mem_univ _, hj⟩
-    exact (not_lt_of_ge (I.min'_le j hjI)) hij
+    constructor
+    · exact (Finset.mem_filter.mp (I.min'_mem hI)).2
+    · simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      intro j hij
+      by_contra hj
+      have hjI : j ∈ I := Finset.mem_filter.mpr ⟨Finset.mem_univ _, hj⟩
+      exact (not_lt_of_ge (I.min'_le j hjI)) hij
 
 /-- A first-failure piece is disjoint from every piece at a later index. -/
 lemma firstFailurePiece_disjoint_of_lt {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]

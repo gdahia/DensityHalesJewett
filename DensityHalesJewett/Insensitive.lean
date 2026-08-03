@@ -447,7 +447,7 @@ private lemma combine_tiling_stage {ι : Type*} [Fintype ι] [DecidableEq ι]
     rcases hV with hV | hV
     · exact fun x ↦ hRU (hnewcontained V hV x)
     · exact fun x ↦ (Finset.mem_sdiff.mp (holdcontained V hV x)).1
-  · refine Set.PairwiseDisjoint.union hnewdisjoint holddisjoint ?_
+  · apply Set.PairwiseDisjoint.union hnewdisjoint holddisjoint
     intro V hV V' hV' _
     rw [Set.disjoint_left]
     intro w hw hw'
@@ -461,10 +461,12 @@ private lemma combine_tiling_stage {ι : Type*} [Fintype ι] [DecidableEq ι]
       simp only [uncovered, Finset.mem_filter, Finset.mem_sdiff, Set.mem_union]
       constructor
       · rintro ⟨hwU, hfree⟩
-        refine ⟨⟨hwU, ?_⟩, fun V hV ↦ hfree V (Or.inr hV)⟩
-        intro hwR
-        obtain ⟨V, hV, hmem⟩ := hRcovered w hwR
-        exact hfree V (Or.inl hV) hmem
+        refine ⟨⟨hwU, ?_⟩, ?_⟩
+        · intro hwR
+          obtain ⟨V, hV, hmem⟩ := hRcovered w hwR
+          exact hfree V (Or.inl hV) hmem
+        · intro V hV
+          exact hfree V (Or.inr hV)
       · rintro ⟨⟨hwU, hwR⟩, hfree⟩
         refine ⟨hwU, ?_⟩
         rintro V (hV | hV)
@@ -475,7 +477,7 @@ private lemma combine_tiling_stage {ι : Type*} [Fintype ι] [DecidableEq ι]
     rw [huncovered]
     rcases holdconclusion with hlt | hle
     · exact Or.inl hlt
-    · refine Or.inr ?_
+    · apply Or.inr
       rw [dens_sdiff_of_subset hRU] at hle
       nlinarith
 
@@ -550,7 +552,8 @@ private lemma density_of_nonempty_fibers {k b : ℕ} {ι ζ : Type*}
   rw [haverage, div_eq_mul_inv, mul_comm β (((k : ℝ) + 1) ^ b)⁻¹, ← one_div]
   apply le_trans (mul_le_mul_of_nonneg_left hgood (by positivity))
   rw [← Finset.expect_indicator_one (s := good), Finset.mul_expect]
-  refine Finset.expect_le_expect fun z _ ↦ ?_
+  apply Finset.expect_le_expect
+  intro z _
   by_cases hz : z ∈ good
   · rw [Set.indicator_of_mem (by simpa using hz)]
     simpa only [Pi.one_apply, mul_one] using hfiber z hz
@@ -763,7 +766,8 @@ lemma exists_tilingSufficient_dimension (k m : ℕ) (hDHJ : HasDensityHJ k) (hm 
     have hc : 0 < β / ((k : ℝ) + 1) ^ b := by positivity
     obtain ⟨T, hT⟩ := exists_nat_gt (1 / (β / ((k : ℝ) + 1) ^ b))
     rw [div_lt_iff₀ hc] at hT
-    refine ⟨T * b, fun i D hD hDβ ↦ ?_⟩
+    refine ⟨T * b, ?_⟩
+    intro i D hD hDβ
     have hsections : ∀ v : Fin 0 → Fin (k + 1),
         IsInsensitive i.castSucc (Fin.last k)
           (fiber (transportWords (Equiv.emptySum (Fin 0) (Fin (T * b))).symm D) v) := by
@@ -1048,7 +1052,7 @@ private lemma mapped_inner_errors_density_le {k M n : ℕ} {β : ℝ} (hβ₀ : 
     dsimp only [innerError]
     rw [dens_map_subspace_eq_mul_range]
     exact mul_le_mul_of_nonneg_right (hlocal V) (by positivity)
-  refine (Finset.sum_le_sum fun V _ ↦ hsummand V).trans ?_
+  apply (Finset.sum_le_sum fun V _ ↦ hsummand V).trans
   rw [← Finset.mul_sum]
   have hranges_pairwise : (outer : Set _).PairwiseDisjoint
       (fun V : Combinatorics.Subspace (Fin M) (Fin (k + 1)) (Fin n) ↦
@@ -1100,7 +1104,7 @@ private lemma uncovered_composed_tiles_subset {k r m M n : ℕ}
     apply Finset.mem_map.mpr
     refine ⟨x, ?_, hx⟩
     simp only [Finset.mem_filter]
-    refine ⟨?_, ?_⟩
+    constructor
     · simp only [parameterPreimage, Finset.mem_filter, Finset.mem_univ, true_and]
       exact hx ▸ (mem_intersection.mp hw.1 (Fin.last r))
     · intro W hW hxW
@@ -1196,7 +1200,7 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
     simpa only [D₀] using hD (Fin.castSucc i)
   obtain ⟨𝒱, hfinite, hcontained, hpairwise, huncovered⟩ :=
     houter hr₀ (by omega) D₀ hD₀ (by
-        refine le_trans (b := 2 * ((r : ℝ) + 1) * β) ?_ ?_
+        apply le_trans (b := 2 * ((r : ℝ) + 1) * β)
         · nlinarith
         · have hdens : ((intersection D).dens : ℝ) ≤ ((intersection D₀).dens : ℝ) := by
             exact_mod_cast Finset.dens_mono hsubset
@@ -1276,7 +1280,8 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
         ((uncovered (intersection D₀) 𝒱 ∪ errors).dens : ℝ) ≤
           ((uncovered (intersection D₀) 𝒱).dens : ℝ) + (errors.dens : ℝ) := by
       exact_mod_cast Finset.dens_union_le (uncovered (intersection D₀) 𝒱) errors
-    refine hdens.trans_lt (lt_of_le_of_lt hdens_union ?_)
+    apply hdens.trans_lt
+    apply lt_of_le_of_lt hdens_union
     convert add_lt_add_of_lt_of_le huncovered herrors using 1
     push_cast
     ring

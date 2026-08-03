@@ -216,7 +216,7 @@ lemma structured_tiling_density_sum {k d m n : ℕ}
   have hcoefficient : 0 ≤ δ + Parameters.γ k δ / 2 := by
     linarith
   rw [hsumT, hsumPT]
-  refine (mul_le_mul_of_nonneg_left hTdens hcoefficient).trans ?_
+  apply (mul_le_mul_of_nonneg_left hTdens hcoefficient).trans
   rw [huncovered_eq] at huncovered
   dsimp only [C, P] at hDdense hcorrelation huncovered hdecomp hremainder_real hTdens ⊢
   nlinarith

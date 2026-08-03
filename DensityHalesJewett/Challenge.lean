@@ -43,5 +43,6 @@ theorem exists_of_density_nat_atTop (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0
   intro n hn A hAn hAδ
   obtain ⟨P, hP⟩ :=
     Combinatorics.ArithmeticProgression.exists_of_density_nat k hk δ hδ n hn A hAn hAδ
-  refine ⟨P.start, P.diff, P.diff_ne_zero, fun i => ?_⟩
+  refine ⟨P.start, P.diff, P.diff_ne_zero, ?_⟩
+  intro i
   simpa [Combinatorics.ArithmeticProgression.term, nsmul_eq_mul] using hP i

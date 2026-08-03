@@ -177,9 +177,10 @@ lemma γ_le_three_mul_η (k : ℕ) (δ : ℝ) : γ k δ ≤ 3 * η k δ := by
 /-- The increment parameters can be chosen uniformly above a fixed positive density floor. -/
 lemma γ_mono_lowerBound {k : ℕ} (hk : 2 ≤ k) {δ₀ : ℝ} (hδ₀ : 0 < δ₀) :
     0 < γ k δ₀ ∧ ∀ ρ, δ₀ ≤ ρ → γ k δ₀ ≤ γ k ρ := by
-  refine ⟨γ_pos hk hδ₀, ?_⟩
-  intro ρ hδρ
-  exact γ_mono hk hδ₀ hδρ
+  constructor
+  · exact γ_pos hk hδ₀
+  · intro ρ hδρ
+    exact γ_mono hk hδ₀ hδρ
 
 /-- The correlated-fiber threshold is at most one in the admissible parameter range. -/
 lemma θ_le_one {k : ℕ} (hk : 2 ≤ k) {δ : ℝ} (hδ₁ : δ ≤ 1) :

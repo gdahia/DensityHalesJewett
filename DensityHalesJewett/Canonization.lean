@@ -143,8 +143,8 @@ private lemma exists_canonical_aux (α : Type*) [Finite α] (C : Type*) [Finite 
     refine ⟨consLine V l, ?_⟩
     intro p s x y hxy
     rw [wordMap_consLine, wordMap_consLine]
-    refine Eq.trans (hV p (Sum.elim (fun _ ↦ x 0) s) (fun i ↦ x i.succ) (fun i ↦ y i.succ)
-      fun i ↦ hxy i.succ) ?_
+    apply Eq.trans (hV p (Sum.elim (fun _ ↦ x 0) s) (fun i ↦ x i.succ) (fun i ↦ y i.succ)
+      fun i ↦ hxy i.succ)
     simp only [Sum.elim_inl, Sum.elim_inr]
     cases hx : x 0 with
     | none => rw [(hxy 0).1 hx]

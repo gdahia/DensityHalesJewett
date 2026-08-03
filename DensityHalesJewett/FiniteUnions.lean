@@ -72,10 +72,12 @@ lemma exists_translatedCube (C : Type*) [Finite C] (n : ℕ) :
     | inl b => cases b <;> simp
     | inr j => simp
   refine ⟨S ∪ X 0, fun i ↦ X i.succ, (hXne 0).mono Finset.subset_union_right,
-    fun i ↦ hXne _, fun i ↦ ?_, fun i j hij ↦ hXX _ _ fun h ↦ hij (Fin.succ_injective _ h),
-    c, fun I ↦ ?_⟩
-  · exact Finset.disjoint_union_left.2 ⟨hSX _, hXX _ _ (Fin.succ_ne_zero i).symm⟩
-  · convert key (insert 0 (I.image Fin.succ)) using 2
+    fun i ↦ hXne _, ?_, fun i j hij ↦ hXX _ _ fun h ↦ hij (Fin.succ_injective _ h),
+    c, ?_⟩
+  · intro i
+    exact Finset.disjoint_union_left.2 ⟨hSX _, hXX _ _ (Fin.succ_ne_zero i).symm⟩
+  · intro I
+    convert key (insert 0 (I.image Fin.succ)) using 2
     ext i
     simp only [Finset.mem_union, Finset.mem_biUnion, Finset.mem_insert, Finset.mem_image, or_assoc]
     constructor
@@ -98,12 +100,16 @@ lemma exists_minCanonical (C : Type*) [Finite C] (t : ℕ) :
   classical
   induction t with
   | zero =>
-    refine ⟨0, fun d ↦ ⟨Fin.elim0, fun i ↦ i.elim0, fun i ↦ i.elim0, Fin.elim0, fun J hJ ↦ ?_⟩⟩
+    refine ⟨0, ?_⟩
+    intro d
+    refine ⟨Fin.elim0, fun i ↦ i.elim0, fun i ↦ i.elim0, Fin.elim0, ?_⟩
+    intro J hJ
     simp [Finset.eq_empty_of_isEmpty J] at hJ
   | succ t ih =>
     obtain ⟨D, hD⟩ := ih
     obtain ⟨M, hM⟩ := exists_translatedCube C D
-    refine ⟨M, fun d ↦ ?_⟩
+    refine ⟨M, ?_⟩
+    intro d
     obtain ⟨E₀, G, hE₀, hG, hE₀G, hGG, c, hc⟩ := hM d
     obtain ⟨I, hI, hII, f, hf⟩ := hD fun K ↦ d (K.biUnion G)
     refine ⟨Fin.cons E₀ fun j ↦ (I j).biUnion G, ?_, ?_, Fin.cons c f, ?_⟩
@@ -125,8 +131,12 @@ lemma exists_minCanonical (C : Type*) [Finite C] (t : ℕ) :
             (Finset.disjoint_biUnion_left _ _ _).2 fun g _ ↦ (hE₀G g).symm
         | succ j =>
           simp only [Fin.cons_succ]
-          refine (Finset.disjoint_biUnion_left _ _ _).2 fun g hg ↦
-            (Finset.disjoint_biUnion_right _ _ _).2 fun g' hg' ↦ hGG g g' fun hgg' ↦ ?_
+          apply (Finset.disjoint_biUnion_left _ _ _).2
+          intro g hg
+          apply (Finset.disjoint_biUnion_right _ _ _).2
+          intro g' hg'
+          apply hGG g g'
+          intro hgg'
           exact (hII i j fun h ↦ hij (congrArg Fin.succ h)).notMem_of_mem_left_finset hg
             (hgg' ▸ hg')
     · intro J hJ
@@ -155,11 +165,12 @@ lemma exists_minCanonical (C : Type*) [Finite C] (t : ℕ) :
           | succ j => exact ⟨j, by simpa [hK] using hi⟩
         have hJK : J = K.image Fin.succ := by rw [← himage, Finset.erase_eq_of_notMem h0]
         have hmin : J.min' hJ = (K.min' hKne).succ := by
-          refine le_antisymm ?_ ?_
-          · refine Finset.min'_le _ _ ?_
+          apply le_antisymm
+          · apply Finset.min'_le
             rw [hJK]
             exact Finset.mem_image_of_mem _ (K.min'_mem _)
-          · refine Finset.le_min' _ _ _ fun y hy ↦ ?_
+          · apply Finset.le_min'
+            intro y hy
             rw [hJK, Finset.mem_image] at hy
             obtain ⟨j, hj, rfl⟩ := hy
             exact Fin.succ_le_succ_iff.2 (Finset.min'_le _ _ hj)

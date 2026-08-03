@@ -49,7 +49,7 @@ lemma average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (�
   classical
   simp_rw [← Finset.expect_indicator_one]
   rw [← Finset.expect_product']
-  refine Finset.expect_equiv (Equiv.sumArrowEquivProdArrow ι κ α).symm ?_ ?_
+  apply Finset.expect_equiv (Equiv.sumArrowEquivProdArrow ι κ α).symm
   · simp
   · intro x _
     rcases x with ⟨x, y⟩

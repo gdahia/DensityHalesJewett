@@ -705,10 +705,12 @@ lemma exists_subspace_many_lines {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k
         simpa only [A', Subspace.dens_splitWords] using hU x⟩)
   obtain ⟨y, hy⟩ | ⟨y, hy, hylines⟩ :=
     exists_suffix_many_lines hk δ hδ₀ hδ₁ A' W hWfiber hWlines
-  · refine Or.inl ⟨Subspace.fixSuffixReindex e W y, ?_⟩
+  · left
+    use Subspace.fixSuffixReindex e W y
     rw [(Subspace.fixSuffixReindex_statistics e A W y).1]
     simpa only [A', Subspace.splitWords] using hy
-  · refine Or.inr ⟨Subspace.fixSuffixReindex e W y, ?_, ?_⟩
+  · right
+    refine ⟨Subspace.fixSuffixReindex e W y, ?_, ?_⟩
     · rw [(Subspace.fixSuffixReindex_statistics e A W y).1]
       simpa only [A', Subspace.splitWords] using hy
     · rw [(Subspace.fixSuffixReindex_statistics e A W y).2]

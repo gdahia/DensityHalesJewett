@@ -54,7 +54,7 @@ noncomputable def ofBlocks (a₀ : α) (E : Fin m → Finset ι) (hE : ∀ j, (E
     obtain ⟨i, hi⟩ := hE e
     refine ⟨i, ?_⟩
     rw [dif_pos ⟨e, hi⟩]
-    refine congrArg Sum.inr ?_
+    apply congrArg Sum.inr
     by_contra hne
     exact Finset.disjoint_left.1 (hEE _ _ hne) (Exists.choose_spec (⟨e, hi⟩ : ∃ j, i ∈ E j)) hi
 
@@ -65,7 +65,7 @@ lemma ofBlocks_idxFun_of_mem {i : ι} {j : Fin m} (hij : i ∈ E j) :
     (ofBlocks a₀ E hE hEE).idxFun i = Sum.inr j := by
   simp only [ofBlocks]
   rw [dif_pos ⟨j, hij⟩]
-  refine congrArg Sum.inr ?_
+  apply congrArg Sum.inr
   by_contra hne
   exact Finset.disjoint_left.1 (hEE _ _ hne) (Exists.choose_spec (⟨j, hij⟩ : ∃ j, i ∈ E j)) hij
 
@@ -134,7 +134,7 @@ lemma exists_lines (α : Type*) [Finite α] [Nonempty α] (C : Type*) [Finite C]
   intro l
   rw [← extend_idxFun χ, composeLine_idxFun, wordMap_compose,
     hV _ _ (sameSupport_wordMap_ofBlocks l.idxFun {j | l.idxFun j = none} fun j ↦ by simp)]
-  refine hc _ ?_
+  apply hc
   obtain ⟨j, hj⟩ := l.proper
   exact ⟨j, by simpa using hj⟩
 
@@ -160,7 +160,8 @@ private lemma composeLine_reindex {β : Type*} (e : α ≃ β)
     (V : Combinatorics.Subspace (Fin m) β (Fin n)) (l : Combinatorics.Line α (Fin m)) :
     composeLine (V.reindex (Equiv.refl _) e.symm (Equiv.refl _)) l
       = Combinatorics.Line.map e.symm (composeLine V (l.map e)) := by
-  refine Combinatorics.Line.ext (funext fun i ↦ ?_)
+  apply Combinatorics.Line.ext
+  funext i
   cases h : V.idxFun i with
   | inl b => simp [composeLine, Combinatorics.Subspace.reindex, Combinatorics.Line.map, h]
   | inr j => simp [composeLine, Combinatorics.Subspace.reindex, Combinatorics.Line.map, h]

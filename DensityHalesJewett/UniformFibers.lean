@@ -65,7 +65,10 @@ private noncomputable def lineIndexEquiv (α ι : Type*) :
       {f : ι → Option α // ¬ ∀ i, f i ≠ none} := by
   classical
   refine {
-    toFun := fun l ↦ ⟨l.idxFun, fun h ↦ ?_⟩
+    toFun := fun l ↦ ⟨l.idxFun, by
+      intro h
+      obtain ⟨i, hi⟩ := l.proper
+      exact h i hi⟩
     invFun := fun f ↦ {
       idxFun := f
       proper := by
@@ -76,8 +79,6 @@ private noncomputable def lineIndexEquiv (α ι : Type*) :
     left_inv := ?_
     right_inv := ?_
   }
-  · obtain ⟨i, hi⟩ := l.proper
-    exact h i hi
   · intro l
     cases l
     rfl
