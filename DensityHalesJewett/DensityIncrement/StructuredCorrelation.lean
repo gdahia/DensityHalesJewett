@@ -134,6 +134,45 @@ lemma endpointFamily_isInsensitive {k m n : ℕ}
   simp only [endpointFamily, Finset.mem_filter, Finset.mem_univ, true_and]
   rw [hreplace]
 
+/-- Encode a restricted-alphabet line by the word using the final letter on its wildcard
+coordinates. -/
+private def lineEndpoint {k m : ℕ} (l : Combinatorics.Line (Fin k) (Fin m)) :
+    Fin m → Fin (k + 1) :=
+  fun c ↦
+    match l.idxFun c with
+    | none => Fin.last k
+    | some a => a.castSucc
+
+/-- The endpoint word remembers every fixed letter and every wildcard coordinate of a line. -/
+private lemma lineEndpoint_injective {k m : ℕ} :
+    Function.Injective (lineEndpoint : Combinatorics.Line (Fin k) (Fin m) →
+      (Fin m → Fin (k + 1))) := by
+  intro l l' hll
+  cases l with
+  | mk f hf =>
+    cases l' with
+    | mk g hg =>
+      congr
+      funext c
+      cases hfc : f c with
+      | none =>
+        cases hgc : g c with
+        | none => rfl
+        | some a =>
+          have hc := congrFun hll c
+          simp only [lineEndpoint, hfc, hgc] at hc
+          exact (Fin.castSucc_ne_last a hc.symm).elim
+      | some a =>
+        cases hgc : g c with
+        | none =>
+          have hc := congrFun hll c
+          simp only [lineEndpoint, hfc, hgc] at hc
+          exact (Fin.castSucc_ne_last a hc).elim
+        | some b =>
+          have hc := congrFun hll c
+          simp only [lineEndpoint, hfc, hgc] at hc
+          exact congrArg some (Fin.castSucc_injective k hc)
+
 /-- Complete restricted-alphabet parameter lines inject into the intersection of the endpoint
 families, giving the required density lower bound. -/
 lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
@@ -150,40 +189,9 @@ lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
   classical
   let good := Finset.univ.filter fun l : Combinatorics.Line (Fin k) (Fin m) ↦
     ∀ a, V (Fin.castSucc ∘ l a) ∈ A
-  let endpoint := fun l : Combinatorics.Line (Fin k) (Fin m) ↦
-    fun c ↦
-      match l.idxFun c with
-      | none => Fin.last k
-      | some a => a.castSucc
-  have hinjective : Function.Injective endpoint := by
-    intro l l' hll
-    cases l with
-    | mk f hf =>
-      cases l' with
-      | mk g hg =>
-        congr
-        funext c
-        cases hfc : f c with
-        | none =>
-            cases hgc : g c with
-            | none => rfl
-            | some a =>
-                have hc := congrFun hll c
-                simp only [endpoint, hfc, hgc] at hc
-                exact (Fin.castSucc_ne_last a hc.symm).elim
-        | some a =>
-            cases hgc : g c with
-            | none =>
-                have hc := congrFun hll c
-                simp only [endpoint, hfc, hgc] at hc
-                exact (Fin.castSucc_ne_last a hc).elim
-            | some b =>
-                have hc := congrFun hll c
-                simp only [endpoint, hfc, hgc] at hc
-                exact congrArg some (Fin.castSucc_injective k hc)
   let endpointEmbedding :
       Combinatorics.Line (Fin k) (Fin m) ↪ (Fin m → Fin (k + 1)) :=
-    ⟨endpoint, hinjective⟩
+    ⟨lineEndpoint, lineEndpoint_injective⟩
   have hsubset :
       good.map endpointEmbedding ⊆ IsInsensitive.intersection (endpointFamily A V) := by
     intro x hx
@@ -195,15 +203,15 @@ lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
         ∀ a, V (Fin.castSucc ∘ l a) ∈ A := by
       simpa only [good, Finset.mem_filter, Finset.mem_univ, true_and] using hl
     have heval :
-        replaceLastLetter i (endpoint l) = Fin.castSucc ∘ l i := by
+        replaceLastLetter i (lineEndpoint l) = Fin.castSucc ∘ l i := by
       funext c
       cases hc : l.idxFun c with
       | none =>
-          simp [endpoint, replaceLastLetter, Combinatorics.Line.coe_apply, hc]
+          simp [lineEndpoint, replaceLastLetter, Combinatorics.Line.coe_apply, hc]
       | some a =>
-          simp [endpoint, replaceLastLetter, Combinatorics.Line.coe_apply, hc,
+          simp [lineEndpoint, replaceLastLetter, Combinatorics.Line.coe_apply, hc,
             Fin.castSucc_ne_last]
-    change V (replaceLastLetter i (endpoint l)) ∈ A
+    change V (replaceLastLetter i (lineEndpoint l)) ∈ A
     rw [heval]
     exact hgood i
   have hmono :
