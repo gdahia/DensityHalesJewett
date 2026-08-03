@@ -103,14 +103,6 @@ lemma compl {α ι : Type*} [Fintype (ι → α)] [DecidableEq (ι → α)]
   simp only [mem_compl]
   exact not_congr (hD hxy)
 
-/-- Unions preserve insensitivity. -/
-lemma union {α ι : Type*} [DecidableEq (ι → α)]
-    {i j : α} {D E : Finset (ι → α)} (hD : IsInsensitive i j D)
-    (hE : IsInsensitive i j E) : IsInsensitive i j (D ∪ E) := by
-  intro x y hxy
-  simp only [mem_union]
-  rw [hD hxy, hE hxy]
-
 /-- The part of `D` left uncovered by a set of subspaces. -/
 noncomputable def uncovered {η α ι : Type*} [Fintype (η → α)]
     [DecidableEq (ι → α)] (D : Finset (ι → α))
@@ -388,8 +380,8 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
           β ≤ ((Finset.univ.filter fun z : ω ⊕ Fin (S * b) → Fin (k + 1) ↦
             β ≤ ((B z).dens : ℝ)).dens : ℝ) := by
         refine le_trans ?_ (density_ge_threshold (fun z ↦ ((B z).dens : ℝ)) (2 * β) β
-          (fun _ ↦ by positivity) (fun z ↦ by exact_mod_cast Finset.dens_le_one (s := B z))
-          hβ₀.le (by linarith) (by rw [havg]; exact hU))
+          (fun z ↦ by exact_mod_cast Finset.dens_le_one (s := B z))
+          (by linarith) (by rw [havg]; exact hU))
         rw [le_div_iff₀ (by linarith)]
         nlinarith
       set good : Finset (ω ⊕ Fin (S * b) → Fin (k + 1)) :=
@@ -553,7 +545,7 @@ private lemma exists_tiling_of_insensitive_sections {k : ℕ} (i : Fin k) (hDHJ 
 
 /-- Finite-stage block packing gives one exact sufficient dimension for one-family tiling. -/
 lemma exists_tilingSufficient_dimension (k m : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
-    {β : ℝ} (hβ₀ : 0 < β) (_hβ₁ : β ≤ 1) :
+    {β : ℝ} (hβ₀ : 0 < β) :
     ∃ N, TilingSufficient k m β N := by
   by_cases hβ : β < 1
   · set b := max m (Subspace.restrictAlphabetBound k m β) with hbdef
@@ -722,9 +714,9 @@ private lemma tilingSufficient_mono {k m N n : ℕ} {β : ℝ}
 
 /-- One-family tiling sufficiency is upward closed after padding with unused final coordinates. -/
 lemma exists_eventually_tilingSufficient (k m : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
-    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    {β : ℝ} (hβ₀ : 0 < β) :
     ∃ N, ∀ n ≥ N, TilingSufficient k m β n := by
-  obtain ⟨N, hN⟩ := exists_tilingSufficient_dimension k m hDHJ hm hβ₀ hβ₁
+  obtain ⟨N, hN⟩ := exists_tilingSufficient_dimension k m hDHJ hm hβ₀
   refine ⟨N, ?_⟩
   intro _n hn
   exact tilingSufficient_mono hN hn
@@ -734,18 +726,18 @@ density Hales--Jewett for the smaller alphabet, so the witness is selected under
 `HasDensityHJ k`. -/
 noncomputable def tilingBound (k m : ℕ) (β : ℝ) : ℕ := by
   classical
-  exact if h : HasDensityHJ k ∧ 1 ≤ m ∧ 0 < β ∧ β ≤ 1 then
-    Nat.find (exists_eventually_tilingSufficient k m h.1 h.2.1 h.2.2.1 h.2.2.2)
+  exact if h : HasDensityHJ k ∧ 1 ≤ m ∧ 0 < β then
+    Nat.find (exists_eventually_tilingSufficient k m h.1 h.2.1 h.2.2)
   else 0
 
 /-- The selected one-family tiling bound satisfies the tiling predicate in every larger
 dimension. -/
 lemma tilingBound_spec (k m n : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
-    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
+    {β : ℝ} (hβ₀ : 0 < β)
     (hn : tilingBound k m β ≤ n) : TilingSufficient k m β n := by
   classical
-  rw [tilingBound, dif_pos ⟨hDHJ, hm, hβ₀, hβ₁⟩] at hn
-  exact Nat.find_spec (exists_eventually_tilingSufficient k m hDHJ hm hβ₀ hβ₁) n hn
+  rw [tilingBound, dif_pos ⟨hDHJ, hm, hβ₀⟩] at hn
+  exact Nat.find_spec (exists_eventually_tilingSufficient k m hDHJ hm hβ₀) n hn
 
 /-- The preimage of a word family in a subspace parameter cube. -/
 noncomputable def parameterPreimage {η α ι : Type*} [Fintype (η → α)]
@@ -1076,21 +1068,21 @@ private lemma extend_intersection_tiling {k r m M n : ℕ}
 dimension. -/
 lemma exists_intersectionTilingSufficient_dimension (k r m : ℕ) (hDHJ : HasDensityHJ k)
     (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
-    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    {β : ℝ} (hβ₀ : 0 < β) :
     ∃ N, IntersectionTilingSufficient k r m β N := by
   induction r using Nat.strong_induction_on generalizing m with
   | h r ih =>
       obtain rfl | hr := r
       · omega
       obtain rfl | s := hr
-      · obtain ⟨N, hN⟩ := exists_tilingSufficient_dimension k m hDHJ hm hβ₀ hβ₁
+      · obtain ⟨N, hN⟩ := exists_tilingSufficient_dimension k m hDHJ hm hβ₀
         exact ⟨N, intersectionTilingSufficient_one hN⟩
       · let M := max 1 (tilingBound k m β)
         have hM : 1 ≤ M := le_max_left _ _
         obtain ⟨N, houter⟩ :=
           ih (s + 1) (by omega) M (by omega) (by omega) hM
         have hinner : TilingSufficient k m β M :=
-          tilingBound_spec k m M hDHJ hm hβ₀ hβ₁ (le_max_right _ _)
+          tilingBound_spec k m M hDHJ hm hβ₀ (le_max_right _ _)
         exact ⟨N, extend_intersection_tiling (by omega) (by omega) hβ₀ houter hinner⟩
 
 /-- Exact intersection-tiling sufficiency transports to every larger coordinate dimension. -/
@@ -1251,38 +1243,38 @@ private lemma intersectionTilingSufficient_mono {k r m N n : ℕ} {β : ℝ}
 coordinates. -/
 lemma exists_eventually_intersectionTilingSufficient (k r m : ℕ) (hDHJ : HasDensityHJ k)
     (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
-    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1) :
+    {β : ℝ} (hβ₀ : 0 < β) :
     ∃ N, ∀ n ≥ N, IntersectionTilingSufficient k r m β n := by
   obtain ⟨N, hN⟩ :=
-    exists_intersectionTilingSufficient_dimension k r m hDHJ hr₀ hrk hm hβ₀ hβ₁
+    exists_intersectionTilingSufficient_dimension k r m hDHJ hr₀ hrk hm hβ₀
   exact ⟨N, fun _n hn ↦ intersectionTilingSufficient_mono hN hn⟩
 
 /-- A sufficient ambient dimension for tiling an intersection of insensitive families, again
 selected under `HasDensityHJ k`. -/
 noncomputable def intersectionTilingBound (k r m : ℕ) (β : ℝ) : ℕ := by
   classical
-  exact if h : HasDensityHJ k ∧ 1 ≤ r ∧ r ≤ k ∧ 1 ≤ m ∧ 0 < β ∧ β ≤ 1 then
+  exact if h : HasDensityHJ k ∧ 1 ≤ r ∧ r ≤ k ∧ 1 ≤ m ∧ 0 < β then
     Nat.find (exists_eventually_intersectionTilingSufficient
-      k r m h.1 h.2.1 h.2.2.1 h.2.2.2.1 h.2.2.2.2.1 h.2.2.2.2.2)
+      k r m h.1 h.2.1 h.2.2.1 h.2.2.2.1 h.2.2.2.2)
   else 0
 
 /-- The selected intersection-tiling bound satisfies the tiling predicate in every larger
 dimension. -/
 lemma intersectionTilingBound_spec (k r m n : ℕ) (hDHJ : HasDensityHJ k)
     (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
-    {β : ℝ} (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
+    {β : ℝ} (hβ₀ : 0 < β)
     (hn : intersectionTilingBound k r m β ≤ n) :
     IntersectionTilingSufficient k r m β n := by
   classical
   rw [intersectionTilingBound,
-    dif_pos ⟨hDHJ, hr₀, hrk, hm, hβ₀, hβ₁⟩] at hn
+    dif_pos ⟨hDHJ, hr₀, hrk, hm, hβ₀⟩] at hn
   exact Nat.find_spec
-    (exists_eventually_intersectionTilingSufficient k r m hDHJ hr₀ hrk hm hβ₀ hβ₁) n hn
+    (exists_eventually_intersectionTilingSufficient k r m hDHJ hr₀ hrk hm hβ₀) n hn
 
 /-- An intersection of insensitive families can be tiled by disjoint subspaces. -/
 lemma exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ) (hDHJ : HasDensityHJ k)
     (hr₀ : 1 ≤ r) (hrk : r ≤ k) (hm : 1 ≤ m)
-    (β : ℝ) (hβ₀ : 0 < β) (hβ₁ : β ≤ 1)
+    (β : ℝ) (hβ₀ : 0 < β)
     (hn : intersectionTilingBound k r m β ≤ n)
     (D : Fin r → Finset (Fin n → Fin (k + 1)))
     (hD : ∀ i, IsInsensitive (Fin.castLE hrk i).castSucc (Fin.last k) (D i))
@@ -1292,7 +1284,7 @@ lemma exists_disjoint_subspaces_iInter {k : ℕ} (r m n : ℕ) (hDHJ : HasDensit
       (∀ V ∈ 𝒱, Subspace.IsContained V (intersection D)) ∧
       (𝒱.PairwiseDisjoint fun V ↦ (Subspace.range V : Set (Fin n → Fin (k + 1)))) ∧
       ((uncovered (intersection D) 𝒱).dens : ℝ) < 2 * r * β := by
-  exact intersectionTilingBound_spec k r m n hDHJ hr₀ hrk hm hβ₀ hβ₁ hn
+  exact intersectionTilingBound_spec k r m n hDHJ hr₀ hrk hm hβ₀ hn
     hr₀ hrk D hD hDβ
 
 end IsInsensitive

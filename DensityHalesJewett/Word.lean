@@ -63,8 +63,8 @@ lemma average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (�
 /-- A bounded function with large average exceeds a lower threshold on a quantitatively large
 set. -/
 lemma density_ge_threshold {X : Type*} [Fintype X] [Nonempty X]
-    (f : X → ℝ) (a b : ℝ) (_hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
-    (_hb : 0 ≤ b) (hba : b < a) (havg : a ≤ 𝔼 x : X, f x) :
+    (f : X → ℝ) (a b : ℝ) (hf₁ : ∀ x, f x ≤ 1)
+    (hba : b < a) (havg : a ≤ 𝔼 x : X, f x) :
     (a - b) / (1 - b) ≤
       ((Finset.univ.filter fun x ↦ b ≤ f x).dens : ℝ) := by
   classical

@@ -349,9 +349,9 @@ lemma exists_dense_prefixCoordinateWord {k m n : ℕ} (hmn : m ≤ n)
   rw [← hfiber]
   exact hy
 
-/-- A coordinate fiber of any prescribed smaller positive dimension has relative density at least
-the ambient density. -/
-lemma exists_density_preserving_subspace_of_le {k m n : ℕ} (_hm : 1 ≤ m) (hmn : m ≤ n)
+/-- A coordinate fiber of any prescribed smaller dimension has relative density at least the
+ambient density. -/
+lemma exists_density_preserving_subspace_of_le {k m n : ℕ} (hmn : m ≤ n)
     (A : Finset (Fin n → Fin (k + 1))) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       (A.dens : ℝ) ≤ (Subspace.relativeDensity V A : ℝ) := by
@@ -451,7 +451,7 @@ lemma line_or_iterated_density_le_one {k R n : ℕ} (hk : 2 ≤ k) (hDHJ : HasDe
     (∃ l : Combinatorics.Line (Fin (k + 1)) (Fin n), ∀ a, l a ∈ A) ∨
       δ + (R : ℝ) * (Parameters.γ k δ / 2) ≤ 1 := by
   obtain ⟨V₀, hV₀⟩ :=
-    exists_density_preserving_subspace_of_le (hd 0 (Nat.zero_le R)) hn A
+    exists_density_preserving_subspace_of_le hn A
   obtain hline | ⟨V, hV⟩ :=
     line_or_density_increment_chain hk hDHJ hδ d hd hstep A V₀ (hA.trans hV₀)
   · exact Or.inl hline

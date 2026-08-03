@@ -201,9 +201,8 @@ lemma half_density_prefixes {k p q : ℕ} (hk : 0 < k) (δ : ℝ) (hδ : 0 < δ)
   letI : Nonempty (Fin p → Fin k) := Pi.instNonempty
   have hδ₁ : δ ≤ 1 := hA.trans (by exact_mod_cast Finset.dens_le_one (s := A))
   have hthreshold := density_ge_threshold (fun x : Fin p → Fin k ↦ ((fiber A x).dens : ℝ))
-    δ (δ / 2) (fun _ ↦ by positivity)
+    δ (δ / 2)
     (fun x ↦ by exact_mod_cast Finset.dens_le_one (s := fiber A x))
-    (by linarith)
     (by linarith) (by simpa only [average_density_fiber] using hA)
   refine le_trans ?_ hthreshold
   refine (le_div_iff₀ ?_).mpr ?_

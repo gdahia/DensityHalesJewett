@@ -95,10 +95,6 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
   have hβ₀ : 0 < β := by
     dsimp only [β]
     positivity
-  have hβ₁ : β ≤ 1 := by
-    have hk_real : (2 : ℝ) ≤ k := by exact_mod_cast hk
-    apply (div_le_iff₀ (by positivity : 0 < 4 * (k : ℝ))).mpr
-    nlinarith [sq_nonneg (1 - Parameters.γ k δ), hk_real]
   have hβ_simplify :
       2 * (k : ℝ) * β = Parameters.γ k δ ^ 2 / 2 := by
     dsimp only [β]
@@ -110,7 +106,7 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
     nlinarith
   obtain ⟨𝒱, h𝒱finite, hcontained, hpairwise, huncovered⟩ :=
     IsInsensitive.exists_disjoint_subspaces_iInter (k := k) k d m hDHJ (by omega) le_rfl hd
-      β hβ₀ hβ₁ hm_tiling D (by
+      β hβ₀ hm_tiling D (by
         simpa only [Fin.castLE_rfl, id_eq] using hD) hDβ
   have h𝒱nonempty : 𝒱.Nonempty := by
     by_contra h𝒱
@@ -132,7 +128,7 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
 /-- The structured correlation and the small uncovered part give an aggregate density gain over
 the disjoint tile family. -/
 lemma structured_tiling_density_sum {k d m n : ℕ}
-    (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1)
+    (hk : 2 ≤ k) {δ : ℝ} (hδ₀ : 0 < δ)
     (A : Finset (Fin n → Fin (k + 1)))
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
     (D : Fin k → Finset (Fin m → Fin (k + 1)))
@@ -259,7 +255,7 @@ lemma Subspace.dens_inter_range_eq_relativeDensity_mul_range
 
 /-- Finite weighted averaging selects a tile whose pullback density realizes the aggregate
 gain. -/
-lemma exists_dense_tile_of_density_sum {k d m n : ℕ} (_hk : 2 ≤ k)
+lemma exists_dense_tile_of_density_sum {k d m n : ℕ}
     {δ : ℝ} (A : Finset (Fin n → Fin (k + 1)))
     (V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n))
     (𝒱 : Finset (Combinatorics.Subspace (Fin d) (Fin (k + 1)) (Fin m)))
@@ -323,8 +319,8 @@ lemma exists_density_increment_subspace_of_structured_correlation {k d m n : ℕ
   obtain ⟨𝒱, h𝒱, hcontained, hpairwise, huncovered⟩ :=
     exists_finite_structured_tiling hk hDHJ hd hδ₀ hδ₁ hm_tiling D hD hDdense
   obtain ⟨W, _, hW⟩ :=
-    exists_dense_tile_of_density_sum hk A V 𝒱 h𝒱 <|
-      structured_tiling_density_sum hk hδ₀ hδ₁ A V D hDdense hcorrelation 𝒱
+    exists_dense_tile_of_density_sum A V 𝒱 h𝒱 <|
+      structured_tiling_density_sum hk hδ₀ A V D hDdense hcorrelation 𝒱
         hcontained hpairwise huncovered
   refine ⟨Subspace.compose V W, ?_⟩
   rw [Subspace.relativeDensity_compose]

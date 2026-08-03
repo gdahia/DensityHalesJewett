@@ -347,7 +347,7 @@ lemma density_complement_bounds {X : Type*} [Fintype X] [Nonempty X]
   · linarith [hsplitC, hC]
   · linarith [hδ₀, hη₀]
 
-/-- A large intersection of insensitive families with a density gain on its complement. -/
+/-- An intersection of insensitive families with a density gain on its complement. -/
 lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
     (hDHJ : HasDensityHJ k) (m n : ℕ) (hm : 1 ≤ m)
     [Nonempty (Combinatorics.Line (Fin k) (Fin m))]
@@ -361,7 +361,6 @@ lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       ∃ C : Fin k → Finset (Fin m → Fin (k + 1)),
         (∀ i, IsInsensitive i.castSucc (Fin.last k) (C i)) ∧
-        Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ) ∧
         (δ + 6 * Parameters.η k δ) *
             ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
           ((pullback V A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ) ∧
@@ -375,7 +374,7 @@ lemma exists_large_insensitive_intersection {k : ℕ} (hk : 2 ≤ k)
   · exact False.elim <| (not_lt_of_ge hV) (hsmall V)
   obtain ⟨C, hC, hCdense, hAC⟩ :=
     exists_endpoint_insensitive_intersection hk δ hδ₀ hδ₁ hm_large A V hfree hlines
-  refine ⟨V, C, hC, hCdense, ?_⟩
+  refine ⟨V, C, hC, ?_⟩
   apply density_complement_bounds
   · exact hδ₀.le
   · exact (Parameters.η_pos hk hδ₀).le
@@ -525,7 +524,6 @@ lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     {X : Type*} [Fintype X] [DecidableEq X]
     (A : Finset X) (C : Fin k → Finset X)
-    (_hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
     (hweighted : (δ + 6 * Parameters.η k δ) *
         ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
       ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ))
@@ -606,7 +604,6 @@ lemma exists_dense_firstFailurePiece {k : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
     {X : Type*} [Fintype X] [DecidableEq X]
     (A : Finset X) (C : Fin k → Finset X)
-    (hC : Parameters.θ k δ / 4 ≤ ((IsInsensitive.intersection C).dens : ℝ))
     (hweighted : (δ + 6 * Parameters.η k δ) *
         ((IsInsensitive.intersection C)ᶜ.dens : ℝ) ≤
       ((A ∩ (IsInsensitive.intersection C)ᶜ).dens : ℝ))
@@ -618,7 +615,7 @@ lemma exists_dense_firstFailurePiece {k : ℕ} (hk : 2 ≤ k)
         ((A ∩ firstFailurePiece C i).dens : ℝ) := by
   obtain ⟨hsumPieces, hsumIntersections⟩ :=
     firstFailurePiece_density_sums A C
-  exact exists_dense_firstFailurePiece_of_density_sums hk hδ₀ hδ₁ A C hC hweighted
+  exact exists_dense_firstFailurePiece_of_density_sums hk hδ₀ hδ₁ A C hweighted
     hlarge hsumPieces hsumIntersections
 
 /-- The Boolean reconstruction of a first-failure piece as an insensitive intersection.
@@ -681,11 +678,11 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
           δ + Parameters.η k δ ^ 2 / 2 := by
       intro V
       exact lt_of_not_ge fun hV ↦ hlarge ⟨V, hV⟩
-    obtain ⟨V, C, hC, hCdense, hweighted, houtside⟩ :=
+    obtain ⟨V, C, hC, hweighted, houtside⟩ :=
       exists_large_insensitive_intersection hk hDHJ m n hm δ hδ₀ hδ₁ hm_large hn A hA
         hfree hsmall
     obtain ⟨i, hidense, hicorrelation⟩ :=
-      exists_dense_firstFailurePiece hk hδ₀ hδ₁ (pullback V A) C hCdense hweighted
+      exists_dense_firstFailurePiece hk hδ₀ hδ₁ (pullback V A) C hweighted
         houtside
     obtain ⟨hD, hintersection, _, _⟩ := firstFailureFamily_facts C hC i
     refine ⟨V, firstFailureFamily C i, hD, ?_, ?_⟩

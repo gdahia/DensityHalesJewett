@@ -167,7 +167,7 @@ private lemma composeLine_reindex {β : Type*} (e : α ≃ β)
 
 /-- The line case of the Graham--Rothschild theorem. -/
 lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C] [Nonempty C]
-    [DecidableEq α] (m n : ℕ) (_hm : 1 ≤ m)
+    [DecidableEq α] (m n : ℕ)
     (hn : bound (Fintype.card α) (Fintype.card C) m ≤ n)
     (χ : Combinatorics.Line α (Fin n) → C) :
     ∃ V : Combinatorics.Subspace (Fin m) α (Fin n),
@@ -184,7 +184,7 @@ lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C] [Nonempty C]
 
 /-- The two-color form of Graham--Rothschild used by the density argument. -/
 lemma lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
-    (m n : ℕ) (hm : 1 ≤ m)
+    (m n : ℕ)
     (hn : bound (Fintype.card α) 2 m ≤ n)
     (L : Finset (Combinatorics.Line α (Fin n))) :
     ∃ V : Combinatorics.Subspace (Fin m) α (Fin n),
@@ -192,7 +192,7 @@ lemma lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
         (∀ l : Combinatorics.Line α (Fin m), Subspace.mapLine V l ∉ L) := by
   classical
   obtain ⟨V, c, hc⟩ :=
-    lines α (Fin 2) m n hm hn fun l ↦ if l ∈ L then 0 else 1
+    lines α (Fin 2) m n hn fun l ↦ if l ∈ L then 0 else 1
   obtain rfl | ⟨c, rfl⟩ := c.eq_zero_or_eq_succ
   · refine ⟨V, Or.inl ?_⟩
     intro l

@@ -52,7 +52,7 @@ noncomputable def correlatedFibersBound (k m : ℕ) (δ : ℝ) : ℕ :=
 /-- Uniformization followed by line canonization produces a large subspace on which every
 restricted-alphabet line is uniformly good or uniformly sparse. -/
 lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
-    {δ : ℝ} (hδ₀ : 0 < δ) (_hδ₁ : δ ≤ 1)
+    {δ : ℝ} (hδ₀ : 0 < δ)
     {ι κ : Type*} [Finite ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
@@ -83,7 +83,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       by_contra hL
       obtain rfl : L = 0 := by omega
       obtain ⟨R, _⟩ :=
-        GrahamRothschild.lines_twoColor (Fin (k + 1)) M 0 hM
+        GrahamRothschild.lines_twoColor (Fin (k + 1)) M 0
           (by simpa only [Fintype.card_fin] using hGR) ∅
       obtain ⟨i, _⟩ := R.proper ⟨0, hM⟩
       exact Fin.elim0 i
@@ -96,7 +96,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
           ((Finset.univ.filter fun y ↦
             ∀ a : Fin k, Sum.elim (U (q a.castSucc)) y ∈ A).dens : ℝ)
     obtain ⟨R, hgood | hbad⟩ :=
-      GrahamRothschild.lines_twoColor (Fin (k + 1)) M L hM
+      GrahamRothschild.lines_twoColor (Fin (k + 1)) M L
         (by simpa only [Fintype.card_fin] using hGR) goodLines
     · refine ⟨Subspace.compose U R, ?_, Or.inl ?_⟩
       · intro x
@@ -182,7 +182,7 @@ the larger subspace as a certificate whose every restricted-alphabet line has co
 strictly below `Parameters.θ k δ`. -/
 lemma exists_correlated_fibers_or_sparse_certificate {k M L : ℕ} (hk : 2 ≤ k)
     (m : ℕ) (hm : 1 ≤ m)
-    (δ : ℝ) (hδ₀ : 0 < δ) (hδ₁ : δ ≤ 1)
+    (δ : ℝ) (hδ₀ : 0 < δ)
     {ι κ : Type*} [Finite ι] [Fintype (κ → Fin (k + 1))]
     [Fintype (ι ⊕ κ → Fin (k + 1))]
     [DecidableEq (ι ⊕ κ → Fin (k + 1))]
@@ -206,7 +206,7 @@ lemma exists_correlated_fibers_or_sparse_certificate {k M L : ℕ} (hk : 2 ≤ k
               ∀ a, Sum.elim (W (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) <
                 Parameters.θ k δ := by
   obtain ⟨W, hfibers, hgood | hsparse⟩ :=
-    exists_uniform_fibers_and_homogeneous_lines hk hδ₀ hδ₁ hGR A hA huniform
+    exists_uniform_fibers_and_homogeneous_lines hk hδ₀ hGR A hA huniform
   · exact Or.inl <|
       restrict_correlated_fibers_subspace hm hmM A W hfibers hgood
   · exact Or.inr ⟨M, hm₀M, W, hfibers, hsparse⟩
@@ -241,11 +241,8 @@ lemma dense_suffixes_of_uniform_fibers {k M : ℕ} (hk : 2 ≤ k)
     (δ - Parameters.η k δ ^ 2 / 2) (δ / 4)
     (fun y ↦ by
       dsimp only [f]
-      positivity)
-    (fun y ↦ by
-      dsimp only [f]
       exact_mod_cast Finset.dens_le_one)
-    (by positivity) (by nlinarith [sq_nonneg δ]) havg
+    (by nlinarith [sq_nonneg δ]) havg
   refine (le_div_iff₀ (by linarith : 0 < 1 - δ / 4)).mpr ?_ |>.trans hthreshold
   nlinarith [sq_nonneg δ]
 
@@ -380,7 +377,7 @@ lemma exists_subspace_correlated_fibers {k M L : ℕ} (hk : 2 ≤ k)
         Parameters.θ k δ ≤
           ((Finset.univ.filter fun y ↦ ∀ a, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
   obtain hV | hsparse :=
-    exists_correlated_fibers_or_sparse_certificate hk m hm δ hδ₀ hδ₁ hmM hm₀M hGR A hA huniform
+    exists_correlated_fibers_or_sparse_certificate hk m hm δ hδ₀ hmM hm₀M hGR A hA huniform
   · exact hV
   · exact (not_exists_sparse_correlated_fibers_certificate hk hDHJ δ hδ₀ hδ₁ A
       hsparse).elim
@@ -452,11 +449,10 @@ lemma average_suffixPullback_lower {α η ι κ : Type*} [Nonempty α] [Fintype 
     Finset.le_expect (Finset.univ_nonempty (α := η → α)) fun x _ => hV x
   exact h_r_le_expect.trans h_expect_eq.le
 
-/-- If a bounded function has average at least `δ - η²/2` but never reaches
-`δ + η²/2`, then it is at least `δ - 2η` on all but an `η`-fraction of its domain. -/
+/-- If a function has average at least `δ - η²/2` but never reaches `δ + η²/2`, then it is at
+least `δ - 2η` on all but an `η`-fraction of its domain. -/
 lemma density_near_average {X : Type*} [Fintype X] [Nonempty X]
-    (f : X → ℝ) (δ η : ℝ) (hη₀ : 0 < η) (_hη₁ : η ≤ 1)
-    (_hf₀ : ∀ x, 0 ≤ f x) (_hf₁ : ∀ x, f x ≤ 1)
+    (f : X → ℝ) (δ η : ℝ) (hη₀ : 0 < η)
     (havg : δ - η ^ 2 / 2 ≤ 𝔼 x : X, f x)
     (hupper : ∀ x, f x < δ + η ^ 2 / 2) :
     1 - η ≤ ((Finset.univ.filter fun x ↦ δ - 2 * η ≤ f x).dens : ℝ) := by
@@ -538,15 +534,14 @@ lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
       fun l _ => hV l
   exact h_θ_le_expect.trans h_expect_eq.le
 
-/-- A `[0,1]`-valued function with average at least `θ` exceeds `θ/2` on a set of
+/-- A function bounded above by one with average at least `θ` exceeds `θ/2` on a set of
 density at least `θ/2`. -/
 lemma density_half_threshold {X : Type*} [Fintype X] [Nonempty X]
     (f : X → ℝ) (θ : ℝ) (hθ₀ : 0 < θ) (hθ₁ : θ ≤ 1)
-    (hf₀ : ∀ x, 0 ≤ f x) (hf₁ : ∀ x, f x ≤ 1)
-    (havg : θ ≤ 𝔼 x : X, f x) :
+    (hf₁ : ∀ x, f x ≤ 1) (havg : θ ≤ 𝔼 x : X, f x) :
     θ / 2 ≤ ((Finset.univ.filter fun x ↦ θ / 2 ≤ f x).dens : ℝ) := by
   refine le_trans ?_
-    (density_ge_threshold f θ (θ / 2) hf₀ hf₁ (by positivity) (by linarith) havg)
+    (density_ge_threshold f θ (θ / 2) hf₁ (by linarith) havg)
   rw [le_div_iff₀ (by linarith : (0 : ℝ) < 1 - θ / 2)]
   nlinarith [sq_nonneg (θ / 2)]
 
@@ -600,25 +595,16 @@ lemma exists_suffix_many_lines {k m : ℕ} (hk : 2 ≤ k)
     exact lt_of_not_ge fun hy ↦ hinc ⟨y, hy⟩
   have hmostly : 1 - Parameters.η k δ ≤
       ((Finset.univ.filter fun y ↦ δ - 2 * Parameters.η k δ ≤ f y).dens : ℝ) := by
-    refine density_near_average f δ (Parameters.η k δ) hη₀ hη₁ ?_ ?_ havgf hupper
-    · intro y
-      dsimp only [f]
-      positivity
-    · intro y
-      dsimp only [f]
-      exact_mod_cast Finset.dens_le_one (s := suffixPullback V A y)
+    exact density_near_average f δ (Parameters.η k δ) hη₀ havgf hupper
   have havgg : Parameters.θ k δ ≤ 𝔼 y, g y := by
     exact average_suffixLines_lower V A (Parameters.θ k δ) hlines
   have hmany : Parameters.θ k δ / 2 ≤
       ((Finset.univ.filter fun y ↦ Parameters.θ k δ / 2 ≤ g y).dens : ℝ) := by
     refine density_half_threshold g (Parameters.θ k δ) (Parameters.θ_pos hk hδ₀)
-      (Parameters.θ_le_one hk hδ₁) ?_ ?_ havgg
-    · intro y
-      dsimp only [g]
-      positivity
-    · intro y
-      dsimp only [g]
-      exact_mod_cast Finset.dens_le_one (s := suffixLines V A y)
+      (Parameters.θ_le_one hk hδ₁) ?_ havgg
+    intro y
+    dsimp only [g]
+    exact_mod_cast Finset.dens_le_one (s := suffixLines V A y)
   obtain ⟨y, hy₁, hy₂⟩ := exists_mem_inter_of_large_density
     (Finset.univ.filter fun y ↦ δ - 2 * Parameters.η k δ ≤ f y)
     (Finset.univ.filter fun y ↦ Parameters.θ k δ / 2 ≤ g y)
