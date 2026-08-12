@@ -51,14 +51,8 @@ lemma average_density_fiber {α ι κ : Type*} [Fintype (ι → α)] [Fintype (�
   rw [← Finset.expect_product']
   apply Finset.expect_equiv (Equiv.sumArrowEquivProdArrow ι κ α).symm
   · simp
-  · intro x _
-    rcases x with ⟨x, y⟩
-    have hy : y ∈ fiber A x ↔ (Equiv.sumArrowEquivProdArrow ι κ α).symm (x, y) ∈ A :=
-      mem_fiber
-    by_cases h : (Equiv.sumArrowEquivProdArrow ι κ α).symm (x, y) ∈ A
-    · rw [Set.indicator_of_mem (by simpa [hy] using h), Set.indicator_of_mem h]
-      simp only [Pi.one_apply]
-    · rw [Set.indicator_of_notMem (by simpa [hy] using h), Set.indicator_of_notMem h]
+  · rintro ⟨x, y⟩ -
+    simp [Set.indicator_apply, Equiv.sumArrowEquivProdArrow]
 
 /-- A bounded function with large average exceeds a lower threshold on a quantitatively large
 set. -/
@@ -83,12 +77,6 @@ lemma density_ge_threshold {X : Type*} [Fintype X] [Nonempty X]
     simp only [Fintype.expect_const, ← Finset.mul_expect, Finset.expect_indicator_one]
     ring
   · intro x _
-    by_cases hx : x ∈ H
-    · rw [Set.indicator_of_mem (by simpa using hx)]
-      simp only [Pi.one_apply]
-      linarith [hf₁ x]
-    · rw [Set.indicator_of_notMem (by simpa using hx)]
-      simp only [mul_zero, add_zero]
-      exact le_of_lt <| lt_of_not_ge <| by simpa [H] using hx
+    by_cases hx : b ≤ f x <;> simp [H, hx] <;> linarith [hf₁ x]
 
 end DensityHalesJewett

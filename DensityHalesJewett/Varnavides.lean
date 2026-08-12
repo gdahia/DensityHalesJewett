@@ -103,8 +103,7 @@ lemma card_gridIncidences_lower_bound (m n D W : ℕ) (hW : m * D ≤ W)
     rw [Finset.mem_inter, Finset.mem_Icc] at hxA
     rw [Finset.mem_Icc] at hxd
     rw [Finset.mem_range] at hxi
-    have hidW : x.2 * x.1.2 ≤ W := by
-      exact (Nat.mul_le_mul hxi.le hxd.2).trans hW
+    have hidW : x.2 * x.1.2 ≤ W := (Nat.mul_le_mul hxi.le hxd.2).trans hW
     have hidX : x.2 * x.1.2 ≤ x.1.1 := hidW.trans hxA.2.1
     constructor
     · refine ⟨?_, Finset.mem_range.mpr hxi⟩
@@ -257,35 +256,27 @@ lemma denseGrids_card_le_containedProgressions_mul (k : ℕ) (hk : 3 ≤ k)
       change p ∈ (Finset.univ : Finset ↥S).filter (fun p ↦ q p = y) at hp
       change r ∈ (Finset.univ : Finset ↥S).filter (fun p ↦ q p = y) at hr
       rw [Finset.mem_filter] at hp hr
-      have hprstart : (P p).start = (P r).start := by
-        simpa using congrArg Prod.fst hpr
-      have hprdiff : (P p).diff = (P r).diff := by
-        simpa using congrArg Prod.snd hpr
+      have hprstart : (P p).start = (P r).start := by simpa using congrArg Prod.fst hpr
+      have hprdiff : (P p).diff = (P r).diff := by simpa using congrArg Prod.snd hpr
       have hqeq : q p = q r := hp.2.trans hr.2.symm
       rw [(hP p).2.2, (hP r).2.2, hprstart, hprdiff] at hqeq
-      have hqdiff := congrArg Prod.snd hqeq
-      have hdiff : p.1.2 = r.1.2 := by
-        exact Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero (P r).diff_ne_zero) hqdiff
-      apply Subtype.ext
-      apply Prod.ext
-      · have hqstart := congrArg Prod.fst hqeq
-        rw [hdiff] at hqstart
-        exact Nat.add_right_cancel hqstart
-      · exact hdiff
+      have hdiff : p.1.2 = r.1.2 :=
+        Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero (P r).diff_ne_zero) (congrArg Prod.snd hqeq)
+      refine Subtype.ext (Prod.ext ?_ hdiff)
+      have hqstart := congrArg Prod.fst hqeq
+      rw [hdiff] at hqstart
+      exact Nat.add_right_cancel hqstart
   calc
     #S = ∑ y ∈ (Finset.univ.image q),
         #{p ∈ (Finset.univ : Finset ↥S) | q p = y} := by
       rw [← Finset.card_eq_sum_card_image]
       simp
-    _ ≤ ∑ _y ∈ (Finset.univ.image q), m ^ 2 := by
-      exact Finset.sum_le_sum fun y _ ↦ hfiber y
+    _ ≤ ∑ _y ∈ (Finset.univ.image q), m ^ 2 := Finset.sum_le_sum fun y _ ↦ hfiber y
     _ = #(Finset.univ.image q) * m ^ 2 := by simp
     _ ≤ #(containedProgressions k n A) * m ^ 2 := by
-      apply Nat.mul_le_mul_right
-      apply Finset.card_le_card
+      refine Nat.mul_le_mul_right _ (Finset.card_le_card ?_)
       intro y hy
-      rw [Finset.mem_image] at hy
-      obtain ⟨p, _, rfl⟩ := hy
+      obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hy
       exact hq p
 
 /-- The positive proportion of progressions supplied by Varnavides' argument. -/
@@ -313,13 +304,9 @@ theorem exists_many_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 
   let D := n / C
   let W := m * D
   have hm : 0 < m := by simp [m]
-  have hC : 0 < C := by
-    dsimp only [C]
-    exact Nat.one_le_ceil_iff.mpr (by positivity)
+  have hC : 0 < C := Nat.one_le_ceil_iff.mpr (by positivity)
   have hCn : C ≤ n := by omega
-  have hD : 0 < D := by
-    dsimp only [D]
-    exact Nat.div_pos hCn hC
+  have hD : 0 < D := Nat.div_pos hCn hC
   have hCD : C * D ≤ n := by
     simpa only [D, Nat.mul_comm] using Nat.div_mul_le_self n C
   have hCbound : (16 : ℝ) * m ≤ δ * C := by

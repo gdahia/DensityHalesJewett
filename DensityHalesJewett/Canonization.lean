@@ -166,10 +166,9 @@ lemma exists_canonical (α : Type*) [Finite α] (C : Type*) [Finite C] (ℓ : �
   refine ⟨Fintype.card B, ?_⟩
   intro χ
   obtain ⟨V, hV⟩ := hB fun _ w _ ↦ χ (w ∘ (Fintype.equivFin B).symm)
-  have hw : ∀ z : Fin ℓ → Option α,
+  have hw (z : Fin ℓ → Option α) :
       wordMap (V.reindex (Equiv.refl _) (Equiv.refl _) (Fintype.equivFin B)) z
         = wordMap V z ∘ (Fintype.equivFin B).symm := by
-    intro z
     funext i
     cases h : V.idxFun ((Fintype.equivFin B).symm i) <;>
       simp [wordMap, Combinatorics.Subspace.reindex, h]

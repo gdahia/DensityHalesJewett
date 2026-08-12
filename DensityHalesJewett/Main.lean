@@ -34,76 +34,20 @@ are strictly comparable. -/
 lemma binary_line_iff_ssubset {ι : Type*} [Fintype ι] (x y : ι → Fin 2) :
     (∃ l : Combinatorics.Line (Fin 2) ι, l 0 = x ∧ l 1 = y) ↔
       binarySupport x ⊂ binarySupport y := by
+  have hmem : ∀ (w : ι → Fin 2) (j : ι), j ∈ binarySupport w ↔ w j = 1 := by simp [binarySupport]
   constructor
-  · rintro ⟨l, hlx, hly⟩
-    refine Finset.ssubset_iff_of_subset ?_ |>.2 ?_
-    · intro i hix
-      rw [← hlx] at hix
-      rw [← hly]
-      simp only [binarySupport, mem_filter, mem_univ, true_and] at hix ⊢
-      change (l.idxFun i).getD 0 = 1 at hix
-      change (l.idxFun i).getD 1 = 1
-      cases hi : l.idxFun i
-      · exfalso
-        rw [hi] at hix
-        exact Fin.zero_ne_one hix
-      · rw [hi] at hix
-        exact hix
-    · obtain ⟨i, hi⟩ := l.proper
-      refine ⟨i, ?_, ?_⟩
-      · rw [← hly]
-        simp only [binarySupport, mem_filter, mem_univ, true_and]
-        change (l.idxFun i).getD 1 = 1
-        rw [hi]
-        simp
-      · rw [← hlx]
-        simp only [binarySupport, mem_filter, mem_univ, true_and]
-        change ¬ (l.idxFun i).getD 0 = 1
-        rw [hi]
-        simp
-  · classical
-    intro h
-    obtain ⟨i, hiy, hix⟩ := (Finset.ssubset_iff_of_subset h.1).1 h
-    have hyi : y i = 1 := by
-      simpa [binarySupport] using hiy
-    have hxi₀ : x i = 0 := by
-      obtain hxi₀ | ⟨j, hxi₀⟩ := (x i).eq_zero_or_eq_succ
-      · exact hxi₀
-      · rw [Fin.eq_zero j] at hxi₀
-        exfalso
-        apply hix
-        simp only [binarySupport, mem_filter, mem_univ, true_and]
-        exact hxi₀
-    let l : Combinatorics.Line (Fin 2) ι :=
-      ⟨fun j ↦ if x j = 0 ∧ y j = 1 then none else some (x j), ⟨i, by simp [hxi₀, hyi]⟩⟩
-    refine ⟨l, ?_, ?_⟩
-    · funext j
-      simp only [l, Combinatorics.Line.coe_apply]
-      split
-      · rename_i hj
-        simp [hj.1]
-      · simp
-    · funext j
-      simp only [l, Combinatorics.Line.coe_apply]
-      split
-      · rename_i hj
-        simp [hj.2]
-      · rename_i hj
-        simp only [Option.getD_some]
-        obtain hxj | ⟨a, hxj⟩ := (x j).eq_zero_or_eq_succ
-        · obtain hyj | ⟨b, hyj⟩ := (y j).eq_zero_or_eq_succ
-          · rw [hxj, hyj]
-          · rw [Fin.eq_zero b] at hyj
-            exact (hj ⟨hxj, hyj⟩).elim
-        · rw [Fin.eq_zero a] at hxj
-          rw [hxj]
-          symm
-          change y j = 1
-          suffices j ∈ binarySupport y by
-            simpa only [binarySupport, mem_filter, mem_univ, true_and] using this
-          apply h.1
-          simp only [binarySupport, mem_filter, mem_univ, true_and]
-          exact hxj
+  · rintro ⟨l, rfl, rfl⟩
+    obtain ⟨i, hi⟩ := l.proper
+    refine (ssubset_iff_of_subset ?_).2 ⟨i, by simp [hmem, hi], by simp [hmem, hi]⟩
+    intro j hj
+    cases hj' : l.idxFun j <;> simp_all
+  · intro h
+    obtain ⟨i, hiy, hix⟩ := exists_of_ssubset h
+    have hsub : ∀ j, x j = 1 → y j = 1 := by
+      intro j hj
+      exact (hmem y j).1 (h.1 ((hmem x j).2 hj))
+    refine ⟨⟨fun j ↦ if x j = y j then some (x j) else none, i, by grind⟩, ?_, ?_⟩ <;>
+      funext j <;> grind [Combinatorics.Line.coe_apply]
 
 /-- Binary support faithfully records a binary word. -/
 lemma binarySupport_injective {ι : Type*} [Fintype ι] :
@@ -143,8 +87,8 @@ lemma centralBinom_ratio_sq_mul_le (m : ℕ) :
 Boolean cube. -/
 lemma centralBinom_ratio_le_inv_sqrt (m : ℕ) :
     (Nat.centralBinom m : ℝ) / 4 ^ m ≤ (√(3 * m + 1))⁻¹ := by
-  rw [inv_eq_one_div, le_div_iff₀ (Real.sqrt_pos.2 (by positivity))]
-  rw [← sq_le_sq₀ (by positivity) (by positivity), mul_pow, Real.sq_sqrt (by positivity)]
+  rw [inv_eq_one_div, le_div_iff₀ (Real.sqrt_pos.2 (by positivity)),
+    ← sq_le_sq₀ (by positivity) (by positivity), mul_pow, Real.sq_sqrt (by positivity)]
   simpa only [one_pow] using centralBinom_ratio_sq_mul_le m
 
 /-- The two normalizations of the binomial denominator, one per half-dimension and one per
@@ -161,8 +105,7 @@ lemma middleBinomial_ratio_le_central (n : ℕ) :
   obtain ⟨m, hm | hm⟩ := Nat.even_or_odd' n
   · subst n
     have hdiv : 2 * m / 2 = m := by grind
-    rw [hdiv, Nat.centralBinom]
-    rw [two_pow_two_mul]
+    rw [hdiv, Nat.centralBinom, two_pow_two_mul]
   · subst n
     have hdiv : (2 * m + 1) / 2 = m := by grind
     rw [hdiv, Nat.centralBinom]
@@ -175,8 +118,7 @@ lemma middleBinomial_ratio_le_central (n : ℕ) :
         simpa only [Nat.add_sub_cancel, two_mul] using
           add_le_add (Nat.choose_le_centralBinom m (m + 1))
             (Nat.choose_le_centralBinom (m + 1) (m + 1))
-      rw [pow_succ, two_pow_two_mul]
-      rw [mul_comm (4 ^ (m + 1) : ℝ) 2]
+      rw [pow_succ, two_pow_two_mul, mul_comm (4 ^ (m + 1) : ℝ) 2]
       apply le_trans (b := (2 * Nat.centralBinom (m + 1) : ℝ) /
         (2 * 4 ^ (m + 1)))
       · exact (div_le_div_iff_of_pos_right
@@ -230,8 +172,7 @@ lemma dhj_two : HasDensityHJ 2 := by
       exact hx
     · simp only [Fin.eq_zero i]
       change l 1 ∈ A
-      rw [hly]
-      exact hy
+      rwa [hly]
   have hcard : #A ≤ n.choose (n / 2) := by
     rw [← Finset.card_image_of_injective A binarySupport_injective]
     simpa only [B, Fintype.card_fin] using hB.sperner
@@ -281,8 +222,7 @@ lemma exists_density_increment_schedule (k R : ℕ) (δ : ℝ) :
     have h_sub : R - j = (R - (j + 1)) + 1 := by omega
     have h_index : (R - ((R - (j + 1) : ℕ) + 1) : ℕ) = j := by omega
     dsimp [d]
-    rw [h_sub, h_aux_succ (R - (j + 1))]
-    rw [h_index]
+    rw [h_sub, h_aux_succ (R - (j + 1)), h_index]
     exact le_max_right _ _
   exact ⟨d, h_d_R, h_d_one, h_d_step⟩
 
@@ -333,22 +273,16 @@ lemma exists_dense_prefixCoordinateWord {k m n : ℕ} (hmn : m ≤ n)
   have hword (x : Fin m → Fin (k + 1)) :
       eWord (Sum.elim y x) = prefixCoordinateWord hmn x y := by
     funext i
-    cases h : (prefixCoordinateEquiv hmn).symm i with
-    | inl j =>
-        simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr,
-          Sum.elim, h, Function.comp_apply]
-    | inr j =>
-        simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr,
-          Sum.elim, h, Function.comp_apply]
+    cases h : (prefixCoordinateEquiv hmn).symm i <;>
+      simp [eWord, eCoord, prefixCoordinateWord, Equiv.arrowCongr, Sum.elim, h,
+        Function.comp_apply]
   have hfiber : fiber A' y = Finset.univ.filter fun x : Fin m → Fin (k + 1) ↦
       prefixCoordinateWord hmn x y ∈ A := by
     ext x
     simp only [mem_fiber, Finset.mem_filter, Finset.mem_univ, true_and, A',
-      Finset.mem_map_equiv]
-    simp only [Equiv.symm_symm]
+      Finset.mem_map_equiv, Equiv.symm_symm]
     rw [hword]
-  rw [← hfiber]
-  exact hy
+  rwa [← hfiber]
 
 /-- A coordinate fiber of any prescribed smaller dimension has relative density at least the
 ambient density. -/
@@ -385,9 +319,7 @@ lemma density_increment_chain_step {k R n j : ℕ} (hk : 2 ≤ k)
   have hρ₀ : 0 < ρ := by
     dsimp only [ρ]
     nlinarith [hγ.1, (Nat.cast_nonneg j : (0 : ℝ) ≤ (j : ℝ))]
-  have hρ₁ : ρ ≤ 1 := by
-    exact hV.trans <| by
-      exact_mod_cast Finset.dens_le_one (s := pullback V A)
+  have hρ₁ : ρ ≤ 1 := hV.trans (by exact_mod_cast Finset.dens_le_one (s := pullback V A))
   have hinc := density_increment hk hDHJ (d (j + 1))
     (hd (j + 1) (Nat.succ_le_of_lt hj)) ρ hρ₀ hρ₁ (d j) (hstep j hj)
       (pullback V A) (by
@@ -431,11 +363,12 @@ lemma line_or_density_increment_chain {k R n : ℕ} (hk : 2 ≤ k)
   intro j hj
   induction j with
   | zero =>
-      exact Or.inr ⟨V₀, by
-        simpa only [Nat.cast_zero, zero_mul, add_zero] using hV₀⟩
+      right
+      exact ⟨V₀, by simpa only [Nat.cast_zero, zero_mul, add_zero] using hV₀⟩
   | succ j ih =>
       obtain hline | ⟨V, hV⟩ := ih (Nat.le_of_succ_le hj)
-      · exact Or.inl hline
+      · left
+        exact hline
       · exact density_increment_chain_step hk hDHJ hδ d hd hstep
           (Nat.lt_of_succ_le hj) A V hV
 
@@ -457,10 +390,10 @@ lemma line_or_iterated_density_le_one {k R n : ℕ} (hk : 2 ≤ k) (hDHJ : HasDe
     exists_density_preserving_subspace_of_le hn A
   obtain hline | ⟨V, hV⟩ :=
     line_or_density_increment_chain hk hDHJ hδ d hd hstep A V₀ (hA.trans hV₀)
-  · exact Or.inl hline
-  · apply Or.inr
-    apply hV.trans
-    exact_mod_cast Finset.dens_le_one (s := pullback V A)
+  · left
+    exact hline
+  · right
+    exact hV.trans (mod_cast Finset.dens_le_one (s := pullback V A))
 
 /-- Density Hales--Jewett for every finite alphabet of cardinality at least two. -/
 lemma density_hales_jewett_fin (k : ℕ) (hk : 2 ≤ k) : HasDensityHJ k := by
@@ -524,8 +457,7 @@ lemma exists_of_density_card_ge_two (α : Type*) [Fintype α]
   specialize hl (e x)
   rw [Finset.mem_map_equiv] at hl
   change (e.symm ∘ l (e x)) ∈ A at hl
-  rw [← e.symm_apply_apply x, Combinatorics.Line.map_apply]
-  exact hl
+  rwa [← e.symm_apply_apply x, Combinatorics.Line.map_apply]
 
 lemma densityTheoremBound_spec (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityTheoremBound (Fintype.card α) δ ≤ n)
@@ -540,7 +472,7 @@ lemma densityTheoremBound_spec (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < �
 theorem exists_of_density (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityTheoremBound (Fintype.card α) δ ≤ n)
     (A : Finset (Fin n → α)) (hAδ : δ * (Fintype.card α : ℝ) ^ n ≤ #A) :
-    ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
-  exact densityTheoremBound_spec α δ hδ n hn A hAδ
+    ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A :=
+  densityTheoremBound_spec α δ hδ n hn A hAδ
 
 end Combinatorics.Line

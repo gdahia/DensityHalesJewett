@@ -63,13 +63,11 @@ lemma baseEncode_isArithmeticProgression {k m : ℕ} (hk : 1 ≤ k)
     { start := (finFunctionFinEquiv (l ⟨0, hk⟩) : ℕ)
       diff := d
       diff_ne_zero := ?_ }, ?_⟩
-  · apply Nat.ne_of_gt
-    apply Finset.sum_pos'
+  · refine Nat.ne_of_gt (Finset.sum_pos' ?_ ?_)
     · intro i _
       exact Nat.zero_le _
     · obtain ⟨i, hi⟩ := l.proper
-      refine ⟨i, Finset.mem_univ i, ?_⟩
-      simp [hi, Nat.zero_lt_of_lt hk]
+      exact ⟨i, Finset.mem_univ i, by simp [hi, Nat.zero_lt_of_lt hk]⟩
   · intro a
     change (finFunctionFinEquiv (l ⟨0, hk⟩) : ℕ) + (a : ℕ) • d
       = (finFunctionFinEquiv (l a) : ℕ)
@@ -77,11 +75,7 @@ lemma baseEncode_isArithmeticProgression {k m : ℕ} (hk : 1 ≤ k)
     rw [nsmul_eq_mul, Finset.mul_sum, ← Finset.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro i _
-    by_cases hi : l.idxFun i = none
-    · simp [Combinatorics.Line.coe_apply, hi]
-    · cases hli : l.idxFun i with
-      | none => exact (hi hli).elim
-      | some b => simp [Combinatorics.Line.coe_apply, hli]
+    cases hli : l.idxFun i <;> simp [Combinatorics.Line.coe_apply, hli]
 
 end Line
 
@@ -122,19 +116,12 @@ lemma exists_dense_digitBlock {K : ℕ} (hK : 1 ≤ K) {δ : ℝ} (hδ : 0 < δ)
         rw [Finset.nonempty_iff_ne_empty]
         intro hSempty
         rw [hSempty, Finset.card_empty, Nat.cast_zero] at hS
-        apply (not_lt_of_ge hS)
-        apply mul_pos
-        · positivity
-        · apply lt_of_lt_of_le _ hN
-          positivity
+        exact not_lt_of_ge hS (mul_pos (by positivity) (lt_of_lt_of_le (by positivity) hN))
       exact ⟨x / K, hmap x hx⟩
     · simp only [Finset.card_range, nsmul_eq_mul, Finset.sum_const, mul_one]
-      apply le_trans _ hS
+      refine le_trans ?_ hS
       rw [← mul_assoc, mul_comm (Q : ℝ) (δ / 2), mul_assoc]
-      apply mul_le_mul_of_nonneg_left
-      · norm_cast
-        exact Nat.div_mul_le_self N K
-      · positivity
+      exact mul_le_mul_of_nonneg_left (by exact_mod_cast Nat.div_mul_le_self N K) (by positivity)
   refine ⟨q, ?_, ?_⟩
   · exact (Nat.mul_le_mul_right K (Nat.succ_le_iff.mp (Finset.mem_range.mp hqQ))).trans
       (Nat.div_mul_le_self N K)

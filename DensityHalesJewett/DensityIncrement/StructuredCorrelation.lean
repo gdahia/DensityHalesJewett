@@ -105,32 +105,8 @@ lemma endpointFamily_isInsensitive {k m n : ℕ}
   intro x y hxy
   have hreplace : replaceLastLetter i x = replaceLastLetter i y := by
     funext c
-    by_cases hx : x c = i.castSucc ∨ x c = Fin.last k
-    · by_cases hy : y c = i.castSucc ∨ y c = Fin.last k
-      · rcases hx with hxi | hxlast
-        · rcases hy with hyi | hylast
-          · simp [replaceLastLetter, hxi, hyi]
-          · simp [replaceLastLetter, hxi, hylast]
-        · rcases hy with hyi | hylast
-          · simp [replaceLastLetter, hxlast, hyi]
-          · simp [replaceLastLetter, hxlast, hylast]
-      · have hyi : y c ≠ i.castSucc := fun h ↦ hy (Or.inl h)
-        have hylast : y c ≠ Fin.last k := fun h ↦ hy (Or.inr h)
-        have hxyc : x c = y c := (hxy (y c) hyi hylast c).mpr rfl
-        rcases hx with hxi | hxlast
-        · exact (hyi (hxyc.symm.trans hxi)).elim
-        · exact (hylast (hxyc.symm.trans hxlast)).elim
-    · have hxi : x c ≠ i.castSucc := fun h ↦ hx (Or.inl h)
-      have hxlast : x c ≠ Fin.last k := fun h ↦ hx (Or.inr h)
-      by_cases hy : y c = i.castSucc ∨ y c = Fin.last k
-      · have hxyc : y c = x c := (hxy (x c) hxi hxlast c).mp rfl
-        rcases hy with hyi | hylast
-        · exact (hxi (hxyc.symm.trans hyi)).elim
-        · exact (hxlast (hxyc.symm.trans hylast)).elim
-      · have hyi : y c ≠ i.castSucc := fun h ↦ hy (Or.inl h)
-        have hylast : y c ≠ Fin.last k := fun h ↦ hy (Or.inr h)
-        have hxyc : y c = x c := (hxy (x c) hxi hxlast c).mp rfl
-        simpa only [replaceLastLetter, if_neg hxlast, if_neg hylast] using hxyc.symm
+    by_cases hxi : x c = i.castSucc <;> by_cases hyi : y c = i.castSucc <;>
+      grind [replaceLastLetter, hxy (x c), hxy (y c)]
   simp only [endpointFamily, Finset.mem_filter, Finset.mem_univ, true_and]
   rw [hreplace]
 
@@ -147,31 +123,12 @@ private def lineEndpoint {k m : ℕ} (l : Combinatorics.Line (Fin k) (Fin m)) :
 private lemma lineEndpoint_injective {k m : ℕ} :
     Function.Injective (lineEndpoint : Combinatorics.Line (Fin k) (Fin m) →
       (Fin m → Fin (k + 1))) := by
-  intro l l' hll
-  cases l with
-  | mk f hf =>
-    cases l' with
-    | mk g hg =>
-      congr
-      funext c
-      cases hfc : f c with
-      | none =>
-        cases hgc : g c with
-        | none => rfl
-        | some a =>
-          have hc := congrFun hll c
-          simp only [lineEndpoint, hfc, hgc] at hc
-          exact (Fin.castSucc_ne_last a hc.symm).elim
-      | some a =>
-        cases hgc : g c with
-        | none =>
-          have hc := congrFun hll c
-          simp only [lineEndpoint, hfc, hgc] at hc
-          exact (Fin.castSucc_ne_last a hc).elim
-        | some b =>
-          have hc := congrFun hll c
-          simp only [lineEndpoint, hfc, hgc] at hc
-          exact congrArg some (Fin.castSucc_injective k hc)
+  rintro ⟨f, hf⟩ ⟨g, hg⟩ hll
+  congr
+  funext c
+  have hc := congrFun hll c
+  cases hfc : f c <;> cases hgc : g c <;>
+    simp_all [lineEndpoint, Fin.castSucc_ne_last, eq_comm (a := Fin.last k)]
 
 /-- Complete restricted-alphabet parameter lines inject into the intersection of the endpoint
 families, giving the required density lower bound. -/
@@ -226,9 +183,7 @@ lemma endpointFamily_intersection_dense {k m n : ℕ} (hk : 2 ≤ k)
       0 < (Fintype.card (Combinatorics.Line (Fin k) (Fin m)) : ℝ) := by
     have hgoodpos : 0 < (good.dens : ℝ) :=
       (div_pos (Parameters.θ_pos hk hδ₀) (by norm_num)).trans_le hgood
-    have hgne : good.Nonempty := by
-      apply Finset.dens_pos.mp
-      exact_mod_cast hgoodpos
+    have hgne : good.Nonempty := Finset.dens_pos.mp (by exact_mod_cast hgoodpos)
     let : Nonempty (Combinatorics.Line (Fin k) (Fin m)) := ⟨hgne.choose⟩
     exact_mod_cast Fintype.card_pos
   rw [Finset.nnratCast_dens, Finset.card_map]
@@ -563,19 +518,16 @@ lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
     by_cases hi : g ≤ ((firstFailurePiece C i).dens : ℝ)
     · linarith [h i (by simpa only [g] using hi)]
     · have hinter :
-          ((A ∩ firstFailurePiece C i).dens : ℝ) ≤
-            ((firstFailurePiece C i).dens : ℝ) := by
+          ((A ∩ firstFailurePiece C i).dens : ℝ) ≤ ((firstFailurePiece C i).dens : ℝ) := by
         exact_mod_cast Finset.dens_le_dens Finset.inter_subset_right
-      have hcoefficient : 0 ≤ δ + g := by
-        linarith
+      have hcoefficient : 0 ≤ δ + g := by linarith
       nlinarith [mul_nonneg hcoefficient
         (by positivity : 0 ≤ ((firstFailurePiece C i).dens : ℝ))]
   have hupper : a < (δ + g) * c + (k : ℝ) * g := by
     rw [Finset.sum_add_distrib, ← Finset.mul_sum] at hsum_lt
     simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin,
       nsmul_eq_mul] at hsum_lt
-    rw [hsumPieces, hsumIntersections] at hsum_lt
-    exact hsum_lt
+    rwa [hsumPieces, hsumIntersections] at hsum_lt
   have hac : a ≤ c := by
     dsimp only [a, c]
     exact_mod_cast Finset.dens_le_dens Finset.inter_subset_right
@@ -586,10 +538,9 @@ lemma exists_dense_firstFailurePiece_of_density_sums {k : ℕ} (hk : 2 ≤ k)
     dsimp only [e, g]
     linarith [Parameters.γ_le_three_mul_η k δ]
   have hleft :
-      3 * e * (δ / 2) ≤ (6 * e - g) * c := by
-    exact mul_le_mul hcoef hc (by positivity) (by linarith)
-  have hk_real : 0 < (k : ℝ) := by
-    exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_two hk)
+      3 * e * (δ / 2) ≤ (6 * e - g) * c :=
+    mul_le_mul hcoef hc (by positivity) (by linarith)
+  have hk_real : 0 < (k : ℝ) := by exact_mod_cast lt_of_lt_of_le Nat.zero_lt_two hk
   have hright : (k : ℝ) * g ≤ δ * e ^ 2 := by
     have hdiv : g ≤ δ * e ^ 2 / (k : ℝ) := by
       dsimp only [g, e]
@@ -639,8 +590,8 @@ lemma firstFailureFamily_facts {k : ℕ} {ι : Type*}
       IsInsensitive.intersection (firstFailureFamily C i) = firstFailurePiece C i ∧
       Finset.univ.biUnion (firstFailurePiece C) = (IsInsensitive.intersection C)ᶜ ∧
       (Set.univ : Set (Fin k)).PairwiseDisjoint fun j ↦
-        (firstFailurePiece C j : Set (ι → Fin (k + 1))) := by
-  exact ⟨firstFailureFamily_isInsensitive C hC i,
+        (firstFailurePiece C j : Set (ι → Fin (k + 1))) :=
+  ⟨firstFailureFamily_isInsensitive C hC i,
     firstFailureFamily_intersection C i, firstFailurePiece_biUnion C,
     firstFailurePiece_pairwiseDisjoint C⟩
 
@@ -683,8 +634,7 @@ lemma exists_structured_correlation {k : ℕ} (hk : 2 ≤ k)
       change δ + Parameters.γ k δ ≤ (Subspace.relativeDensity V A : ℝ)
       linarith [Parameters.γ_le_η_sq_div_two k δ]
   · have hsmall : ∀ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
-        (Subspace.relativeDensity V A : ℝ) <
-          δ + Parameters.η k δ ^ 2 / 2 := by
+        (Subspace.relativeDensity V A : ℝ) < δ + Parameters.η k δ ^ 2 / 2 := by
       intro V
       exact lt_of_not_ge fun hV ↦ hlarge ⟨V, hV⟩
     obtain ⟨V, C, hC, hweighted, houtside⟩ :=

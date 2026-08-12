@@ -75,9 +75,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       simp only [Fintype.card_fin]
       omega)
   let ε := Parameters.η k δ ^ 2 / 2
-  have hε₀ : 0 < ε := by
-    dsimp only [ε]
-    positivity [Parameters.η_pos hk hδ₀]
+  have hε₀ : 0 < ε := by positivity [Parameters.η_pos hk hδ₀]
   by_cases hM : 1 ≤ M
   · have hL : 1 ≤ L := by
       by_contra hL
@@ -98,22 +96,24 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
     obtain ⟨R, hgood | hbad⟩ :=
       GrahamRothschild.lines_twoColor (Fin (k + 1)) M L
         (by simpa only [Fintype.card_fin] using hGR) goodLines
-    · refine ⟨Subspace.compose U R, ?_, Or.inl ?_⟩
+    · refine ⟨Subspace.compose U R, ?_, ?_⟩
       · intro x
         rw [Subspace.compose_apply]
         have hx := hU (R x)
         linarith
-      · intro l
+      · left
+        intro l
         have hl := hgood (l.map Fin.castSucc)
         simpa only [goodLines, Finset.mem_filter, Finset.mem_univ, true_and,
           Subspace.mapLine_apply, Combinatorics.Line.map_apply,
           Subspace.compose_apply] using hl
-    · refine ⟨Subspace.compose U R, ?_, Or.inr ?_⟩
+    · refine ⟨Subspace.compose U R, ?_, ?_⟩
       · intro x
         rw [Subspace.compose_apply]
         have hx := hU (R x)
         linarith
-      · intro l
+      · right
+        intro l
         have hl := hbad (l.map Fin.castSucc)
         simp only [goodLines, Finset.mem_filter, Finset.mem_univ, true_and,
           Subspace.mapLine_apply, Combinatorics.Line.map_apply] at hl
@@ -130,7 +130,7 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       idxFun := fun i ↦ Sum.inl (x i)
       proper := fun e ↦ Fin.elim0 e
     }
-    refine ⟨W, ?_, Or.inl ?_⟩
+    refine ⟨W, ?_, ?_⟩
     · intro z
       have hW : W z = x := by
         funext i
@@ -138,7 +138,8 @@ lemma exists_uniform_fibers_and_homogeneous_lines {k M L : ℕ} (hk : 2 ≤ k)
       rw [hW]
       dsimp only [ε] at hε₀
       linarith
-    · intro l
+    · left
+      intro l
       exact Fin.elim0 l.proper.choose
 
 /-- Restricting the parameter directions of a good correlated-fibers subspace preserves its
@@ -164,9 +165,7 @@ lemma restrict_correlated_fibers_subspace {k m M : ℕ} (hm : 1 ≤ m) (hmM : m 
   let V := Subspace.compose W R
   refine ⟨V, ?_, ?_⟩
   · intro x
-    dsimp only [V]
-    rw [Subspace.compose_apply]
-    exact hfibers (R x)
+    simpa only [V, Subspace.compose_apply] using hfibers (R x)
   · intro l
     let Rk := Subspace.repeatInitial (Fin k) hm hmM
     simpa only [V, R, Rk, Subspace.compose_apply, Subspace.composeLine_apply,
@@ -207,9 +206,10 @@ lemma exists_correlated_fibers_or_sparse_certificate {k M L : ℕ} (hk : 2 ≤ k
                 Parameters.θ k δ := by
   obtain ⟨W, hfibers, hgood | hsparse⟩ :=
     exists_uniform_fibers_and_homogeneous_lines hk hδ₀ hGR A hA huniform
-  · exact Or.inl <|
+  · exact .inl <|
       restrict_correlated_fibers_subspace hm hmM A W hfibers hgood
-  · exact Or.inr ⟨M, hm₀M, W, hfibers, hsparse⟩
+  · right
+    exact ⟨M, hm₀M, W, hfibers, hsparse⟩
 
 /-- Uniformly dense fibers force a positive-density set of suffixes whose restricted parameter
 slice has density at least `δ / 4`. -/
@@ -235,8 +235,7 @@ lemma dense_suffixes_of_uniform_fibers {k M : ℕ} (hk : 2 ≤ k)
   have havg : δ - Parameters.η k δ ^ 2 / 2 ≤
       Finset.expect Finset.univ f := by
     rw [Subspace.average_restrictedParameterSlice]
-    exact Finset.le_expect Finset.univ_nonempty fun x _ ↦
-      hfibers (Fin.castSucc ∘ x)
+    exact Finset.le_expect Finset.univ_nonempty fun x _ ↦ hfibers (Fin.castSucc ∘ x)
   have hthreshold := density_ge_threshold f
     (δ - Parameters.η k δ ^ 2 / 2) (δ / 4)
     (fun y ↦ by
@@ -278,9 +277,8 @@ lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
         Sum.elim (W₀ (Fin.castSucc ∘ x)) y ∈ A).dens : ℝ)
   have hB : δ / 4 ≤ (B.dens : ℝ) := by
     simpa only [B] using hdense
-  have hBne : B.Nonempty := by
-    apply Finset.dens_pos.mp
-    exact_mod_cast lt_of_lt_of_le (by linarith : 0 < δ / 4) hB
+  have hBne : B.Nonempty :=
+    Finset.dens_pos.mp (by exact_mod_cast lt_of_lt_of_le (by linarith : 0 < δ / 4) hB)
   have hbound : Subspace.densityOneBound k (δ / 4) ≤ q := by
     dsimp only [q]
     rw [Subspace.densityOneBound, dif_pos ⟨by linarith, hDHJ⟩,
@@ -372,12 +370,9 @@ lemma exists_subspace_correlated_fibers {k M L : ℕ} (hk : 2 ≤ k)
       (∀ x, δ - Parameters.η k δ ^ 2 / 2 ≤ ((fiber A (V x)).dens : ℝ)) ∧
       ∀ l : Combinatorics.Line (Fin k) (Fin m),
         Parameters.θ k δ ≤
-          ((Finset.univ.filter fun y ↦ ∀ a, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) := by
-  obtain hV | hsparse :=
-    exists_correlated_fibers_or_sparse_certificate hk m hm δ hδ₀ hmM hm₀M hGR A hA huniform
-  · exact hV
-  · exact (not_exists_sparse_correlated_fibers_certificate hk hDHJ δ hδ₀ hδ₁ A
-      hsparse).elim
+          ((Finset.univ.filter fun y ↦ ∀ a, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A).dens : ℝ) :=
+  (exists_correlated_fibers_or_sparse_certificate hk m hm δ hδ₀ hmM hm₀M hGR A hA
+    huniform).resolve_right (not_exists_sparse_correlated_fibers_certificate hk hDHJ δ hδ₀ hδ₁ A)
 
 /-- The pullback of a word family to a subspace after fixing the suffix coordinates. -/
 def suffixPullback {α η ι κ : Type*} [Fintype (η → α)]
@@ -429,17 +424,7 @@ lemma average_suffixPullback_lower {α η ι κ : Type*} [Nonempty α] [Fintype 
         intro y _
         apply Finset.expect_congr rfl
         intro x _
-        by_cases h : Sum.elim (V x) y ∈ A
-        · have hy : y ∈ fiber A (V x) := by simpa [fiber] using h
-          have hx : x ∈ suffixPullback V A y := by
-            dsimp [suffixPullback]
-            simp [h]
-          simp [hy, hx]
-        · have hy : y ∉ fiber A (V x) := by simpa [fiber] using h
-          have hx : x ∉ suffixPullback V A y := by
-            dsimp [suffixPullback]
-            simp [h]
-          simp [hy, hx]
+        by_cases h : Sum.elim (V x) y ∈ A <;> simp [fiber, suffixPullback, h]
       _ = 𝔼 y : κ → α, ((suffixPullback V A y).dens : ℝ) := by
         simp
   have h_r_le_expect : r ≤ 𝔼 x : η → α, ((fiber A (V x)).dens : ℝ) :=
@@ -519,9 +504,7 @@ lemma average_suffixLines_lower {k m : ℕ} {ι κ : Type*}
         apply Finset.expect_congr rfl
         intro l _
         dsimp [suffixLines]
-        by_cases h : ∀ a : Fin k, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A
-        · simp [h]
-        · simp [h]
+        by_cases h : ∀ a : Fin k, Sum.elim (V (Fin.castSucc ∘ l a)) y ∈ A <;> simp [h]
       _ = 𝔼 y : κ → Fin (k + 1), ((suffixLines V A y).dens : ℝ) := by
         simp
   have h_θ_le_expect : θ ≤ 𝔼 l : Combinatorics.Line (Fin k) (Fin m),
@@ -580,21 +563,21 @@ lemma exists_suffix_many_lines {k m : ℕ} (hk : 2 ≤ k)
   let f := fun y : κ → Fin (k + 1) ↦ ((suffixPullback V A y).dens : ℝ)
   let g := fun y : κ → Fin (k + 1) ↦ ((suffixLines V A y).dens : ℝ)
   by_cases hinc : ∃ y, δ + Parameters.η k δ ^ 2 / 2 ≤ f y
-  · exact Or.inl hinc
-  apply Or.inr
+  · exact .inl hinc
+  right
   have hη₀ : 0 < Parameters.η k δ := Parameters.η_pos hk hδ₀
   have hη₁ : Parameters.η k δ ≤ 1 :=
     (Parameters.η_le_δ_div_six k δ).trans (by linarith)
-  have havgf : δ - Parameters.η k δ ^ 2 / 2 ≤ 𝔼 y, f y := by
-    exact average_suffixPullback_lower V A _ hfiber
+  have havgf : δ - Parameters.η k δ ^ 2 / 2 ≤ 𝔼 y, f y :=
+    average_suffixPullback_lower V A _ hfiber
   have hupper : ∀ y, f y < δ + Parameters.η k δ ^ 2 / 2 := by
     intro y
     exact lt_of_not_ge fun hy ↦ hinc ⟨y, hy⟩
   have hmostly : 1 - Parameters.η k δ ≤
-      ((Finset.univ.filter fun y ↦ δ - 2 * Parameters.η k δ ≤ f y).dens : ℝ) := by
-    exact density_near_average f δ (Parameters.η k δ) hη₀ havgf hupper
-  have havgg : Parameters.θ k δ ≤ 𝔼 y, g y := by
-    exact average_suffixLines_lower V A (Parameters.θ k δ) hlines
+      ((Finset.univ.filter fun y ↦ δ - 2 * Parameters.η k δ ≤ f y).dens : ℝ) :=
+    density_near_average f δ (Parameters.η k δ) hη₀ havgf hupper
+  have havgg : Parameters.θ k δ ≤ 𝔼 y, g y :=
+    average_suffixLines_lower V A (Parameters.θ k δ) hlines
   have hmany : Parameters.θ k δ / 2 ≤
       ((Finset.univ.filter fun y ↦ Parameters.θ k δ / 2 ≤ g y).dens : ℝ) := by
     refine density_half_threshold g (Parameters.θ k δ) (Parameters.θ_pos hk hδ₀)
@@ -632,11 +615,7 @@ lemma Subspace.fixSuffixReindex_statistics {k m : ℕ} {ι κ ζ : Type*}
       (Subspace.fixSuffix V y : (Fin m → Fin (k + 1)) → (ι ⊕ κ → Fin (k + 1))) x
         = Sum.elim (V x) y := by
     ext j
-    cases j with
-    | inl i =>
-      simp [Subspace.fixSuffix, Combinatorics.Subspace.coe_apply]
-    | inr k =>
-      simp [Subspace.fixSuffix, Combinatorics.Subspace.coe_apply]
+    cases j <;> simp [Subspace.fixSuffix, Combinatorics.Subspace.coe_apply]
   have h_eval (x : Fin m → Fin (k + 1)) :
       Subspace.fixSuffixReindex e V y x = Sum.elim (V x) y ∘ e.symm := by
     calc
@@ -658,13 +637,7 @@ lemma Subspace.fixSuffixReindex_statistics {k m : ℕ} {ι κ ζ : Type*}
   · dsimp [suffixLines]
     congr
     ext l
-    constructor
-    · intro h a
-      rw [← h_mem_map (Fin.castSucc ∘ l a)]
-      exact h a
-    · intro h a
-      rw [h_mem_map (Fin.castSucc ∘ l a)]
-      exact h a
+    exact forall_congr' fun a ↦ h_mem_map (Fin.castSucc ∘ l a)
 
 /-- A bound for the many-lines lemma. -/
 noncomputable def manyLinesBound (k m : ℕ) (δ : ℝ) : ℕ :=

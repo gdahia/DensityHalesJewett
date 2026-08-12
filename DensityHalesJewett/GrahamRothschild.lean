@@ -101,10 +101,7 @@ lemma sameSupport_wordMap_ofBlocks (x : Fin m → Option α) (J : Finset (Fin m)
       exact hj'J
   · rw [not_exists] at h
     rw [ofBlocks_idxFun_of_notMem h, Sum.elim_inl, hite i]
-    simp only [reduceCtorEq, false_iff]
-    intro hi
-    obtain ⟨j, -, hij⟩ := Finset.mem_biUnion.1 hi
-    exact h j hij
+    simp [Finset.mem_biUnion, h]
 
 /-- Extend a colouring of the lines of a cube to a colouring of all words over `Option α`. -/
 private noncomputable def extend [Nonempty C] (χ : Combinatorics.Line α (Fin n) → C)
@@ -162,9 +159,8 @@ private lemma composeLine_reindex {β : Type*} (e : α ≃ β)
       = Combinatorics.Line.map e.symm (composeLine V (l.map e)) := by
   apply Combinatorics.Line.ext
   funext i
-  cases h : V.idxFun i with
-  | inl b => simp [composeLine, Combinatorics.Subspace.reindex, Combinatorics.Line.map, h]
-  | inr j => simp [composeLine, Combinatorics.Subspace.reindex, Combinatorics.Line.map, h]
+  cases h : V.idxFun i <;>
+    simp [composeLine, Combinatorics.Subspace.reindex, Combinatorics.Line.map, h]
 
 /-- The line case of the Graham--Rothschild theorem. -/
 lemma lines (α C : Type*) [Fintype α] [Nontrivial α] [Fintype C] [Nonempty C]
@@ -195,11 +191,13 @@ lemma lines_twoColor (α : Type*) [Fintype α] [Nontrivial α] [DecidableEq α]
   obtain ⟨V, c, hc⟩ :=
     lines α (Fin 2) m n hn fun l ↦ if l ∈ L then 0 else 1
   obtain rfl | ⟨c, rfl⟩ := c.eq_zero_or_eq_succ
-  · refine ⟨V, Or.inl ?_⟩
+  · refine ⟨V, ?_⟩
+    left
     intro l
     by_contra h
     simpa [h] using hc l
-  · refine ⟨V, Or.inr ?_⟩
+  · refine ⟨V, ?_⟩
+    right
     rw [Fin.eq_zero c] at hc
     intro l h
     simpa [h] using hc l

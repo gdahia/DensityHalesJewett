@@ -48,25 +48,18 @@ lemma exists_translatedCube (C : Type*) [Finite C] (n : ℕ) :
     obtain ⟨i, hi⟩ := W.proper j
     exact ⟨i, by simp [hX, hi]⟩
   have hXX : ∀ j j', j ≠ j' → Disjoint (X j) (X j') := by
-    intro j j' hjj'
-    rw [Finset.disjoint_left]
-    intro i hi hi'
-    simp only [hX, Finset.mem_filter, Finset.mem_univ, true_and] at hi hi'
-    exact hjj' (Sum.inr_injective (hi.symm.trans hi'))
+    simp only [Finset.disjoint_left, hX, Finset.mem_filter, Finset.mem_univ, true_and]
+    grind
   have hSX : ∀ j, Disjoint S (X j) := by
-    intro j
-    rw [Finset.disjoint_left]
-    intro i hi hi'
-    simp only [hS, hX, Finset.mem_filter, Finset.mem_univ, true_and] at hi hi'
-    exact absurd (hi.symm.trans hi') (by simp)
+    simp only [Finset.disjoint_left, hS, hX, Finset.mem_filter, Finset.mem_univ, true_and]
+    grind
   have key : ∀ J : Finset (Fin (n + 1)), d (S ∪ J.biUnion X) = c := by
     intro J
     rw [← hc fun j ↦ decide (j ∈ J)]
     congr 1
     ext i
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_union, Finset.mem_biUnion]
-    simp only [hS, hX]
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    simp only [hS, hX, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_union,
+      Finset.mem_biUnion]
     rw [Combinatorics.Subspace.coe_apply]
     cases h : W.idxFun i with
     | inl b => cases b <;> simp
@@ -79,16 +72,8 @@ lemma exists_translatedCube (C : Type*) [Finite C] (n : ℕ) :
   · intro I
     convert key (insert 0 (I.image Fin.succ)) using 2
     ext i
-    simp only [Finset.mem_union, Finset.mem_biUnion, Finset.mem_insert, Finset.mem_image, or_assoc]
-    constructor
-    · rintro (hi | hi | ⟨j, hj, hij⟩)
-      · exact Or.inl hi
-      · exact Or.inr ⟨0, Or.inl rfl, hi⟩
-      · exact Or.inr ⟨j.succ, Or.inr ⟨j, hj, rfl⟩, hij⟩
-    · rintro (hi | ⟨j, rfl | ⟨j', hj', rfl⟩, hij⟩)
-      · exact Or.inl hi
-      · exact Or.inr (Or.inl hij)
-      · exact Or.inr (Or.inr ⟨j', hj', hij⟩)
+    simp only [Finset.mem_union, Finset.mem_biUnion, Finset.mem_insert, Finset.mem_image]
+    grind
 
 /-- Iterating the translated cube canonizes the colour of a union of blocks in terms of the least
 block that it contains. -/
@@ -130,15 +115,13 @@ lemma exists_minCanonical (C : Type*) [Finite C] (t : ℕ) :
           simpa using
             (Finset.disjoint_biUnion_left _ _ _).2 fun g _ ↦ (hE₀G g).symm
         | succ j =>
-          simp only [Fin.cons_succ]
-          apply (Finset.disjoint_biUnion_left _ _ _).2
-          intro g hg
-          apply (Finset.disjoint_biUnion_right _ _ _).2
-          intro g' hg'
-          apply hGG g g'
+          simp only [Fin.cons_succ, Finset.disjoint_biUnion_left, Finset.disjoint_biUnion_right]
+          intro g hg g' hg'
+          apply hGG g' g
           intro hgg'
-          exact (hII i j fun h ↦ hij (congrArg Fin.succ h)).notMem_of_mem_left_finset hg
-            (hgg' ▸ hg')
+          refine (hII i j ?_).notMem_of_mem_left_finset hg' (hgg' ▸ hg)
+          intro h
+          exact hij (congrArg Fin.succ h)
     · intro J hJ
       set K : Finset (Fin t) := {j | j.succ ∈ J} with hK
       have himage : J.erase 0 = K.image Fin.succ := by
@@ -148,16 +131,11 @@ lemma exists_minCanonical (C : Type*) [Finite C] (t : ℕ) :
         | succ j => simp [hK, Fin.succ_ne_zero]
       have hbiUnion : (J.erase 0).biUnion (Fin.cons E₀ fun j ↦ (I j).biUnion G)
           = (K.biUnion I).biUnion G := by
-        rw [himage, Finset.image_biUnion, Finset.biUnion_biUnion]
-        simp
+        simp [himage, Finset.image_biUnion, Finset.biUnion_biUnion]
       by_cases h0 : (0 : Fin (t + 1)) ∈ J
       · have hmin : J.min' hJ = 0 := le_antisymm (Finset.min'_le _ _ h0) (Fin.zero_le _)
-        rw [hmin]
-        simp only [Fin.cons_zero]
-        rw [← Finset.insert_erase h0, Finset.biUnion_insert]
-        simp only [Fin.cons_zero]
-        rw [hbiUnion]
-        exact hc _
+        rw [hmin, ← Finset.insert_erase h0, Finset.biUnion_insert, hbiUnion]
+        simpa using hc _
       · have hKne : K.Nonempty := by
           obtain ⟨i, hi⟩ := hJ
           induction i using Fin.cases with
@@ -165,19 +143,10 @@ lemma exists_minCanonical (C : Type*) [Finite C] (t : ℕ) :
           | succ j => exact ⟨j, by simpa [hK] using hi⟩
         have hJK : J = K.image Fin.succ := by rw [← himage, Finset.erase_eq_of_notMem h0]
         have hmin : J.min' hJ = (K.min' hKne).succ := by
-          apply le_antisymm
-          · apply Finset.min'_le
-            rw [hJK]
-            exact Finset.mem_image_of_mem _ (K.min'_mem _)
-          · apply Finset.le_min'
-            intro y hy
-            rw [hJK, Finset.mem_image] at hy
-            obtain ⟨j, hj, rfl⟩ := hy
-            exact Fin.succ_le_succ_iff.2 (Finset.min'_le _ _ hj)
-        rw [hmin]
-        simp only [Fin.cons_succ]
-        rw [← Finset.erase_eq_of_notMem h0, hbiUnion]
-        exact hf K hKne
+          simp_rw [hJK]
+          exact Finset.min'_image (fun _ _ h ↦ Fin.succ_le_succ_iff.2 h) K _
+        rw [hmin, ← Finset.erase_eq_of_notMem h0, hbiUnion]
+        simpa using hf K hKne
 
 /-- The finite disjoint unions theorem: for every colouring of the subsets of a large enough
 finite index set there are `m` pairwise disjoint nonempty blocks all of whose nonempty unions

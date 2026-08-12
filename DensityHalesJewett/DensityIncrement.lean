@@ -92,9 +92,7 @@ lemma exists_finite_structured_tiling {k d m : ℕ}
   have hγ₀ := Parameters.γ_pos hk hδ₀
   have hγ₁ : Parameters.γ k δ ≤ 1 := by
     linarith [Parameters.γ_le_three_mul_η k δ, Parameters.η_le_δ_div_six k δ]
-  have hβ₀ : 0 < β := by
-    dsimp only [β]
-    positivity
+  have hβ₀ : 0 < β := by positivity
   have hβ_simplify :
       2 * (k : ℝ) * β = Parameters.γ k δ ^ 2 / 2 := by
     dsimp only [β]
@@ -189,32 +187,19 @@ lemma structured_tiling_density_sum {k d m n : ℕ}
     ext x
     simp [IsInsensitive.uncovered, T]
   have hPT_eq : (P ∩ C) ∩ T = P ∩ T := by
-    ext x
-    simp only [Finset.mem_inter]
-    constructor
-    · rintro ⟨⟨hxP, _⟩, hxT⟩
-      exact ⟨hxP, hxT⟩
-    · rintro ⟨hxP, hxT⟩
-      exact ⟨⟨hxP, hTsub hxT⟩, hxT⟩
-  have hremainder :
-      ((P ∩ C) \ T).dens ≤ (C \ T).dens := by
-    apply Finset.dens_le_dens
-    intro x hx
-    obtain ⟨hxPC, hxT⟩ := Finset.mem_sdiff.mp hx
-    exact Finset.mem_sdiff.mpr ⟨(Finset.mem_inter.mp hxPC).2, hxT⟩
+    rw [Finset.inter_assoc, Finset.inter_eq_right.mpr hTsub]
   have hremainder_real :
       (((P ∩ C) \ T).dens : ℝ) ≤ ((C \ T).dens : ℝ) := by
-    exact_mod_cast hremainder
+    exact_mod_cast Finset.dens_le_dens
+      (Finset.sdiff_subset_sdiff Finset.inter_subset_right (subset_refl T))
   have hdecomp :
       ((P ∩ T).dens : ℝ) + (((P ∩ C) \ T).dens : ℝ) =
         ((P ∩ C).dens : ℝ) := by
     norm_cast
     simpa only [hPT_eq] using Finset.dens_inter_add_dens_sdiff (P ∩ C) T
-  have hTdens : (T.dens : ℝ) ≤ (C.dens : ℝ) := by
-    exact_mod_cast Finset.dens_le_dens hTsub
+  have hTdens : (T.dens : ℝ) ≤ (C.dens : ℝ) := by exact_mod_cast Finset.dens_le_dens hTsub
   have hγ₀ := Parameters.γ_pos hk hδ₀
-  have hcoefficient : 0 ≤ δ + Parameters.γ k δ / 2 := by
-    linarith
+  have hcoefficient : 0 ≤ δ + Parameters.γ k δ / 2 := by linarith
   rw [hsumT, hsumPT]
   apply (mul_le_mul_of_nonneg_left hTdens hcoefficient).trans
   rw [huncovered_eq] at huncovered
@@ -235,11 +220,7 @@ lemma Subspace.dens_inter_range_eq_relativeDensity_mul_range
     ext w
     simp only [B, range, Finset.mem_inter, Finset.mem_image, Finset.mem_filter,
       Finset.mem_univ, true_and]
-    constructor
-    · rintro ⟨hw, x, hx⟩
-      exact ⟨x, hx.symm ▸ hw, hx⟩
-    · rintro ⟨x, hx, hxy⟩
-      exact ⟨hxy ▸ hx, x, hxy⟩
+    grind
   rw [hAB]
   simp only [Finset.nnratCast_dens, relativeDensity, range, B]
   rw [Finset.card_image_iff.mpr (Subspace.injective W).injOn,
@@ -322,8 +303,7 @@ lemma exists_density_increment_subspace_of_structured_correlation {k d m n : ℕ
       structured_tiling_density_sum hk hδ₀ A V D hDdense hcorrelation 𝒱
         hcontained hpairwise huncovered
   refine ⟨Subspace.compose V W, ?_⟩
-  rw [Subspace.relativeDensity_compose]
-  exact hW
+  rwa [Subspace.relativeDensity_compose]
 
 /-- A dense word family either contains a line or has increased density on a prescribed-dimensional
 subspace. -/
@@ -348,6 +328,7 @@ lemma density_increment {k : ℕ} (hk : 2 ≤ k) (hDHJ : HasDensityHJ k)
         A V D hD hDdense hcorrelation
   · rw [IsLineFree] at hfree
     push Not at hfree
-    exact Or.inl hfree
+    left
+    exact hfree
 
 end DensityHalesJewett

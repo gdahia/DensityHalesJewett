@@ -62,56 +62,32 @@ lemma exists_one_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
 coordinate. -/
 private noncomputable def lineIndexEquiv (α ι : Type*) :
     Combinatorics.Line α ι ≃
-      {f : ι → Option α // ¬ ∀ i, f i ≠ none} := by
-  classical
-  refine {
-    toFun := fun l ↦ ⟨l.idxFun, by
-      intro h
-      obtain ⟨i, hi⟩ := l.proper
-      exact h i hi⟩
-    invFun := fun f ↦ {
-      idxFun := f
-      proper := by
-        have hf := f.property
-        push Not at hf
-        exact hf
-    }
-    left_inv := ?_
-    right_inv := ?_
-  }
-  · intro l
-    cases l
-    rfl
-  · intro f
-    apply Subtype.ext
-    rfl
+      {f : ι → Option α // ¬ ∀ i, f i ≠ none} where
+  toFun l := by
+    refine ⟨l.idxFun, ?_⟩
+    intro h
+    apply l.proper.elim
+    intro i hi
+    exact h i hi
+  invFun f := ⟨f, by simpa using f.property⟩
+  left_inv l := by cases l; rfl
+  right_inv _ := Subtype.ext rfl
 
 /-- An index word with no variable coordinate is equivalently an ordinary alphabet word. -/
 private noncomputable def fixedIndexWordEquiv (α ι : Type*) [Nonempty α] :
-    {f : ι → Option α // ∀ i, f i ≠ none} ≃ (ι → α) := by
-  classical
-  let a : α := Classical.choice inferInstance
-  refine {
-    toFun := fun f i ↦ (f.1 i).getD a
-    invFun := fun x ↦ ⟨some ∘ x, by
-      intro i
-      change some (x i) ≠ none
-      exact Option.some_ne_none (x i)⟩
-    left_inv := ?_
-    right_inv := ?_
-  }
-  · intro f
-    apply Subtype.ext
-    funext i
+    {f : ι → Option α // ∀ i, f i ≠ none} ≃ (ι → α) where
+  toFun f i := (f.1 i).getD (Classical.arbitrary α)
+  invFun x := by
+    refine ⟨some ∘ x, ?_⟩
+    intro i
+    exact Option.some_ne_none (x i)
+  left_inv f := by
+    refine Subtype.ext (funext ?_)
+    intro i
     cases hi : f.1 i with
     | none => exact (f.2 i hi).elim
-    | some b =>
-        simp only [Function.comp_apply]
-        rw [hi]
-        rfl
-  · intro x
-    funext i
-    simp only [Function.comp_apply, Option.getD_some]
+    | some b => simp [hi]
+  right_inv x := by simp
 
 /-- The exact number of combinatorial line structures in a nonempty finite-alphabet word cube. -/
 lemma card_line (k m : ℕ) (hk : 0 < k)
@@ -137,11 +113,7 @@ noncomputable def lineFintype (k m : ℕ) : Fintype (Combinatorics.Line (Fin k) 
 def emptyAlphabetSubspace {m n : ℕ} (hm : 1 ≤ m) (hmn : m ≤ n) :
     Combinatorics.Subspace (Fin m) (Fin 0) (Fin n) where
   idxFun i := Sum.inr ⟨i.val % m, Nat.mod_lt _ (Nat.zero_lt_of_lt hm)⟩
-  proper e := by
-    refine ⟨Fin.castLE hmn e, ?_⟩
-    simp only [Sum.inr.injEq]
-    apply Fin.ext
-    exact Nat.mod_eq_of_lt e.isLt
+  proper e := ⟨Fin.castLE hmn e, by simp [Nat.mod_eq_of_lt e.isLt]⟩
 
 /-- Every empty-alphabet subspace is contained in every word family. -/
 lemma emptyAlphabetSubspace_isContained {m n : ℕ} (hm : 1 ≤ m) (hmn : m ≤ n)
@@ -168,8 +140,8 @@ lemma card_le_of_density_le {k n : ℕ} (hk : 0 < k) (δ : ℝ)
   have hpos : 0 < (Fintype.card (Fin n → Fin k) : ℝ) := by
     rw [Fintype.card_pi_const, Fintype.card_fin]
     exact_mod_cast pow_pos hk n
-  have hcard := (le_div_iff₀ hpos).mp hA
-  simpa only [Fintype.card_pi_const, Fintype.card_fin, Nat.cast_pow] using hcard
+  simpa only [Fintype.card_pi_const, Fintype.card_fin, Nat.cast_pow] using
+    (le_div_iff₀ hpos).mp hA
 
 /-- One fiber of a map to a finite nonempty type has at least the average relative density. -/
 lemma exists_fiber_density {X Y : Type*} [Fintype X] [Fintype Y] [Nonempty Y] [DecidableEq Y]
@@ -240,7 +212,7 @@ lemma exists_common_dense_line {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensityHJ k
   have hBne : B.Nonempty := by
     by_contra h
     rw [Finset.not_nonempty_iff_eq_empty.mp h, Finset.dens_empty] at hB
-    norm_num at hB
+    simp only [NNRat.cast_zero] at hB
     linarith
   have existsLine (x : {x // x ∈ B}) : ∃ l : Combinatorics.Line (Fin k) (Fin q),
       ∀ a, Sum.elim x (l a) ∈ A :=
@@ -365,8 +337,8 @@ lemma exists_of_density {k : ℕ} (hDHJ : HasDensityHJ k)
     (m : ℕ) (hm : 1 ≤ m) (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityBound k m δ ≤ n) (A : Finset (Fin n → Fin k))
     (hA : δ * (k : ℝ) ^ n ≤ #A) :
-    ∃ V : Combinatorics.Subspace (Fin m) (Fin k) (Fin n), IsContained V A := by
-  exact densityBound_spec hDHJ m hm δ hδ n hn A hA
+    ∃ V : Combinatorics.Subspace (Fin m) (Fin k) (Fin n), IsContained V A :=
+  densityBound_spec hDHJ m hm δ hδ n hn A hA
 
 /-- Split the coordinates of a word family into a prefix and a suffix along a cut equivalence. -/
 def splitWords {alphabet p q n : ℕ} (e : Fin p ⊕ Fin q ≃ Fin n)
@@ -416,10 +388,7 @@ lemma prependFixed_apply {α η : Type*} {m p : ℕ} (u : Fin m → α)
     prependFixed u V x = Sum.elim u (V x) ∘ finSumFinEquiv.symm := by
   funext i
   simp only [Function.comp_apply, Combinatorics.Subspace.coe_apply, prependFixed]
-  cases hi : finSumFinEquiv.symm i with
-  | inl j => simp only [Sum.elim_inl, Sum.elim_inl, id_eq]
-  | inr j =>
-      rw [Sum.elim_inr, Combinatorics.Subspace.coe_apply]
+  cases hi : finSumFinEquiv.symm i <;> simp [Combinatorics.Subspace.coe_apply]
 
 /-- Regroup a cut of the coordinates following a fixed block. -/
 def prependCoords {m p q r : ℕ} (e : Fin p ⊕ Fin q ≃ Fin r) :
@@ -443,9 +412,7 @@ lemma concat_prependFixed {alphabet η m p q r : ℕ} (e : Fin p ⊕ Fin q ≃ F
   cases s with
   | inl a => simp [prependCoords]
   | inr b =>
-      cases hb : e.symm b with
-      | inl c => simp [prependCoords, hb]
-      | inr d => simp [prependCoords, hb]
+      cases hb : e.symm b <;> simp [prependCoords, hb]
 
 /-- The same identification stated for the cut of the ambient coordinates. -/
 lemma concat_prependFixed_cut {alphabet η m p q r n : ℕ} (h : m + r = n)
@@ -608,18 +575,7 @@ lemma average_restrictedParameterSlice {k M : ℕ}
   intro x _
   apply Finset.expect_congr rfl
   intro y _
-  by_cases h : Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A
-  · have hx : x ∈ Finset.univ.filter fun z : Fin M → Fin k ↦
-        Sum.elim (W (Fin.castSucc ∘ z)) y ∈ A :=
-      Finset.mem_filter.mpr ⟨Finset.mem_univ _, h⟩
-    have hy : y ∈ fiber A (W (Fin.castSucc ∘ x)) := mem_fiber.mpr h
-    rw [Set.indicator_of_mem hx, Set.indicator_of_mem hy]
-    simp only [Pi.one_apply]
-  · have hx : x ∉ Finset.univ.filter fun z : Fin M → Fin k ↦
-        Sum.elim (W (Fin.castSucc ∘ z)) y ∈ A :=
-      fun hx ↦ h (Finset.mem_filter.mp hx).2
-    have hy : y ∉ fiber A (W (Fin.castSucc ∘ x)) := fun hy ↦ h (mem_fiber.mp hy)
-    rw [Set.indicator_of_notMem hx, Set.indicator_of_notMem hy]
+  by_cases h : Sum.elim (W (Fin.castSucc ∘ x)) y ∈ A <;> simp [h]
 
 /-- Averaging a pointwise-dense family of suffix fibers produces one suffix above which the
 restricted parameter family is dense. -/
@@ -666,8 +622,7 @@ lemma extend_restricted_subspace {k m M : ℕ} {ι κ ζ : Type*}
         simp [hi] }
   have h_lift_eval (x : Fin m → Fin k) : lift_S (Fin.castSuccEmb ∘ x) = Fin.castSucc ∘ S x := by
     ext i
-    simp [lift_S, Combinatorics.Subspace.coe_apply]
-    cases S.idxFun i <;> simp
+    cases hi : S.idxFun i <;> simp [lift_S, Combinatorics.Subspace.coe_apply, hi]
   let concat_suffix : Combinatorics.Subspace (Fin M) (Fin (k + 1)) ζ :=
     { idxFun := fun c ↦
         match e.symm c with
@@ -681,9 +636,7 @@ lemma extend_restricted_subspace {k m M : ℕ} {ι κ ζ : Type*}
       concat_suffix z = (Sum.elim (W z) y) ∘ e.symm := by
     ext c
     simp only [Subspace.coe_apply, Function.comp_apply, concat_suffix]
-    cases e.symm c with
-    | inl i => simp [Combinatorics.Subspace.coe_apply]
-    | inr j => simp
+    cases e.symm c <;> simp [Combinatorics.Subspace.coe_apply]
   let V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) ζ :=
     compose concat_suffix lift_S
   refine ⟨V, ?_⟩
@@ -706,8 +659,7 @@ lemma exists_empty_restrictAlphabet_subset {m n : ℕ} (hm : 1 ≤ m) (hmn : m �
         simp only [Fin.castLE, e.isLt, ↓reduceDIte] }
   refine ⟨V, ?_⟩
   intro w hw
-  rw [restrictAlphabet] at hw
-  simp only [Finset.mem_image, Finset.mem_univ, true_and] at hw
+  simp only [restrictAlphabet, Finset.mem_image, Finset.mem_univ, true_and] at hw
   obtain ⟨x, _⟩ := hw
   exact Fin.elim0 (x ⟨0, Nat.zero_lt_of_lt hm⟩)
 
@@ -772,8 +724,8 @@ lemma exists_restrictAlphabet_subset {k : ℕ} (hDHJ : HasDensityHJ k)
     (A : Finset (Fin n → Fin (k + 1)))
     (hA : δ * (k + 1 : ℝ) ^ n ≤ #A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
-      restrictAlphabet V Fin.castSuccEmb ⊆ A := by
-  exact restrictAlphabetBound_spec hDHJ m hm δ hδ n hn A hA
+      restrictAlphabet V Fin.castSuccEmb ⊆ A :=
+  restrictAlphabetBound_spec hDHJ m hm δ hδ n hn A hA
 
 end Subspace
 end DensityHalesJewett
