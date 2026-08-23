@@ -34,9 +34,10 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
 
-      - name: Build and lint project
-        uses: leanprover/lean-action@434f25c2f80ded67bba02502ad3a86f25db50709 # 2025-07-02
+      - name: Build, lint and audit axioms
+        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
         with:
           build: true
           lint: true
           mk_all-check: true
+          axiom-audit: true

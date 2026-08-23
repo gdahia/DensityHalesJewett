@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: write      # Grants permission to push changes to the repository
       issues: write        # Grants permission to create or update issues
-      pull-requests: write # Grants permission to create or update pull requests
+      pull-requests: read  # Grants permission to look up previous update PRs
     needs: check-for-updates
     if: ${{ needs.check-for-updates.outputs.is-update-available == 'true' }}
     strategy: # Runs for each update discovered by the `check-for-updates` job.
@@ -36,6 +36,20 @@ jobs:
         with:
           tag: ${{ matrix.tag }}
           # START CONFIGURATION BLOCK 2
-          on_update_succeeds: pr # Create a pull request if the update succeeds
+          on_update_succeeds: silent
           on_update_fails: issue # Create an issue if the update fails
           # END CONFIGURATION BLOCK 2
+      - name: Build, lint and audit axioms
+        if: steps.update-the-repo.outputs.result == 'update-success' && steps.update-the-repo.outputs.notify == 'true'
+        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        with:
+          build: true
+          lint: true
+          mk_all-check: true
+          axiom-audit: true
+      - name: Commit the update
+        if: steps.update-the-repo.outputs.result == 'update-success' && steps.update-the-repo.outputs.notify == 'true'
+        uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9.1.4
+        with:
+          default_author: github_actions
+          message: "Update Lean to ${{ steps.update-the-repo.outputs.latest_lean }}"
