@@ -21,10 +21,6 @@ of `#α` words, one for each letter `x : α`, obtained from a single pattern by 
 occurrence of a wildcard with `x`; at least one coordinate must be a wildcard, so the line is
 nonconstant. This is Mathlib's `Combinatorics.Line α (Fin n)`, and `l x` is the word of the line
 indexed by the letter `x`.
-
-The degenerate alphabets are included. When `α` is empty the density hypothesis is unsatisfiable
-for `n ≥ 1`, and when `α` is a singleton every nonempty `A` contains the line whose every
-coordinate is a wildcard.
 -/
 
 @[expose] public section
@@ -36,7 +32,7 @@ namespace Combinatorics.Line
 /-- The **Density Hales--Jewett theorem**: for a positive density `δ`, every sufficiently long word
 length `n` has the property that any set of at least a `δ` fraction of the words of length `n`
 over `α` contains a combinatorial line. -/
-theorem exists_of_density_atTop (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ) :
+theorem exists_of_density_atTop (α : Type*) [Fintype α] [Nontrivial α] (δ : ℝ) (hδ : 0 < δ) :
     ∀ᶠ n in atTop, ∀ A : Finset (Fin n → α), δ * (Fintype.card α : ℝ) ^ n ≤ #A →
       ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A :=
   sorry
