@@ -1,29 +1,77 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
 # Repo-root metadata for this formalization project.
-# Format: https://github.com/mathlib-initiative/formalization.yaml (v0.3)
+# Format: https://github.com/mathlib-initiative/formalization.yaml (v0.4)
 
-version: "v0.3"
+version: "v0.4"
 
 project:
-  name: DensityHalesJewett
+  name: The density Hales–Jewett theorem and Szemerédi's theorem
+  description: >-
+    A Lean 4 formalization of the density Hales–Jewett theorem: for every finite alphabet α
+    and every density δ > 0, all sufficiently large n have the property that any set of at
+    least δ·|α|^n words of length n over α contains a combinatorial line. The basis for the
+    formalization is the combinatorial proof of Dodos, Kanellopoulos, and Tyros. As a
+    consequence, we also formalize Szemerédi's theorem on the integers: for every k ≥ 3 and
+    δ > 0, the following holds for all sufficiently large n. Any subset of {0, …, n−1} of
+    size at least δ·n contains a nonconstant arithmetic progression of length k.
   authors:
     - Gabriel Dahia
   license: Apache-2.0
+  responsible_maintainers:
+    - Gabriel Dahia
+
+classification:
+  arxiv: [math.CO]
+  msc2020: [05D10, 05A05, 11B75, 68R15]
 
 sources:
-  - title: A Simple Proof of the Density Hales–Jewett Theorem
+  - title: A Simple Proof of the Density Hales--Jewett Theorem
     authors:
       - Pandelis Dodos
       - Vassilis Kanellopoulos
       - Konstantinos Tyros
     id: https://doi.org/10.1093/imrn/rnt041
-    type: journal article
+    type: paper
+    location: >-
+      International Mathematics Research Notices 2014(12), 3340--3352; preprint at
+      https://arxiv.org/abs/1209.4986
+    relationship: formalizes
+    license: unknown
+    author_endorsement: not-contacted
+    note: >-
+      The formalization follows this paper's density-increment argument. The stated theorem is the
+      same but the explicit constants differ, as recorded under `fidelity`.
+  - title: Ramsey's theorem for n-parameter sets
+    authors:
+      - Ronald L. Graham
+      - Bruce L. Rothschild
+    id: https://doi.org/10.2307/1995354
+    type: paper
+    location: Transactions of the American Mathematical Society 159 (1971), 257--292
+    relationship: background
+    license: unknown
+    author_endorsement: not-contacted
+    note: >-
+      Source of the Graham--Rothschild line-canonization statement that the paper cites as
+      background and that this development proves internally.
+
+related_formalizations:
+  - id: https://github.com/leanprover-community/mathlib4
+    relationship: builds-on
+    note: >-
+      Mathlib supplies `Combinatorics.Line` and the colouring Hales--Jewett theorem, which this
+      development uses and on which the compared statements are phrased. Mathlib does not contain
+      the density version; that is what this repository adds.
 
 status:
   scope: >-
-    A Lean 4 formalization of the density Hales–Jewett theorem and its supporting argument,
-    together with Szemerédi's theorem as a consequence. The development also includes the
-    finite-unions theorem, the Graham–Rothschild theorem for combinatorial lines, block
-    canonization, and Varnavides' averaging argument.
+    The density Hales--Jewett theorem and Szemeredi's theorem on the integers are proved in full,
+    with no `sorry` outside the deliberate holes in `Challenge.lean`. Both are proved
+    asymptotically in `Challenge.lean`. The formalization also includes the finite-unions theorem,
+    the Graham--Rothschild theorem for combinatorial lines, block canonization, and Varnavides'
+    averaging argument, none of which are among the compared declarations. Szemeredi's theorem is
+    formalized for subsets of an initial segment of the naturals only; no version for general
+    abelian groups or for the primes is included.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms:
@@ -54,41 +102,58 @@ automation:
         - GPT-5.6 Terra
         - GPT-5.6 Lua
         - Opus 5
+      framework: n/a
+      tool_setup: >-
+        AI-assisted development driven from coding agents against a local Lean 4 and Mathlib
+        checkout, with the author lightly steering the formalization and later reviewing the
+        proof and main declarations.
+      cost:
+        wall_time: not tracked
+        spend_usd: subscription-based
+        hardware: local machine
       prompting_notes: >-
         GPT-5.6 Sol and Opus 5 contributed planning; GPT-5.6 Terra, GPT-5.6 Lua, and Opus 5
         contributed implementation.
-  notes: >-
-    The agent-produced implementation was reviewed by Gabriel Dahia for mathematical correctness
-    and mathlib style.
+  spend_usd: subscription-based
 
 fidelity:
   divergences: |-
-    - The paper cites its Graham–Rothschild line-canonization proposition as background. The Lean
-      development proves the required two-color line theorem internally from multidimensional
-      Hales–Jewett.
     - The paper sets `eta = delta * theta / 48` and `gamma = delta * eta^2 / k`. The formalization
       replaces these by smaller minima that also enforce `eta <= theta / 4`, `eta <= delta / 6`,
       `gamma <= eta^2 / 2`, and `gamma <= 3 * eta`. Consequently its numerical thresholds and
       density increment are weaker, while the qualitative theorem is unchanged.
     - Several displayed paper bounds (`M_0`, `F`, and `N`) are replaced by sufficient bounds
-      selected with `Nat.find` from eventual-existence lemmas.
+      selected with `Nat.find` from eventual-existence lemmas. This makes the formalized
+      thresholds non-explicit, so the compared statements are asymptotic rather than quantitative.
 
 review:
   status: self-assessed
   reviewers:
     - Gabriel Dahia
-  notes: Reviewed for mathematical correctness and mathlib style.
+  notes: >-
+    Reviewed by the author for mathematical correctness, including a statement audit of the two
+    compared declarations against the cited paper. No independent reviewer has checked the
+    development, and there is no novelty whatsoever, as the theorems are known results. The
+    only contribution is the formalization.
 
 alignment:
   namespace: Combinatorics
   statements:
-    - source: Density Hales–Jewett theorem
-      lean: Combinatorics.Line.exists_of_density
-      module: DensityHalesJewett.Main
+    - source: Density Hales--Jewett theorem
+      lean: Combinatorics.Line.exists_of_density_atTop
+      module: Challenge
       status: proved
-    - source: Szemerédi's theorem (derived consequence)
-      lean: Combinatorics.ArithmeticProgression.exists_of_density_nat
-      module: DensityHalesJewett.Szemeredi
+      note: >-
+        Asymptotic form of `Combinatorics.Line.exists_of_density` in
+        `DensityHalesJewett/Main.lean`, which carries an explicit threshold.
+    - source: Szemeredi's theorem (derived consequence)
+      lean: Combinatorics.ArithmeticProgression.exists_of_density_nat_atTop
+      module: Challenge
       status: proved
+      note: >-
+        Asymptotic form of `Combinatorics.ArithmeticProgression.exists_of_density_nat` in
+        `DensityHalesJewett/Szemeredi.lean`.
 
-acknowledgements: Built on Mathlib.
+acknowledgements: >-
+  Built on Mathlib, which provides, among many other things, `Combinatorics.Line` and a proof of
+  the standard Hales--Jewett theorem.

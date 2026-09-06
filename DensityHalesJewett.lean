@@ -1,5 +1,4 @@
 import DensityHalesJewett.Canonization
-import DensityHalesJewett.Challenge
 import DensityHalesJewett.DensityIncrement
 import DensityHalesJewett.DensityIncrement.CorrelatedFibers
 import DensityHalesJewett.DensityIncrement.Parameters

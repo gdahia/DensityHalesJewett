@@ -39,4 +39,7 @@ jobs:
         with:
           build: true
           lint: true
-          mk_all-check: true
+          mk_all-check: false
+
+      - name: Check that DensityHalesJewett.lean imports every module
+        run: lake exe mk_all --lib DensityHalesJewett --check
