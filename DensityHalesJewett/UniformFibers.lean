@@ -44,7 +44,7 @@ lemma densityOneBound_spec {k : ℕ} (hDHJ : HasDensityHJ k) (δ : ℝ) (hδ : 0
     (hA : δ * (k : ℝ) ^ n ≤ #A) :
     ∃ l : Combinatorics.Line (Fin k) (Fin n), ∀ a, l a ∈ A := by
   classical
-  rw [densityOneBound, dif_pos ⟨hδ, hDHJ⟩] at hn
+  rw [densityOneBound, dite_eq_left ⟨hδ, hDHJ⟩] at hn
   exact Nat.find_spec (hDHJ δ hδ) n hn A hA
 
 /-- The one-dimensional case of multidimensional density Hales--Jewett. -/
@@ -232,7 +232,7 @@ lemma exists_common_dense_line {k p q : ℕ} (hk : 0 < k) (hDHJ : HasDensityHJ k
       intro x hx
       simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hx ⊢
       have hfl : lineAt ⟨x, hx.1⟩ = l := by
-        simpa only [f, dif_pos hx.1] using hx.2
+        simpa only [f, dite_eq_left hx.1] using hx.2
       intro a
       rw [← hfl]
       exact hlineAt ⟨x, hx.1⟩ a
@@ -329,7 +329,7 @@ lemma densityBound_spec {k : ℕ} (hDHJ : HasDensityHJ k)
     (hA : δ * (k : ℝ) ^ n ≤ #A) :
     ∃ V : Combinatorics.Subspace (Fin m) (Fin k) (Fin n), IsContained V A := by
   classical
-  rw [densityBound, dif_pos ⟨hm, hδ, hDHJ⟩] at hn
+  rw [densityBound, dite_eq_left ⟨hm, hδ, hDHJ⟩] at hn
   exact Nat.find_spec (exists_eventually_of_density hDHJ m hm δ hδ) n hn A hA
 
 /-- Multidimensional density Hales--Jewett follows from the one-dimensional assertion. -/
@@ -457,12 +457,12 @@ lemma exists_denser_fiber {alphabet m q : ℕ} (halphabet : 0 < alphabet) {ε : 
     apply Finset.sum_le_sum
     intro u _
     by_cases hu : u = u₀
-    · rw [hu, if_pos rfl]
+    · rw [hu, ite_eq_left rfl]
       linarith
-    · rw [if_neg hu, add_zero]
+    · rw [ite_eq_right hu, add_zero]
       linarith [hcon u]
   rw [Finset.sum_add_distrib, Finset.sum_const, Finset.sum_ite_eq' Finset.univ u₀,
-    if_pos (Finset.mem_univ u₀), Finset.card_univ, nsmul_eq_mul, hcard, hsum, mul_add,
+    ite_eq_left (Finset.mem_univ u₀), Finset.card_univ, nsmul_eq_mul, hcard, hsum, mul_add,
     mul_div_cancel₀ ε hpow.ne'] at hle
   linarith [div_pos hε hpow]
 
@@ -553,7 +553,7 @@ lemma variableCutFibersBound_spec (alphabet dimension n : ℕ) (hdimension : 1 �
     {ε : ℝ} (hε : 0 < ε) (hn : variableCutFibersBound alphabet dimension ε ≤ n) :
     VariableCutFibersSufficient alphabet dimension ε n := by
   classical
-  rw [variableCutFibersBound, dif_pos ⟨hdimension, hε⟩] at hn
+  rw [variableCutFibersBound, dite_eq_left ⟨hdimension, hε⟩] at hn
   exact Nat.find_spec
     (exists_eventually_variableCutFibersSufficient alphabet dimension hdimension hε) n hn
 
@@ -714,7 +714,7 @@ lemma restrictAlphabetBound_spec {k : ℕ} (hDHJ : HasDensityHJ k)
     ∃ V : Combinatorics.Subspace (Fin m) (Fin (k + 1)) (Fin n),
       restrictAlphabet V Fin.castSuccEmb ⊆ A := by
   classical
-  rw [restrictAlphabetBound, dif_pos ⟨hm, hδ, hDHJ⟩] at hn
+  rw [restrictAlphabetBound, dite_eq_left ⟨hm, hδ, hDHJ⟩] at hn
   exact Nat.find_spec (exists_eventually_restrictAlphabet_subset hDHJ m hm δ hδ) n hn A hA
 
 /-- A dense family over `Fin (k+1)` contains the `Fin k` restriction of a subspace. -/

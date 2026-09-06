@@ -465,9 +465,9 @@ lemma densityTheoremBound_spec (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < �
     ∃ l : Line α (Fin n), ∀ x : α, l x ∈ A := by
   by_cases hα : 2 ≤ Fintype.card α
   · refine exists_of_density_card_ge_two α hα δ hδ n ?_ A hAδ
-    simpa only [densityTheoremBound, if_pos hα] using hn
+    simpa only [densityTheoremBound, ite_eq_left hα] using hn
   · refine exists_of_density_card_le_one α (by grind) δ hδ n ?_ A hAδ
-    simpa only [densityTheoremBound, if_neg hα] using hn
+    simpa only [densityTheoremBound, ite_eq_right hα] using hn
 
 theorem exists_of_density (α : Type*) [Fintype α] (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityTheoremBound (Fintype.card α) δ ≤ n)

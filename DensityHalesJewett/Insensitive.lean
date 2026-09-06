@@ -236,13 +236,13 @@ lemma exists_isContained_of_insensitive {k m b : ℕ} (hDHJ : HasDensityHJ k) (h
   | inr e =>
       simp only [V.apply_inr hc, Function.comp_apply]
       by_cases hx : x e = Fin.last k
-      · rw [dif_pos hx, hx, Fin.castSuccEmb_apply]
+      · rw [dite_eq_left hx, hx, Fin.castSuccEmb_apply]
         apply iff_of_false
         · intro h
           exact hal h.symm
         · intro h
           exact hai h.symm
-      · rw [dif_neg hx, Fin.castSuccEmb_apply, Fin.castSucc_castPred]
+      · rw [dite_eq_right hx, Fin.castSuccEmb_apply, Fin.castSucc_castPred]
 
 /-- The two block orders describe the same ambient word. -/
 private lemma concat_comp_swap {α ι ω ν ν₁ ν₂ : Type*} (e : ι ≃ ω ⊕ ν) (s : ν ≃ ν₁ ⊕ ν₂)
@@ -272,7 +272,7 @@ lemma pickSubspace_isContained {k m b : ℕ} (hm : 1 ≤ m) (hmb : m ≤ b)
       Subspace.IsContained V E) :
     Subspace.IsContained (pickSubspace hm hmb E) E := by
   classical
-  rw [pickSubspace, dif_pos h]
+  rw [pickSubspace, dite_eq_left h]
   exact Classical.choose_spec h
 
 namespace IsInsensitive
@@ -843,7 +843,7 @@ lemma tilingBound_spec (k m n : ℕ) (hDHJ : HasDensityHJ k) (hm : 1 ≤ m)
     {β : ℝ} (hβ₀ : 0 < β)
     (hn : tilingBound k m β ≤ n) : TilingSufficient k m β n := by
   classical
-  rw [tilingBound, dif_pos ⟨hDHJ, hm, hβ₀⟩] at hn
+  rw [tilingBound, dite_eq_left ⟨hDHJ, hm, hβ₀⟩] at hn
   exact Nat.find_spec (exists_eventually_tilingSufficient k m hDHJ hm hβ₀) n hn
 
 /-- The preimage of a word family in a subspace parameter cube. -/
@@ -1323,7 +1323,7 @@ lemma intersectionTilingBound_spec (k r m n : ℕ) (hDHJ : HasDensityHJ k)
     IntersectionTilingSufficient k r m β n := by
   classical
   rw [intersectionTilingBound,
-    dif_pos ⟨hDHJ, hr₀, hrk, hm, hβ₀⟩] at hn
+    dite_eq_left ⟨hDHJ, hr₀, hrk, hm, hβ₀⟩] at hn
   exact Nat.find_spec
     (exists_eventually_intersectionTilingSufficient k r m hDHJ hr₀ hrk hm hβ₀) n hn
 

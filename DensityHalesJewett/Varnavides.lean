@@ -68,11 +68,11 @@ lemma card_gridIncidences_upper_bound (δ : ℝ) (hδ : 0 ≤ δ) (m n D : ℕ)
       apply Finset.sum_le_sum
       intro p hp
       by_cases hpdense : p ∈ denseGrids δ m n D A
-      · rw [if_pos hpdense]
+      · rw [ite_eq_left hpdense]
         apply le_add_of_nonneg_of_le (by positivity)
         change ((#((range m).filter fun i ↦ p.1 + i * p.2 ∈ A) : ℕ) : ℝ) ≤ m
         exact_mod_cast (Finset.card_filter_le _ _).trans_eq (Finset.card_range m)
-      · simp only [if_neg hpdense, add_zero]
+      · simp only [ite_eq_right hpdense, add_zero]
         rw [denseGrids, Finset.mem_filter] at hpdense
         exact le_of_lt (not_le.mp fun h ↦ hpdense ⟨hp, h⟩)
     _ = δ * m * #(grids m n D) + m * #(denseGrids δ m n D A) := by

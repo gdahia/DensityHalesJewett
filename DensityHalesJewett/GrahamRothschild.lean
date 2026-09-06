@@ -53,7 +53,7 @@ noncomputable def ofBlocks (a₀ : α) (E : Fin m → Finset ι) (hE : ∀ j, (E
   proper e := by
     obtain ⟨i, hi⟩ := hE e
     refine ⟨i, ?_⟩
-    rw [dif_pos ⟨e, hi⟩]
+    rw [dite_eq_left ⟨e, hi⟩]
     apply congrArg Sum.inr
     by_contra hne
     exact Finset.disjoint_left.1 (hEE _ _ hne) (Exists.choose_spec (⟨e, hi⟩ : ∃ j, i ∈ E j)) hi
@@ -64,7 +64,7 @@ variable {a₀ : α} {E : Fin m → Finset ι} {hE : ∀ j, (E j).Nonempty}
 lemma ofBlocks_idxFun_of_mem {i : ι} {j : Fin m} (hij : i ∈ E j) :
     (ofBlocks a₀ E hE hEE).idxFun i = Sum.inr j := by
   simp only [ofBlocks]
-  rw [dif_pos ⟨j, hij⟩]
+  rw [dite_eq_left ⟨j, hij⟩]
   apply congrArg Sum.inr
   by_contra hne
   exact Finset.disjoint_left.1 (hEE _ _ hne) (Exists.choose_spec (⟨j, hij⟩ : ∃ j, i ∈ E j)) hij
@@ -72,7 +72,7 @@ lemma ofBlocks_idxFun_of_mem {i : ι} {j : Fin m} (hij : i ∈ E j) :
 lemma ofBlocks_idxFun_of_notMem {i : ι} (hi : ∀ j, i ∉ E j) :
     (ofBlocks a₀ E hE hEE).idxFun i = Sum.inl a₀ := by
   simp only [ofBlocks]
-  rw [dif_neg (by simpa using hi)]
+  rw [dite_eq_right (by simpa using hi)]
 
 /-- The support of a word substituted into `ofBlocks` is the union of the blocks indexed by the
 support of that word. -/
@@ -110,7 +110,7 @@ private noncomputable def extend [Nonempty C] (χ : Combinatorics.Line α (Fin n
 
 private lemma extend_idxFun [Nonempty C] (χ : Combinatorics.Line α (Fin n) → C)
     (l : Combinatorics.Line α (Fin n)) : extend χ l.idxFun = χ l :=
-  dif_pos l.proper
+  dite_eq_left l.proper
 
 /-- **Graham--Rothschild for lines**: beyond a dimension depending only on the alphabet, the
 number of colours and `m`, every colouring of the lines of a cube is constant on the lines of some

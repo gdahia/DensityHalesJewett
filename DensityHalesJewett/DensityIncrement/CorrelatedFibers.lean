@@ -281,8 +281,8 @@ lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
     Finset.dens_pos.mp (by exact_mod_cast lt_of_lt_of_le (by linarith : 0 < δ / 4) hB)
   have hbound : Subspace.densityOneBound k (δ / 4) ≤ q := by
     dsimp only [q]
-    rw [Subspace.densityOneBound, dif_pos ⟨by linarith, hDHJ⟩,
-      Parameters.m₀, dif_pos ⟨hδ₀, hDHJ⟩]
+    rw [Subspace.densityOneBound, dite_eq_left ⟨by linarith, hDHJ⟩,
+      Parameters.m₀, dite_eq_left ⟨hδ₀, hDHJ⟩]
     omega
   have existsLine (y : κ → Fin (k + 1)) (hy : y ∈ B) :
       ∃ l : Combinatorics.Line (Fin k) (Fin q),
@@ -308,7 +308,7 @@ lemma exists_popular_line_of_dense_suffixes {k M : ℕ} (hk : 2 ≤ k)
     intro y hy
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hy ⊢
     have hline : lineAt ⟨y, hy.1⟩ = l := by
-      simpa only [f, dif_pos hy.1] using hy.2
+      simpa only [f, dite_eq_left hy.1] using hy.2
     intro a
     rw [← hline]
     exact hlineAt ⟨y, hy.1⟩ a

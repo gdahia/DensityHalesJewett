@@ -41,7 +41,7 @@ lemma m₀_pos (k : ℕ) (δ : ℝ) : 0 < m₀ k δ := by
 lemma m₀_antitone {k : ℕ} (hDHJ : HasDensityHJ k) {δ ρ : ℝ}
     (hδ : 0 < δ) (hδρ : δ ≤ ρ) : m₀ k ρ ≤ m₀ k δ := by
   classical
-  rw [m₀, dif_pos ⟨hδ.trans_le hδρ, hDHJ⟩, m₀, dif_pos ⟨hδ, hDHJ⟩]
+  rw [m₀, dite_eq_left ⟨hδ.trans_le hδρ, hDHJ⟩, m₀, dite_eq_left ⟨hδ, hDHJ⟩]
   apply Nat.succ_le_succ
   apply Nat.find_min'
   intro n hn A hA
@@ -96,7 +96,7 @@ lemma θ_mono {k : ℕ} (hk : 2 ≤ k) {δ ρ : ℝ}
   by_cases hDHJ : HasDensityHJ k
   · exact θ_mono_of_dhj hk hDHJ hδ hδρ
   · unfold θ
-    rw [m₀, dif_neg (fun h ↦ hDHJ h.2), m₀, dif_neg (fun h ↦ hDHJ h.2)]
+    rw [m₀, dite_eq_right (fun h ↦ hDHJ h.2), m₀, dite_eq_right (fun h ↦ hDHJ h.2)]
     apply div_le_div_of_nonneg_right
     · linarith
     · rw [pow_one, pow_one, Nat.cast_add, Nat.cast_one]

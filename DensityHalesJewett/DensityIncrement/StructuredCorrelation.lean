@@ -47,7 +47,7 @@ lemma insensitiveIntersectionDimension_spec {k m : ℕ} (hk : 2 ≤ k)
     {δ : ℝ} (hδ₀ : 0 < δ) (hm : insensitiveIntersectionDimension k δ ≤ m) :
     ((k : ℝ) / (k + 1)) ^ m ≤ Parameters.η k δ := by
   classical
-  rw [insensitiveIntersectionDimension, dif_pos ⟨hk, hδ₀⟩] at hm
+  rw [insensitiveIntersectionDimension, dite_eq_left ⟨hk, hδ₀⟩] at hm
   refine (pow_le_pow_of_le_one (by positivity) ?_ hm).trans ?_
   · exact (div_le_one (by positivity : 0 < (k + 1 : ℝ))).mpr (by norm_num)
   · exact (Nat.find_spec (exists_restrictedParameterWords_decay hk hδ₀)).le
@@ -229,7 +229,7 @@ lemma pullback_inter_endpointFamily_subset_restricted {k m n : ℕ}
   intro c hc
   let p : Combinatorics.Line (Fin (k + 1)) (Fin m) := {
     idxFun := fun i ↦ if x i = Fin.last k then none else some (x i)
-    proper := ⟨c, if_pos hc⟩
+    proper := ⟨c, ite_eq_left hc⟩
   }
   have hp_last : p (Fin.last k) = x := by
     funext i
@@ -388,14 +388,14 @@ lemma firstFailureFamily_intersection {k : ℕ} {X : Type*} [Fintype X] [Decidab
       simp only [lt_self_iff_false, ↓reduceIte, Finset.mem_compl] at hxi
       exact hxi
     · intro j hij
-      simpa only [if_pos hij] using hx j
+      simpa only [ite_eq_left hij] using hx j
   · rintro ⟨hnot, hbefore⟩ j
     by_cases hij : j < i
-    · simpa only [if_pos hij] using hbefore j hij
+    · simpa only [ite_eq_left hij] using hbefore j hij
     · by_cases hji : j = i
       · subst j
         simpa only [lt_self_iff_false, ↓reduceIte, Finset.mem_compl] using hnot
-      · simp only [if_neg hij, if_neg hji, Finset.mem_univ]
+      · simp only [ite_eq_right hij, ite_eq_right hji, Finset.mem_univ]
 
 /-- The first-failure pieces cover the complement of the original intersection. -/
 lemma firstFailurePiece_biUnion {k : ℕ} {X : Type*} [Fintype X] [DecidableEq X]
