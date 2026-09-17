@@ -6,8 +6,8 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.Subspace
-import Mathlib.Data.Finite.Prod
-import Mathlib.Data.Finite.Sum
+import Mathlib.Basic.Finite.Prod
+import Mathlib.Basic.Finite.Sum
 
 /-!
 # Canonization of the constant letters

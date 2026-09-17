@@ -9,7 +9,7 @@ public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Algebra.Order.BigOperators.Expect
 public import Mathlib.Combinatorics.HalesJewett
 public import Mathlib.Data.Finset.Density
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
