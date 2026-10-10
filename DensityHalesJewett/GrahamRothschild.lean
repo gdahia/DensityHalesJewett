@@ -6,8 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.Canonization
-public import DensityHalesJewett.FiniteUnions
-public import DensityHalesJewett.Subspace
+import DensityHalesJewett.FiniteUnions
 public import Mathlib.Order.Lattice.Nat
 import Mathlib.Combinatorics.Pigeonhole
 

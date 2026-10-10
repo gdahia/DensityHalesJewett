@@ -5,7 +5,8 @@ Authors: Gabriel Dahia
 -/
 module
 
-public import DensityHalesJewett.Word
+public import Mathlib.Combinatorics.HalesJewett
+public import Mathlib.Data.Finset.Density
 public import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!

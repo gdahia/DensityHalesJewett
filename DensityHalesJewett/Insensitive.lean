@@ -8,6 +8,7 @@ module
 public import DensityHalesJewett.UniformFibers
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.Archimedean.Real.Basic
+import Mathlib.Data.Set.Finite.Lattice
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Order.Preorder.Finite

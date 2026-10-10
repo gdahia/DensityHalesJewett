@@ -8,6 +8,7 @@ module
 public import DensityHalesJewett.Subspace
 import Mathlib.Basic.Finite.Prod
 import Mathlib.Basic.Finite.Sum
+import Mathlib.Data.Fintype.Option
 
 /-!
 # Canonization of the constant letters

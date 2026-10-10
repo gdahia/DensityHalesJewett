@@ -5,7 +5,8 @@ Authors: Gabriel Dahia
 -/
 module
 
-public import DensityHalesJewett.GrahamRothschild
+public import DensityHalesJewett.Subspace
+public import DensityHalesJewett.Word
 import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Tactic.Linarith

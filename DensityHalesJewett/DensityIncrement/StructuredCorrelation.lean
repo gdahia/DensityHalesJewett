@@ -6,6 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.DensityIncrement.CorrelatedFibers
+public import DensityHalesJewett.Insensitive
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Data.NNRat.BigOperators

@@ -6,7 +6,7 @@ Authors: Gabriel Dahia
 module
 
 public import DensityHalesJewett.DensityIncrement.Parameters
-public import DensityHalesJewett.Insensitive
+public import DensityHalesJewett.GrahamRothschild
 import Mathlib.Tactic.Linarith
 
 /-!
