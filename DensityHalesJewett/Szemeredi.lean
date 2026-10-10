@@ -40,9 +40,10 @@ def term {α : Type*} [AddMonoid α] {k : ℕ} (P : ArithmeticProgression α k)
     (i : Fin k) : α :=
   P.start + (i : ℕ) • P.diff
 
-/-- The proposition that every term of `P` belongs to `s`. -/
-def IsSubset {α : Type*} [AddMonoid α] {k : ℕ} (P : ArithmeticProgression α k)
-    (s : Set α) : Prop :=
+/-- The proposition that every term of `P` belongs to `s`, for `s` of any type with a membership
+relation, such as `Set α` or `Finset α`. -/
+def IsSubset {α S : Type*} [AddMonoid α] [Membership α S] {k : ℕ} (P : ArithmeticProgression α k)
+    (s : S) : Prop :=
   ∀ i, P.term i ∈ s
 
 end ArithmeticProgression
@@ -159,7 +160,7 @@ noncomputable def densityTheoremBound (k : ℕ) (δ : ℝ) : ℕ :=
 theorem exists_of_density_nat (k : ℕ) (hk : 3 ≤ k) (δ : ℝ) (hδ : 0 < δ)
     (n : ℕ) (hn : densityTheoremBound k δ ≤ n) (A : Finset ℕ)
     (hAn : A ⊆ range n) (hAδ : δ * n ≤ #A) :
-    ∃ P : ArithmeticProgression ℕ k, P.IsSubset (A : Set ℕ) := by
+    ∃ P : ArithmeticProgression ℕ k, P.IsSubset A := by
   classical
   have hk_one : 1 ≤ k := by grind
   let m := Combinatorics.Line.densityTheoremBound k (δ / 2)
