@@ -310,10 +310,6 @@ lemma density_increment_chain_step {k R n j : ℕ} (hk : 2 ≤ k)
       ∃ W : Combinatorics.Subspace (Fin (d (j + 1))) (Fin (k + 1)) (Fin n),
         δ + ((j + 1 : ℕ) : ℝ) * (Parameters.γ k δ / 2) ≤
           (Subspace.relativeDensity W A : ℝ) := by
-  let : Nontrivial (Fin (k + 1)) :=
-    Fintype.one_lt_card_iff_nontrivial.mp (by
-      simp only [Fintype.card_fin]
-      omega)
   let ρ := δ + (j : ℝ) * (Parameters.γ k δ / 2)
   have hγ := Parameters.γ_mono_lowerBound hk hδ
   have hρ₀ : 0 < ρ := by

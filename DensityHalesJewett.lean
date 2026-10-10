@@ -1,14 +1,16 @@
-import DensityHalesJewett.Canonization
-import DensityHalesJewett.DensityIncrement
-import DensityHalesJewett.DensityIncrement.CorrelatedFibers
-import DensityHalesJewett.DensityIncrement.Parameters
-import DensityHalesJewett.DensityIncrement.StructuredCorrelation
-import DensityHalesJewett.FiniteUnions
-import DensityHalesJewett.GrahamRothschild
-import DensityHalesJewett.Insensitive
-import DensityHalesJewett.Main
-import DensityHalesJewett.Subspace
-import DensityHalesJewett.Szemeredi
-import DensityHalesJewett.UniformFibers
-import DensityHalesJewett.Varnavides
-import DensityHalesJewett.Word
+module  -- shake: keep-all --deprecated_module: ignore
+
+public import DensityHalesJewett.Canonization
+public import DensityHalesJewett.DensityIncrement
+public import DensityHalesJewett.DensityIncrement.CorrelatedFibers
+public import DensityHalesJewett.DensityIncrement.Parameters
+public import DensityHalesJewett.DensityIncrement.StructuredCorrelation
+public import DensityHalesJewett.FiniteUnions
+public import DensityHalesJewett.GrahamRothschild
+public import DensityHalesJewett.Insensitive
+public import DensityHalesJewett.Main
+public import DensityHalesJewett.Subspace
+public import DensityHalesJewett.Szemeredi
+public import DensityHalesJewett.UniformFibers
+public import DensityHalesJewett.Varnavides
+public import DensityHalesJewett.Word
