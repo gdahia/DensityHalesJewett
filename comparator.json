@@ -2,8 +2,8 @@
   "challenge_module": "Challenge",
   "solution_module": "Solution",
   "theorem_names": [
-    "Combinatorics.Line.exists_of_density_atTop",
-    "Combinatorics.ArithmeticProgression.exists_of_density_nat_atTop"
+    "Combinatorics.Line.exists_of_density'",
+    "Combinatorics.ArithmeticProgression.exists_of_density_nat'"
   ],
   "definition_names": [],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]

@@ -1,5 +1,6 @@
 module  -- shake: keep-all --deprecated_module: ignore
 
+public import DensityHalesJewett.Ackermann
 public import DensityHalesJewett.Canonization
 public import DensityHalesJewett.DensityIncrement
 public import DensityHalesJewett.DensityIncrement.CorrelatedFibers
@@ -7,6 +8,8 @@ public import DensityHalesJewett.DensityIncrement.Parameters
 public import DensityHalesJewett.DensityIncrement.StructuredCorrelation
 public import DensityHalesJewett.FiniteUnions
 public import DensityHalesJewett.GrahamRothschild
+public import DensityHalesJewett.HalesJewett
+public import DensityHalesJewett.Induction
 public import DensityHalesJewett.Insensitive
 public import DensityHalesJewett.Main
 public import DensityHalesJewett.Subspace

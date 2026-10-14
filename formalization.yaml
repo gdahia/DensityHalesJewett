@@ -55,23 +55,44 @@ sources:
       Source of the Graham--Rothschild line-canonization statement that the paper cites as
       background and that this development proves internally.
 
+  - title: Primitive recursive bounds for van der Waerden numbers
+    authors:
+      - Saharon Shelah
+    id: https://doi.org/10.1090/S0894-0347-1988-0929498-X
+    type: paper
+    location: Journal of the American Mathematical Society 1 (1988), 683--697
+    relationship: background
+    license: unknown
+    author_endorsement: not-contacted
+    note: >-
+      Source of the bound for the Hales--Jewett numbers on which the explicit thresholds are
+      built. Its formalization is in the separate project
+      https://github.com/gdahia/ShelahHalesJewett.
+
 related_formalizations:
   - id: https://github.com/leanprover-community/mathlib4
     relationship: builds-on
     note: >-
-      Mathlib supplies `Combinatorics.Line` and the colouring Hales--Jewett theorem, which this
+      Mathlib has `Combinatorics.Line` and the colouring Hales--Jewett theorem, which this
       development uses and on which the compared statements are phrased. Mathlib does not contain
-      the density version; that is what this repository adds.
+      the density version; that is what this repository adds. The colouring theorem is used with
+      Shelah's bound, from the separate project `ShelahHalesJewett`.
+  - id: https://github.com/gdahia/ShelahHalesJewett
+    relationship: builds-on
+    note: >-
+      Shelah's bound for the Hales--Jewett numbers and its bound by the Ackermann function. The
+      explicit thresholds of this development are built on it.
 
 status:
   scope: >-
-    The density Hales--Jewett theorem and Szemeredi's theorem on the integers are proved in full,
-    with no `sorry` outside the deliberate holes in `Challenge.lean`. Both are proved
-    asymptotically in `Challenge.lean`. The formalization also includes the finite-unions theorem,
-    the Graham--Rothschild theorem for combinatorial lines, block canonization, and Varnavides'
-    averaging argument, none of which are among the compared declarations. Szemeredi's theorem is
-    formalized for subsets of an initial segment of the naturals only; no version for general
-    abelian groups or for the primes is included.
+    The density Hales--Jewett theorem and Szemerédi's theorem on the integers are proved in full,
+    with no `sorry` outside the deliberate holes in `Challenge.lean`. Both are stated in
+    `Challenge.lean` with explicit thresholds. The formalization also includes the finite-unions
+    theorem, the Graham--Rothschild theorem for combinatorial lines, block canonization, and
+    Varnavides' averaging argument, none of which are among the compared declarations. The
+    thresholds of all three density statements are stated with the Ackermann function. Szemerédi's
+    theorem is formalized for subsets of an initial segment of the naturals only; no version for
+    general abelian groups or for the primes is included.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms:
@@ -87,7 +108,7 @@ status:
         - Classical.choice
         - Quot.sound
     - declaration: Combinatorics.ArithmeticProgression.exists_of_density_nat
-      file: DensityHalesJewett/Szemeredi.lean
+      file: DensityHalesJewett/Main.lean
       sorry_count: 0
       axioms:
         - propext
@@ -102,6 +123,7 @@ automation:
         - GPT-5.6 Terra
         - GPT-5.6 Lua
         - Opus 5
+        - Opus 5.5
       framework: n/a
       tool_setup: >-
         AI-assisted development driven from coding agents against a local Lean 4 and Mathlib
@@ -113,7 +135,8 @@ automation:
         hardware: local machine
       prompting_notes: >-
         GPT-5.6 Sol and Opus 5 contributed planning; GPT-5.6 Terra, GPT-5.6 Lua, and Opus 5
-        contributed implementation.
+        contributed implementation. Opus 5.5 contributed the explicit bounds and restructured the
+        proofs during the review.
   spend_usd: subscription-based
 
 fidelity:
@@ -122,9 +145,19 @@ fidelity:
       replaces these by smaller minima that also enforce `eta <= theta / 4`, `eta <= delta / 6`,
       `gamma <= eta^2 / 2`, and `gamma <= 3 * eta`. Consequently its numerical thresholds and
       density increment are weaker, while the qualitative theorem is unchanged.
-    - Several displayed paper bounds (`M_0`, `F`, and `N`) are replaced by sufficient bounds
-      selected with `Nat.find` from eventual-existence lemmas. This makes the formalized
-      thresholds non-explicit, so the compared statements are asymptotic rather than quantitative.
+    - The main statements have explicit thresholds: density Hales--Jewett over `k` letters holds
+      in every dimension `n >= ack (4 * k) (k + ceil (1 / delta))`, for Mathlib's Ackermann
+      function `ack`. `Ackermann.lean` obtains this from the dimensions of the formalized proof
+      rather than from the paper's displayed bounds (`M_0`, `F`, and `N`), and it bounds the
+      Graham--Rothschild numbers, which the paper cites, through Shelah's bound for the
+      Hales--Jewett numbers. The level `4 * k` is not optimized. The compared statements have
+      these thresholds, so the paper's theorems, which are stated for all sufficiently large `n`,
+      follow from them.
+    - The induction on the alphabet carries a bound `F` for density Hales--Jewett over `k`
+      letters, and the dimension of every intermediate lemma is explicit in `F`. The density
+      increment is stated for a family of any density `rho >= delta`, with the dimensions and
+      the increment computed at `delta`, so iterating it needs no monotonicity of the bounds in
+      the density.
 
 review:
   status: self-assessed
@@ -132,27 +165,29 @@ review:
     - Gabriel Dahia
   notes: >-
     Reviewed by the author for mathematical correctness, including a statement audit of the two
-    compared declarations against the cited paper. No independent reviewer has checked the
-    development, and there is no novelty whatsoever, as the theorems are known results. The
+    compared declarations against the cited paper. The author also lightly reviewed the style of
+    every proof. No independent reviewer has checked the
+    development, and there is no novelty, as the theorems are known results. The
     only contribution is the formalization.
 
 alignment:
   namespace: Combinatorics
   statements:
     - source: Density Hales--Jewett theorem
-      lean: Combinatorics.Line.exists_of_density_atTop
+      lean: Combinatorics.Line.exists_of_density'
       module: Challenge
       status: proved
       note: >-
-        Asymptotic form of `Combinatorics.Line.exists_of_density` in
-        `DensityHalesJewett/Main.lean`, which carries an explicit threshold.
-    - source: Szemeredi's theorem (derived consequence)
-      lean: Combinatorics.ArithmeticProgression.exists_of_density_nat_atTop
+        The same statement as `Combinatorics.Line.exists_of_density` in
+        `DensityHalesJewett/Main.lean`, with the threshold `ack (4 * k) (k + ceil (1 / delta))`.
+    - source: Szemerédi's theorem (derived consequence)
+      lean: Combinatorics.ArithmeticProgression.exists_of_density_nat'
       module: Challenge
       status: proved
       note: >-
-        Asymptotic form of `Combinatorics.ArithmeticProgression.exists_of_density_nat` in
-        `DensityHalesJewett/Szemeredi.lean`.
+        `Combinatorics.ArithmeticProgression.exists_of_density_nat` in
+        `DensityHalesJewett/Main.lean`, with the progression given by its first term and common
+        difference and the threshold `ack (4 * k + 1) (k + ceil (1 / delta))`.
 
 acknowledgements: >-
   Built on Mathlib, which provides, among many other things, `Combinatorics.Line` and a proof of
