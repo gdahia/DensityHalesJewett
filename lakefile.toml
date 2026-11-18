@@ -15,13 +15,13 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "ShelahHalesJewett"
 git = "https://github.com/gdahia/ShelahHalesJewett"
-rev = "8a91fc0e8a9617f8ade16ccb3b56e543990c9f45"
+rev = "ff6a03d77a4933514d47e7dac3f5a631493508e3"
 
 # Keep Mathlib last so that its pin takes precedence.
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.35.0"
+rev = "v4.36.0"
 
 [[lean_lib]]
 name = "DensityHalesJewett"
